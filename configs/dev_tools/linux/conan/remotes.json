@@ -1,0 +1,19 @@
+{
+ "remotes": [
+    {
+    "name": "default_remote",
+    "url": "https://roundtables.kplanb.com:10030/artifactory/api/conan/kplanb_conan",
+    "verify_ssl": true
+    },
+    {
+    "name": "conancenter",
+    "url": "https://center.conan.io",
+    "verify_ssl": true
+    },
+    {
+    "name": "conan-center",
+    "url": "https://conan.bintray.com",
+    "verify_ssl": true
+    }
+ ]
+}

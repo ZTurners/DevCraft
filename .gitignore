@@ -1,4 +1,8 @@
 .temp
 bin
+
 .conan
-workspaces
+conan/.conan
+conan/_generated
+
+vscode/.config

@@ -6,6 +6,6 @@ arch=x86_64
 build_type=Release
 
 [tool_requires]
+llvm/20.1.1@arieo/dev
 ninja/1.12.1
 cmake/3.31.6
-llvm/20.1.1@arieo/dev

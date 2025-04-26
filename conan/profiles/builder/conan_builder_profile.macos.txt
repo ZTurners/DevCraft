@@ -1,0 +1,10 @@
+#https://docs.conan.io/2/reference/config_files/settings.html
+[settings]
+arch=armv8
+build_type=Release
+os=Macos
+
+[tool_requires]
+llvm/20.1.1@arieo/dev
+ninja/1.12.1
+cmake/3.31.6

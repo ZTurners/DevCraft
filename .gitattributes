@@ -1,3 +1,1 @@
-*.sh eol=lf
-*.py eol=lf
-*.md eol=lf
+* text=auto eol=lf

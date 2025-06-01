@@ -8,3 +8,4 @@ os=Macos
 llvm/20.1.1@arieo/dev
 ninja/1.12.1
 cmake/3.31.6
+vulkan_sdk/1.4.309.0@arieo/dev

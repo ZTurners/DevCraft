@@ -13,8 +13,10 @@ compiler.runtime_type=Release
 [tool_requires]
 ninja/1.12.1
 cmake/3.31.6
+
 llvm/20.1.1@arieo/dev
 vulkan_sdk/1.4.309.0@arieo/dev
+directx_tex/0.4.1@arieo/dev
 
 [conf]
 tools.build:jobs=8

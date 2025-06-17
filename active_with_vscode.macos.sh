@@ -11,7 +11,7 @@ VS_CODE_INIT_USER_SETTING="$DEV_ENV_ROOT_PATH/vscode/init_user_settings.json"
 VS_CODE_USER_SETTING="$DEV_ENV_ROOT_PATH/vscode/.config/User/settings.json"
 
 # Execute the conan build script
-. "$DEV_ENV_ROOT_PATH/conan/_generated/builder/windows/conanbuild.sh"
+. "$DEV_ENV_ROOT_PATH/conan/_generated/builder/macos/conanbuild.sh"
 
 # Check if VS Code user settings exist, if not create them
 if [ ! -f "$VS_CODE_USER_SETTING" ]; then

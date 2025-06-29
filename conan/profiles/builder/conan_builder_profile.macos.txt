@@ -12,3 +12,6 @@ llvm/20.1.1@arieo/dev
 vulkan_sdk/1.4.309.0@arieo/dev
 directx_tex/0.4.1@arieo/dev
 dxc/1.8.2505@arieo/dev
+
+android_sdk/bootstrap@arieo/dev
+#gradle/8.14.2@arieo/dev

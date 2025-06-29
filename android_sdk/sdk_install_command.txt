@@ -1,0 +1,1 @@
+sdkmanager --install "ndk;29.0.13599879" "build-tools;36.0.0-rc5" "ndk-bundle" "build-tools;36.0.0-rc5"

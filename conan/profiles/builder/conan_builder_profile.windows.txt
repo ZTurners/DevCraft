@@ -13,6 +13,7 @@ compiler.runtime_type=Release
 [tool_requires]
 ninja/1.12.1
 cmake/3.31.6
+
 ndk/27.2.12479018@arieo/dev
 gradle/8.14.2@arieo/dev
 
@@ -25,6 +26,10 @@ dxc/1.8.2505@arieo/dev
 tools.build:jobs=8
 tools.cmake.cmaketoolchain:generator=Ninja
 tools.cmake.cmakedeps:new=will_break_next
+
 #tools.microsoft.msbuild:installation_path=X:/conan/msvc/build/2022/Community
 tools.microsoft.msbuild:vs_version=17
 tools.microsoft:winsdk_version=10.0.26100.0
+
+[buildenv]
+ANDROID_SDK_ROOT=D:/Android/Sdk

@@ -10,7 +10,7 @@ SETLOCAL ENABLEDELAYEDEXPANSION
     :: Usage: Just double-click this .bat file to run it (Admin rights required)
 
     :: Configuration - Change these values if needed
-    set PYTHON_VERSION=3.12.4
+    set PYTHON_VERSION=3.13.5
     set PYTHON_URL=https://www.python.org/ftp/python/%PYTHON_VERSION%/python-%PYTHON_VERSION%-embed-amd64.zip
     set PYTHON_DOWNLOAD_DIR=%DEV_ENV_WORKSPACE_PATH%/.download
     set PYTHON_INSTALL_DIR=%DEV_ENV_WORKSPACE_PATH%/python/python_%PYTHON_VERSION%
@@ -78,8 +78,9 @@ SETLOCAL ENABLEDELAYEDEXPANSION
     copy "%PTH_FILE%" "%PTH_FILE%.bak" >nul
 
     :: Modify ._pth file to enable site-packages
+    for %%f in ("%PYTHON_INSTALL_DIR%\python*.zip") do set PYTHON_ZIP_FILE=%%f
     (
-        echo python312.zip
+        echo %PYTHON_ZIP_FILE%
         echo .
         echo Lib\site-packages
         echo import site
@@ -141,8 +142,7 @@ SETLOCAL ENABLEDELAYEDEXPANSION
     
     :: Verify build backend is available
     echo Verifying build backend...
-    "%PYTHON_INSTALL_DIR%\python.exe" -c "import setuptools.build_meta" || (
-        echo WARNING: Build backend still not available
+    (    
         echo Installing complete setuptools package...
         "%PYTHON_INSTALL_DIR%\python.exe" -m pip install --force-reinstall setuptools --no-warn-script-location
 
@@ -190,5 +190,3 @@ SETLOCAL ENABLEDELAYEDEXPANSION
     echo.
     echo [CONAN INSTALLATION]
     "%PYTHON_INSTALL_DIR%\python.exe" -m pip show conan
-    pause
-pause

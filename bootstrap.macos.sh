@@ -1,17 +1,27 @@
 #!/bin/bash
 
-if [[ -z "${DEV_ENV_ROOT_PATH+x}" ]]; then
-    echo "DEV_ENV_ROOT_PATH does NOT exist. Please call bootstrap.windows.bat instead."
-    exit 1
-fi
-
+DEV_ENV_ROOT_PATH=$(dirname "$(realpath "$0")")
 DEV_ENV_WORKSPACE_PATH="$DEV_ENV_ROOT_PATH/workspace"
 
+PYTHON_SETTING_FILE="$DEV_ENV_ROOT_PATH/settings/python/version.txt"
+# Read the file, trim whitespace, and remove quotes
+PYTHON_VERSION=$(cat "$PYTHON_SETTING_FILE" | xargs | tr -d '"')
+# Check if version was obtained
+if [ -z "$PYTHON_VERSION" ]; then
+    echo "Cannot fetch python version"
+    exit 1
+fi
+# Set the environment variable (for current session and export to child processes)
+export PYTHON_VERSION="$PYTHON_VERSION"
+# Verify
+echo "Setting PYTHON_VERSION=$PYTHON_VERSION"
+
 # Configuration
-PYTHON_VERSION=3.13.5
+# PYTHON_VERSION=3.13.5
 PYTHON_URL="https://www.python.org/ftp/python/$PYTHON_VERSION/python-$PYTHON_VERSION-macos11.pkg"
 PYTHON_DOWNLOAD_DIR="$DEV_ENV_WORKSPACE_PATH/.download"
 PYTHON_INSTALL_DIR="$DEV_ENV_WORKSPACE_PATH/python/python_$PYTHON_VERSION"
+TMP_MOUNT_DIR="/tmp/python_installer"
 ADD_TO_SYSTEM_PATH=0
 
 # Check if pyenv is installed
@@ -20,11 +30,6 @@ if ! command -v pyenv &> /dev/null; then
     echo "You can install it using: brew install pyenv"
     exit 1
 fi
-
-# Create directories
-echo "Creating directories..."
-mkdir -p "$PYTHON_DOWNLOAD_DIR"
-mkdir -p "$PYTHON_INSTALL_DIR"
 
 # Install the specified Python version using pyenv
 echo "Installing Python $PYTHON_VERSION using pyenv..."
@@ -47,54 +52,121 @@ fi
 
 # Copy the bin directory to the target location
 echo "Copying binaries from $PYENV_PYTHON_PATH/bin to $PYTHON_INSTALL_DIR..."
-rsync -a "$PYENV_PYTHON_PATH/" "$PYTHON_INSTALL_DIR/"
+cp -r "$PYENV_PYTHON_PATH/bin" "$PYTHON_INSTALL_DIR"
 
-echo "Done! Python $PYTHON_VERSION binaries have been copied to $PYTHON_INSTALL_DIR"
+echo "Done! Python $PYTHON_VERSION binaries have been copied to $TARGET_DIR"
+exit 1
+
+# Create directories
+echo "Creating directories..."
+mkdir -p "$PYTHON_DOWNLOAD_DIR"
+mkdir -p "$PYTHON_INSTALL_DIR"
+mkdir -p "$TMP_MOUNT_DIR"
+
+# Download Python package
+echo "Downloading Python $PYTHON_VERSION..."
+if [ ! -f "$PYTHON_DOWNLOAD_DIR/python-$PYTHON_VERSION.pkg" ]; then
+    curl -L -o "$PYTHON_DOWNLOAD_DIR/python-$PYTHON_VERSION.pkg" "$PYTHON_URL" || {
+        echo "Failed to download Python package"
+        exit 1
+    }
+else
+    echo "Package already downloaded"
+fi
+
+# Mount the package
+echo "Mounting installer package..."
+sudo hdiutil attach "$PYTHON_DOWNLOAD_DIR/python-$PYTHON_VERSION.pkg" -mountpoint "$TMP_MOUNT_DIR" -nobrowse || {
+    echo "Failed to mount package"
+    exit 1
+}
+
+# Extract Python framework
+echo "Extracting Python framework..."
+pkgutil --expand-full "$TMP_MOUNT_DIR/Python_Framework.pkg" "$PYTHON_DOWNLOAD_DIR/python-extracted" || {
+    echo "Failed to extract package"
+    sudo hdiutil detach "$TMP_MOUNT_DIR"
+    exit 1
+}
+
+# Copy Python framework to our installation directory
+echo "Installing Python to $PYTHON_INSTALL_DIR..."
+if [ -d "$PYTHON_DOWNLOAD_DIR/python-extracted/Payload/Library/Frameworks/Python.framework" ]; then
+    cp -R "$PYTHON_DOWNLOAD_DIR/python-extracted/Payload/Library/Frameworks/Python.framework" "$PYTHON_INSTALL_DIR/" || {
+        echo "Failed to copy Python framework"
+        sudo hdiutil detach "$TMP_MOUNT_DIR"
+        exit 1
+    }
+else
+    echo "Error: Python framework not found in package"
+    sudo hdiutil detach "$TMP_MOUNT_DIR"
+    exit 1
+fi
+
+# Unmount the package
+sudo hdiutil detach "$TMP_MOUNT_DIR"
+
+# Create symlinks for easier access
+echo "Creating symlinks..."
+ln -sf "$PYTHON_INSTALL_DIR/Python.framework/Versions/Current/bin/python3" "$PYTHON_INSTALL_DIR/python"
+ln -sf "$PYTHON_INSTALL_DIR/Python.framework/Versions/Current/bin/pip3" "$PYTHON_INSTALL_DIR/pip"
+
+# Set up environment variables
+echo "Creating activation script..."
+cat > "$PYTHON_INSTALL_DIR/activate" << 'EOF'
+#!/bin/bash
+export PYTHONHOME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export PATH="$PYTHONHOME/Python.framework/Versions/Current/bin:$PATH"
+EOF
+
+chmod +x "$PYTHON_INSTALL_DIR/activate"
 
 # Temporarily add to PATH for the rest of the script
-export PATH="$PYTHON_INSTALL_DIR/bin:$PATH"
+export PATH="$PYTHON_INSTALL_DIR/Python.framework/Versions/Current/bin:$PATH"
 
 # Verify installation
 echo "Verifying Python installation..."
-"$PYTHON_INSTALL_DIR/bin/python" --version || {
+"$PYTHON_INSTALL_DIR/python" --version || {
     echo "Python installation verification failed"
     exit 1
 }
 
 # Install pip if not present (should already be included in macOS package)
 echo "Verifying pip..."
-"$PYTHON_INSTALL_DIR/bin/python" -m ensurepip --upgrade || {
+"$PYTHON_INSTALL_DIR/python" -m ensurepip --upgrade || {
     echo "Failed to ensure pip is available"
     exit 1
 }
 
 # Verify pip installation
-"$PYTHON_INSTALL_DIR/bin/python" -m pip --version || {
+"$PYTHON_INSTALL_DIR/python" -m pip --version || {
     echo "Pip verification failed"
     exit 1
 }
 
 # Verify build backend is available
 echo "Verifying build backend..."
-echo "Installing complete setuptools package..."
-
-"$PYTHON_INSTALL_DIR/bin/python" -m pip install --force-reinstall setuptools    
-if [ $? -ne 0 ]; then
-    echo "setuptools install failed"
-    exit 1
-fi
+"$PYTHON_INSTALL_DIR/python" -c "import setuptools.build_meta" || {
+    echo "WARNING: Build backend not available"
+    echo "Installing complete setuptools package..."
+    "$PYTHON_INSTALL_DIR/python" -m pip install --force-reinstall setuptools
+    
+    if [ $? -ne 0 ]; then
+        echo "setuptools install failed"
+        exit 1
+    fi
+}
 
 # Install Conan
 echo "Installing Conan..."
-"$PYTHON_INSTALL_DIR/bin/python" -m pip install conan || {
+"$PYTHON_INSTALL_DIR/python" -m pip install conan || {
     echo "Failed to install Conan"
     exit 1
 }
 
-
 # Verify Conan
 echo "Verifying conan..."
-"$PYTHON_INSTALL_DIR/bin/conan" --version || {
+"$PYTHON_INSTALL_DIR/Python.framework/Versions/Current/bin/conan" --version || {
     echo "Conan verification failed"
     exit 1
 }

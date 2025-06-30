@@ -3,8 +3,21 @@
 DEV_ENV_ROOT_PATH=$(dirname "$(realpath "$0")")
 DEV_ENV_WORKSPACE_PATH="$DEV_ENV_ROOT_PATH/workspace"
 
+PYTHON_SETTING_FILE="$DEV_ENV_ROOT_PATH/settings/python/version.txt"
+# Read the file, trim whitespace, and remove quotes
+PYTHON_VERSION=$(cat "$PYTHON_SETTING_FILE" | xargs | tr -d '"')
+# Check if version was obtained
+if [ -z "$PYTHON_VERSION" ]; then
+    echo "Cannot fetch python version"
+    exit 1
+fi
+# Set the environment variable (for current session and export to child processes)
+export PYTHON_VERSION="$PYTHON_VERSION"
+# Verify
+echo "Setting PYTHON_VERSION=$PYTHON_VERSION"
+
 # Configuration
-PYTHON_VERSION=3.13.5
+# PYTHON_VERSION=3.13.5
 PYTHON_URL="https://www.python.org/ftp/python/$PYTHON_VERSION/python-$PYTHON_VERSION-macos11.pkg"
 PYTHON_DOWNLOAD_DIR="$DEV_ENV_WORKSPACE_PATH/.download"
 PYTHON_INSTALL_DIR="$DEV_ENV_WORKSPACE_PATH/python/python_$PYTHON_VERSION"

@@ -6,3 +6,10 @@ conan/.conan
 conan/_generated
 
 vscode/.config
+
+android/AndroidSDK
+android/.AndroidSDK
+
+.download
+
+workspace

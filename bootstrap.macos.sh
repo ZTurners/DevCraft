@@ -4,12 +4,45 @@ DEV_ENV_ROOT_PATH=$(dirname "$(realpath "$0")")
 DEV_ENV_WORKSPACE_PATH="$DEV_ENV_ROOT_PATH/workspace"
 
 # Configuration
-PYTHON_VERSION=3.12.4
+PYTHON_VERSION=3.13.5
 PYTHON_URL="https://www.python.org/ftp/python/$PYTHON_VERSION/python-$PYTHON_VERSION-macos11.pkg"
 PYTHON_DOWNLOAD_DIR="$DEV_ENV_WORKSPACE_PATH/.download"
 PYTHON_INSTALL_DIR="$DEV_ENV_WORKSPACE_PATH/python/python_$PYTHON_VERSION"
 TMP_MOUNT_DIR="/tmp/python_installer"
 ADD_TO_SYSTEM_PATH=0
+
+# Check if pyenv is installed
+if ! command -v pyenv &> /dev/null; then
+    echo "Error: pyenv is not installed. Please install pyenv first."
+    echo "You can install it using: brew install pyenv"
+    exit 1
+fi
+
+# Install the specified Python version using pyenv
+echo "Installing Python $PYTHON_VERSION using pyenv..."
+pyenv install "$PYTHON_VERSION" --skip-existing
+
+# Check if installation was successful
+if [ $? -ne 0 ]; then
+    echo "Error: Failed to install Python $PYTHON_VERSION"
+    exit 1
+fi
+
+# Get the path to the installed Python version
+PYENV_PYTHON_PATH=$(pyenv prefix "$PYTHON_VERSION")
+
+# Check if the path exists
+if [ ! -d "$PYENV_PYTHON_PATH" ]; then
+    echo "Error: Could not find installed Python version at $PYENV_PYTHON_PATH"
+    exit 1
+fi
+
+# Copy the bin directory to the target location
+echo "Copying binaries from $PYENV_PYTHON_PATH/bin to $PYTHON_INSTALL_DIR..."
+cp -r "$PYENV_PYTHON_PATH/bin" "$PYTHON_INSTALL_DIR"
+
+echo "Done! Python $PYTHON_VERSION binaries have been copied to $TARGET_DIR"
+exit 1
 
 # Create directories
 echo "Creating directories..."

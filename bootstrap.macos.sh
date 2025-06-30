@@ -3,136 +3,108 @@
 DEV_ENV_ROOT_PATH=$(dirname "$(realpath "$0")")
 DEV_ENV_WORKSPACE_PATH="$DEV_ENV_ROOT_PATH/workspace"
 
-# Install Python
-# Python Installer Bash Script
-# Usage: Run this script with sudo or as root
-
-# Configuration - Change these values if needed
+# Configuration
 PYTHON_VERSION=3.12.4
-PYTHON_URL="https://www.python.org/ftp/python/$PYTHON_VERSION/python-$PYTHON_VERSION-embed-amd64.zip"
+PYTHON_URL="https://www.python.org/ftp/python/$PYTHON_VERSION/python-$PYTHON_VERSION-macos11.pkg"
 PYTHON_DOWNLOAD_DIR="$DEV_ENV_WORKSPACE_PATH/.download"
 PYTHON_INSTALL_DIR="$DEV_ENV_WORKSPACE_PATH/python/python_$PYTHON_VERSION"
-PYTHON_SCRIPTS_DIR="$PYTHON_INSTALL_DIR/Scripts"
+TMP_MOUNT_DIR="/tmp/python_installer"
 ADD_TO_SYSTEM_PATH=0
 
-# Check for root privileges
-#if [ "$(id -u)" -ne 0 ]; then
-#    echo "This script requires administrator privileges."
-#    echo "Please run with sudo or as root."
-#    exit 1
-#fi
-
-# Create directories if they don't exist
-echo "Creating directories if needed..."
+# Create directories
+echo "Creating directories..."
 mkdir -p "$PYTHON_DOWNLOAD_DIR"
-if [ ! -d "$PYTHON_INSTALL_DIR" ]; then
-    echo "Creating installation directory: $PYTHON_INSTALL_DIR"
-    mkdir -p "$PYTHON_INSTALL_DIR"
-fi
+mkdir -p "$PYTHON_INSTALL_DIR"
+mkdir -p "$TMP_MOUNT_DIR"
 
-# Download Python ZIP
-echo "Downloading Python $PYTHON_VERSION (ZIP version)..."
-ZIP_FILE="$PYTHON_DOWNLOAD_DIR/python-$PYTHON_VERSION-embed-amd64.zip"
-if [ ! -f "$ZIP_FILE" ]; then
-    echo "Downloading from $PYTHON_URL..."
-    wget -O "$ZIP_FILE" "$PYTHON_URL"
-    if [ $? -ne 0 ]; then
-        echo "Failed to download Python ZIP file!"
+# Download Python package
+echo "Downloading Python $PYTHON_VERSION..."
+if [ ! -f "$PYTHON_DOWNLOAD_DIR/python-$PYTHON_VERSION.pkg" ]; then
+    curl -L -o "$PYTHON_DOWNLOAD_DIR/python-$PYTHON_VERSION.pkg" "$PYTHON_URL" || {
+        echo "Failed to download Python package"
         exit 1
-    fi
+    }
 else
-    echo "ZIP file already exists at $ZIP_FILE"
+    echo "Package already downloaded"
 fi
 
-# Extract Python
-echo "Extracting Python to $PYTHON_INSTALL_DIR..."
-if [ -f "$ZIP_FILE" ]; then
-    unzip -o "$ZIP_FILE" -d "$PYTHON_INSTALL_DIR"
+# Mount the package
+echo "Mounting installer package..."
+sudo hdiutil attach "$PYTHON_DOWNLOAD_DIR/python-$PYTHON_VERSION.pkg" -mountpoint "$TMP_MOUNT_DIR" -nobrowse || {
+    echo "Failed to mount package"
+    exit 1
+}
+
+# Extract Python framework
+echo "Extracting Python framework..."
+pkgutil --expand-full "$TMP_MOUNT_DIR/Python_Framework.pkg" "$PYTHON_DOWNLOAD_DIR/python-extracted" || {
+    echo "Failed to extract package"
+    sudo hdiutil detach "$TMP_MOUNT_DIR"
+    exit 1
+}
+
+# Copy Python framework to our installation directory
+echo "Installing Python to $PYTHON_INSTALL_DIR..."
+if [ -d "$PYTHON_DOWNLOAD_DIR/python-extracted/Payload/Library/Frameworks/Python.framework" ]; then
+    cp -R "$PYTHON_DOWNLOAD_DIR/python-extracted/Payload/Library/Frameworks/Python.framework" "$PYTHON_INSTALL_DIR/" || {
+        echo "Failed to copy Python framework"
+        sudo hdiutil detach "$TMP_MOUNT_DIR"
+        exit 1
+    }
 else
-    echo "Error: ZIP file not found!"
+    echo "Error: Python framework not found in package"
+    sudo hdiutil detach "$TMP_MOUNT_DIR"
     exit 1
 fi
 
-# Configure Python environment
-echo "Configuring Python..."
-# Dynamically find the ._pth file
-PTH_FILE=$(find "$PYTHON_INSTALL_DIR" -name "python*._pth" | head -n 1)
+# Unmount the package
+sudo hdiutil detach "$TMP_MOUNT_DIR"
 
-if [ -z "$PTH_FILE" ]; then
-    echo "ERROR: Could not find python*._pth file in $PYTHON_INSTALL_DIR"
-    exit 1
-fi
+# Create symlinks for easier access
+echo "Creating symlinks..."
+ln -sf "$PYTHON_INSTALL_DIR/Python.framework/Versions/Current/bin/python3" "$PYTHON_INSTALL_DIR/python"
+ln -sf "$PYTHON_INSTALL_DIR/Python.framework/Versions/Current/bin/pip3" "$PYTHON_INSTALL_DIR/pip"
 
-echo "Found ._pth file: $PTH_FILE"
-
-# Backup original ._pth file
-cp "$PTH_FILE" "$PTH_FILE.bak"
-
-# Modify ._pth file to enable site-packages
-cat > "$PTH_FILE" << EOF
-python312.zip
-.
-Lib/site-packages
-import site
+# Set up environment variables
+echo "Creating activation script..."
+cat > "$PYTHON_INSTALL_DIR/activate" << 'EOF'
+#!/bin/bash
+export PYTHONHOME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export PATH="$PYTHONHOME/Python.framework/Versions/Current/bin:$PATH"
 EOF
 
-# Add to Environment PATH
-echo "Adding Python to PATH..."
-export PATH="$PYTHON_INSTALL_DIR:$PYTHON_SCRIPTS_DIR:$PATH"
-echo "$PATH"
+chmod +x "$PYTHON_INSTALL_DIR/activate"
 
-if [ "$ADD_TO_SYSTEM_PATH" -eq 1 ]; then
-    echo "Adding Python to system PATH..."
-    # Add to system environment
-    echo "export PATH=\"$PYTHON_INSTALL_DIR:$PYTHON_SCRIPTS_DIR:\$PATH\"" >> /etc/profile
-fi
+# Temporarily add to PATH for the rest of the script
+export PATH="$PYTHON_INSTALL_DIR/Python.framework/Versions/Current/bin:$PATH"
 
 # Verify installation
 echo "Verifying Python installation..."
-"$PYTHON_INSTALL_DIR/python" --version
-if [ $? -ne 0 ]; then
-    echo "Python installation verification failed."
-else
-    echo "Python $PYTHON_VERSION successfully installed at $PYTHON_INSTALL_DIR"
-fi
-
-# Download get-pip.py
-echo "Downloading pip installer..."
-wget -O "$PYTHON_DOWNLOAD_DIR/get-pip.py" https://bootstrap.pypa.io/get-pip.py
-if [ $? -ne 0 ]; then
-    echo "Failed to download pip installer"
+"$PYTHON_INSTALL_DIR/python" --version || {
+    echo "Python installation verification failed"
     exit 1
-fi
+}
 
-# Install pip properly for embedded Python
-echo "Installing pip..."
-"$PYTHON_INSTALL_DIR/python" "$PYTHON_DOWNLOAD_DIR/get-pip.py" --no-warn-script-location --trusted-host pypi.org --trusted-host files.pythonhosted.org
-if [ $? -ne 0 ]; then
-    echo "Failed to install pip"
-    echo "Trying alternative installation method..."
-    "$PYTHON_INSTALL_DIR/python" -c "import urllib.request; urllib.request.urlretrieve('https://bootstrap.pypa.io/get-pip.py', '$PYTHON_DOWNLOAD_DIR/get-pip.py')"
-    "$PYTHON_INSTALL_DIR/python" "$PYTHON_DOWNLOAD_DIR/get-pip.py" --no-warn-script-location
-    if [ $? -ne 0 ]; then
-        echo "Pip installation failed completely"
-        exit 1
-    fi
-fi
+# Install pip if not present (should already be included in macOS package)
+echo "Verifying pip..."
+"$PYTHON_INSTALL_DIR/python" -m ensurepip --upgrade || {
+    echo "Failed to ensure pip is available"
+    exit 1
+}
 
 # Verify pip installation
-echo "Verifying pip..."
-"$PYTHON_INSTALL_DIR/python" -m pip --version
-if [ $? -ne 0 ]; then
+"$PYTHON_INSTALL_DIR/python" -m pip --version || {
     echo "Pip verification failed"
     exit 1
-fi
+}
 
 # Verify build backend is available
 echo "Verifying build backend..."
 "$PYTHON_INSTALL_DIR/python" -c "import setuptools.build_meta" || {
-    echo "WARNING: Build backend still not available"
+    echo "WARNING: Build backend not available"
     echo "Installing complete setuptools package..."
-    "$PYTHON_INSTALL_DIR/python" -m pip install --force-reinstall setuptools --no-warn-script-location
-
+    "$PYTHON_INSTALL_DIR/python" -m pip install --force-reinstall setuptools
+    
     if [ $? -ne 0 ]; then
         echo "setuptools install failed"
         exit 1
@@ -141,23 +113,19 @@ echo "Verifying build backend..."
 
 # Install Conan
 echo "Installing Conan..."
-"$PYTHON_INSTALL_DIR/python" -m pip install conan
-if [ $? -ne 0 ]; then
+"$PYTHON_INSTALL_DIR/python" -m pip install conan || {
     echo "Failed to install Conan"
     exit 1
-fi
+}
 
+# Verify Conan
 echo "Verifying conan..."
-"$PYTHON_SCRIPTS_DIR/conan" --version
-if [ $? -ne 0 ]; then
+"$PYTHON_INSTALL_DIR/Python.framework/Versions/Current/bin/conan" --version || {
     echo "Conan verification failed"
     exit 1
-fi
+}
 
-# Get installation details
-echo "Collecting installation details..."
-
-# Display installation summary
+# Installation summary
 echo
 echo "========================================"
 echo "         INSTALLATION SUMMARY"
@@ -166,7 +134,7 @@ echo
 echo "[PYTHON INSTALLATION]"
 echo "Version:     $PYTHON_VERSION"
 echo "Location:    $PYTHON_INSTALL_DIR"
-echo "Executable:  $PYTHON_EXE"
+echo "Executable:  $PYTHON_INSTALL_DIR/python"
 "$PYTHON_INSTALL_DIR/python" -c "import sys; print(sys.executable)"
 echo
 echo "[PIP INSTALLATION]"
@@ -174,4 +142,7 @@ echo "[PIP INSTALLATION]"
 echo
 echo "[CONAN INSTALLATION]"
 "$PYTHON_INSTALL_DIR/python" -m pip show conan
-read -p "Press enter to continue"
+echo
+echo "To use this Python environment, run:"
+echo "source $PYTHON_INSTALL_DIR/activate"
+echo

@@ -24,44 +24,44 @@ PYTHON_INSTALL_DIR="$DEV_ENV_WORKSPACE_PATH/python/python_$PYTHON_VERSION"
 ADD_TO_SYSTEM_PATH=0
 
 # Check if pyenv is installed
-if ! command -v pyenv &> /dev/null; then
-    echo "Error: pyenv is not installed. Please install pyenv first."
-    echo "You can install it using: brew install pyenv"
-    exit 1
-fi
+echo "Verifying Python installation..."
+"$PYTHON_INSTALL_DIR/bin/python" --version || {
+    if ! command -v pyenv &> /dev/null; then
+        echo "Error: pyenv is not installed. Please install pyenv first."
+        echo "You can install it using: brew install pyenv"
+        exit 1
+    fi
 
-# Create directories
-echo "Creating directories..."
-mkdir -p "$PYTHON_DOWNLOAD_DIR"
-mkdir -p "$PYTHON_INSTALL_DIR"
+    # Create directories
+    echo "Creating directories..."
+    mkdir -p "$PYTHON_DOWNLOAD_DIR"
+    mkdir -p "$PYTHON_INSTALL_DIR"
 
-# Install the specified Python version using pyenv
-echo "Installing Python $PYTHON_VERSION using pyenv..."
-pyenv install "$PYTHON_VERSION" --skip-existing
+    # Install the specified Python version using pyenv
+    echo "Installing Python $PYTHON_VERSION using pyenv..."
+    pyenv install "$PYTHON_VERSION" --skip-existing
 
-# Check if installation was successful
-if [ $? -ne 0 ]; then
-    echo "Error: Failed to install Python $PYTHON_VERSION"
-    exit 1
-fi
+    # Check if installation was successful
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to install Python $PYTHON_VERSION"
+        exit 1
+    fi
 
-# Get the path to the installed Python version
-PYENV_PYTHON_PATH=$(pyenv prefix "$PYTHON_VERSION")
+    # Get the path to the installed Python version
+    PYENV_PYTHON_PATH=$(pyenv prefix "$PYTHON_VERSION")
 
-# Check if the path exists
-if [ ! -d "$PYENV_PYTHON_PATH" ]; then
-    echo "Error: Could not find installed Python version at $PYENV_PYTHON_PATH"
-    exit 1
-fi
+    # Check if the path exists
+    if [ ! -d "$PYENV_PYTHON_PATH" ]; then
+        echo "Error: Could not find installed Python version at $PYENV_PYTHON_PATH"
+        exit 1
+    fi
 
-# Copy the bin directory to the target location
-echo "Copying binaries from $PYENV_PYTHON_PATH/bin to $PYTHON_INSTALL_DIR..."
-rsync -a "$PYENV_PYTHON_PATH/" "$PYTHON_INSTALL_DIR/"
+    # Copy the bin directory to the target location
+    echo "Copying binaries from $PYENV_PYTHON_PATH/bin to $PYTHON_INSTALL_DIR..."
+    rsync -a "$PYENV_PYTHON_PATH/" "$PYTHON_INSTALL_DIR/"
 
-echo "Done! Python $PYTHON_VERSION binaries have been copied to $PYTHON_INSTALL_DIR"
-
-# Temporarily add to PATH for the rest of the script
-export PATH="$PYTHON_INSTALL_DIR/bin:$PATH"
+    echo "Done! Python $PYTHON_VERSION binaries have been copied to $PYTHON_INSTALL_DIR"
+}
 
 # Verify installation
 echo "Verifying Python installation..."
@@ -69,6 +69,9 @@ echo "Verifying Python installation..."
     echo "Python installation verification failed"
     exit 1
 }
+
+# Temporarily add to PATH for the rest of the script
+export PATH="$PYTHON_INSTALL_DIR/bin:$PATH"
 
 # Install pip if not present (should already be included in macOS package)
 echo "Verifying pip..."
@@ -87,7 +90,7 @@ echo "Verifying pip..."
 echo "Verifying build backend..."
 echo "Installing complete setuptools package..."
 
-"$PYTHON_INSTALL_DIR/bin/python" -m pip install --force-reinstall setuptools    
+"$PYTHON_INSTALL_DIR/bin/python" -m pip install setuptools    
 if [ $? -ne 0 ]; then
     echo "setuptools install failed"
     exit 1
@@ -95,10 +98,13 @@ fi
 
 # Install Conan
 echo "Installing Conan..."
-"$PYTHON_INSTALL_DIR/bin/python" -m pip install conan || {
-    echo "Failed to install Conan"
-    exit 1
+"$PYTHON_INSTALL_DIR/bin/conan" --version || {
+    "$PYTHON_INSTALL_DIR/bin/python" -m pip install conan || {
+        echo "Failed to install Conan"
+        exit 1
+    }
 }
+
 
 
 # Verify Conan

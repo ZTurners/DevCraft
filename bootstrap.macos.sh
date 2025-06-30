@@ -1,6 +1,10 @@
 #!/bin/bash
 
-DEV_ENV_ROOT_PATH=$(dirname "$(realpath "$0")")
+if [[ -z "${DEV_ENV_ROOT_PATH+x}" ]]; then
+    echo "DEV_ENV_ROOT_PATH does NOT exist. Please call bootstrap.windows.bat instead."
+    exit 1
+fi
+
 DEV_ENV_WORKSPACE_PATH="$DEV_ENV_ROOT_PATH/workspace"
 
 # Configuration

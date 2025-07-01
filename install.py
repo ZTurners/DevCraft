@@ -3,6 +3,7 @@ import shutil
 from pathlib import Path
 import subprocess
 import platform
+import json
 
 class DevEnvInstaller:
     def __init__(self):
@@ -14,8 +15,25 @@ class DevEnvInstaller:
 
         return
 
+    def run_command(self, command: str) -> str:
+        """Run a Conan command and return its output."""
+        try:
+            result = subprocess.run(
+                command,
+                shell=True,
+                check=True,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+            return result.stdout.strip()
+        except subprocess.CalledProcessError as e:
+            print(f"Error running Conan command: {e.stderr}")
+            raise
+
     def install_all(self):
         self.install_conan()
+        self.install_android_dev()
 
     def install_conan(self):
         # Create .conan directory 
@@ -89,6 +107,88 @@ class DevEnvInstaller:
             print(f"Command failed with error: {e}")
             exit(1)
 
+    def install_android_dev(self):
+        # Set destination path (relative to current directory)
+        self.m_android_dev_setting_path = os.path.join(self.m_settins_root_path, "android")
+        self.m_android_dev_root_path = os.path.join(self.m_workspace_root_path, "android")
+
+        if not os.path.exists(self.m_android_dev_root_path):
+            # dig the android bootstrap package path
+            self.m_android_sdk_bootstrap_root_path = self.get_conan_package_folder("android_sdk/bootstrap@arieo/dev:*")
+            print(f"Info: Got android sdk bootstrap root: {self.m_android_sdk_bootstrap_root_path}")
+
+            if not self.m_android_sdk_bootstrap_root_path:
+                print("Error: ANDROID_SDK_BOOTSTRAP_ROOT environment variable is not set")
+                exit(1)
+            if not os.path.exists(self.m_android_sdk_bootstrap_root_path):
+                print(f"Error: Source directory does not exist: {self.m_android_sdk_bootstrap_root_path}")
+                exit(1)
+            
+            # Create destination directory if it doesn't exist
+            os.makedirs(self.m_android_dev_root_path, exist_ok=True)
+
+            # Copy files from source to destination
+            print(f"Copying Android SDK files to {self.m_android_dev_root_path}")
+            try:
+                shutil.copytree(self.m_android_sdk_bootstrap_root_path, self.m_android_dev_root_path, dirs_exist_ok=True)
+            except Exception as e:
+                print(f"Error: Failed to copy files: {str(e)}")
+                exit(1)
+
+        # Install packages
+        try:
+            android_settings_file = os.path.join(self.m_android_dev_setting_path, "settings.json")
+            if self.system_name == "Windows":
+                sdkmanager_exe_path = os.path.join(self.m_android_dev_root_path, "AndroidSDK", "cmdline-tools", "bootstrap", "bin", "sdkmanager.bat")
+            else:
+                sdkmanager_exe_path = os.path.join(self.m_android_dev_root_path, "AndroidSDK", "cmdline-tools", "bootstrap", "bin", "sdkmanager")
+
+            with open(android_settings_file, 'r') as f:
+                android_settings_json = json.load(f)
+            
+            # Get the list of packages to install (now nested under android_sdk)
+            android_install_packages = android_settings_json['android_sdk']['install_packages']
+
+            # Construct the sdkmanager command
+            print(f"Installing Android SDK packages ... {str(android_install_packages)}")
+            command = [sdkmanager_exe_path, '--install'] + android_install_packages
+            
+            result = subprocess.run(command, check=True)
+            print("Command executed successfully:")
+            print(result.stdout)
+
+        except Exception as e:
+            print(f"Error: Failed to install android sdk packages: {str(e)}")
+            exit(1)
+
+    def get_conan_package_folder(self, conan_package):
+        output = self.run_command(f'conan list "{conan_package}" --format=json')
+        try:
+            data = json.loads(output)
+            packages = []
+            
+            # Navigate through the JSON structure based on the example
+            local_cache = data.get("Local Cache", {})
+            package_ref = local_cache.get("android_sdk/bootstrap@arieo/dev", {})
+            revisions = package_ref.get("revisions", {})
+            
+            for revision_id, revision_data in revisions.items():
+                for package_id, package_info in revision_data.get("packages", {}).items():
+                    packages.append({
+                        "id": package_id,
+                        "revision": revision_id,
+                        "settings": package_info.get("info", {}).get("settings", {})
+                    })
+            
+
+            return self.run_command(f'conan cache path "android_sdk/bootstrap@arieo/dev:{packages[0]["id"]}"').strip()
+            
+        except json.JSONDecodeError as e:
+            print(f"Error parsing JSON output: {e}")
+            raise
+        except Exception as e:
+            print(f"Unexpected error processing JSON: {e}")
+            raise
 
 def main():
     dev_env_installer = DevEnvInstaller()

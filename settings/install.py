@@ -1,4 +1,5 @@
 import os
+import stat
 import shutil
 from pathlib import Path
 import subprocess
@@ -8,7 +9,7 @@ import json
 class DevEnvInstaller:
     def __init__(self):
         # Get the directory where this script is located
-        self.m_dev_env_root_path = Path(__file__).parent.absolute()
+        self.m_dev_env_root_path = Path(__file__).parent.parent.absolute()
         self.m_settins_root_path = os.path.join(self.m_dev_env_root_path, "settings")
         self.m_workspace_root_path = os.path.join(self.m_dev_env_root_path, "workspace")
         self.system_name = platform.system()
@@ -30,10 +31,73 @@ class DevEnvInstaller:
         except subprocess.CalledProcessError as e:
             print(f"Error running Conan command: {e.stderr}")
             raise
+    
+    def make_executable(self, path):
+        mode = os.stat(path).st_mode
+        mode |= (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+        os.chmod(path, mode)
+
+    def get_conan_package_folder(self, conan_package):
+        output = self.run_command(f'conan list "{conan_package}" --format=json')
+        try:
+            data = json.loads(output)
+            packages = []
+            
+            # Navigate through the JSON structure based on the example
+            local_cache = data.get("Local Cache", {})
+            package_ref = local_cache.get("android_sdk/bootstrap@arieo/dev", {})
+            revisions = package_ref.get("revisions", {})
+            
+            for revision_id, revision_data in revisions.items():
+                for package_id, package_info in revision_data.get("packages", {}).items():
+                    packages.append({
+                        "id": package_id,
+                        "revision": revision_id,
+                        "settings": package_info.get("info", {}).get("settings", {})
+                    })
+            
+
+            return self.run_command(f'conan cache path "android_sdk/bootstrap@arieo/dev:{packages[0]["id"]}"').strip()
+            
+        except json.JSONDecodeError as e:
+            print(f"Error parsing JSON output: {e}")
+            raise
+        except Exception as e:
+            print(f"Unexpected error processing JSON: {e}")
+            raise
 
     def install_all(self):
+        self.install_active_script()
         self.install_conan()
         self.install_android_dev()
+        self.install_vs_code_setting()
+
+    def install_active_script(self):
+        self.active_scripts_src_folder = os.path.join(self.m_settins_root_path, "active_scripts")
+        self.active_scripts_dest_folder = os.path.join(self.m_workspace_root_path)
+
+        # Create destination directory if it doesn't exist
+        os.makedirs(self.active_scripts_dest_folder, exist_ok=True)
+
+        if self.system_name == "Windows":
+            # Find all .bat files in source folder
+            batch_files = [f for f in os.listdir(os.path.join(self.active_scripts_src_folder, "windows")) if f.endswith('.bat')]
+            for batch_file in batch_files:
+                shutil.copyfile(os.path.join(self.active_scripts_src_folder, "windows", batch_file), os.path.join(self.active_scripts_dest_folder, batch_file))
+                self.make_executable(os.path.join(self.active_scripts_dest_folder, batch_file))
+        if self.system_name == "Linux":
+            # Find all .bat files in source folder
+            batch_files = [f for f in os.listdir(os.path.join(self.active_scripts_src_folder, "linux")) if f.endswith('.sh')]
+            for batch_file in batch_files:
+                shutil.copyfile(os.path.join(self.active_scripts_src_folder, "linux", batch_file), os.path.join(self.active_scripts_dest_folder, batch_file))
+                self.make_executable(os.path.join(self.active_scripts_dest_folder, batch_file))
+        if self.system_name == "Darwin":
+            # Find all .bat files in source folder
+            batch_files = [f for f in os.listdir(os.path.join(self.active_scripts_src_folder, "macos")) if f.endswith('.sh')]
+            for batch_file in batch_files:
+                shutil.copyfile(os.path.join(self.active_scripts_src_folder, "macos", batch_file), os.path.join(self.active_scripts_dest_folder, batch_file))
+                self.make_executable(os.path.join(self.active_scripts_dest_folder, batch_file))
+        
 
     def install_conan(self):
         # Create .conan directory 
@@ -161,34 +225,14 @@ class DevEnvInstaller:
             print(f"Error: Failed to install android sdk packages: {str(e)}")
             exit(1)
 
-    def get_conan_package_folder(self, conan_package):
-        output = self.run_command(f'conan list "{conan_package}" --format=json')
-        try:
-            data = json.loads(output)
-            packages = []
-            
-            # Navigate through the JSON structure based on the example
-            local_cache = data.get("Local Cache", {})
-            package_ref = local_cache.get("android_sdk/bootstrap@arieo/dev", {})
-            revisions = package_ref.get("revisions", {})
-            
-            for revision_id, revision_data in revisions.items():
-                for package_id, package_info in revision_data.get("packages", {}).items():
-                    packages.append({
-                        "id": package_id,
-                        "revision": revision_id,
-                        "settings": package_info.get("info", {}).get("settings", {})
-                    })
-            
+    def install_vs_code_setting(self):
+        self.vs_code_init_user_setting_file_path = os.path.join(self.m_settins_root_path, "vscode", "init_user_settings.json")
+        self.vs_code_workspace_setting_folder = os.path.join(self.m_workspace_root_path, "vscode", ".config", "User")
 
-            return self.run_command(f'conan cache path "android_sdk/bootstrap@arieo/dev:{packages[0]["id"]}"').strip()
-            
-        except json.JSONDecodeError as e:
-            print(f"Error parsing JSON output: {e}")
-            raise
-        except Exception as e:
-            print(f"Unexpected error processing JSON: {e}")
-            raise
+        # Create destination directory if it doesn't exist
+        os.makedirs(self.vs_code_workspace_setting_folder, exist_ok=True)
+        shutil.copyfile(self.vs_code_init_user_setting_file_path, os.path.join(self.vs_code_workspace_setting_folder, "settings.json"))
+
 
 def main():
     dev_env_installer = DevEnvInstaller()

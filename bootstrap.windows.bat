@@ -57,7 +57,7 @@ set DEV_ENV_WORKSPACE_PATH=%DEV_ENV_ROOT_PATH%/workspace
         echo Downloading Python %PYTHON_VERSION% ...
         if not exist "%ZIP_FILE%" (
             echo Downloading from %PYTHON_URL% ...
-            powershell -Command "Invoke-WebRequest -Uri '%PYTHON_URL%' -OutFile '%ZIP_FILE%'"
+            powershell -Command "Invoke-WebRequest -Uri '%PYTHON_URL%' -OutFile '%ZIP_FILE%'" 
 
         ) else (
             echo ZIP file already exists at %ZIP_FILE%

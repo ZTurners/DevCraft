@@ -1,9 +1,17 @@
 #!/bin/bash
-# Source the conanbuild script (assuming there's a Linux version)
-source "./active_macos.sh"
 
-# Modify the prompt to show (arieo_dev) and current path
-export PS1='(arieo_dev) \[\033[01;34m\]\w\[\033[00m\] \$ '
+# Set the workspace root path
+WORKSPACE_ROOT_PATH=$(dirname "$0")
 
-# Start a new interactive shell with the modified environment
+# Call the activation script
+source "${WORKSPACE_ROOT_PATH}/active.linux.sh"
+
+# Check the exit status
+if [ $? -ne 0 ]; then
+    echo "Error occurred in active.linux.sh"
+    exit $?
+fi
+
+# Set custom prompt and start interactive shell
+export PS1="(arieo_dev) $PS1"
 exec bash

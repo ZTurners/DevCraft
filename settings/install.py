@@ -6,11 +6,11 @@ import subprocess
 import platform
 import json
 
-class DevEnvInstaller:
+class WorkspaceInstaller:
     def __init__(self):
         # Get the directory where this script is located
         self.m_dev_env_root_path = Path(__file__).parent.parent.absolute()
-        self.m_settins_root_path = os.path.join(self.m_dev_env_root_path, "settings")
+        self.m_settings_root_path = os.path.join(self.m_dev_env_root_path, "settings")
         self.m_workspace_root_path = os.path.join(self.m_dev_env_root_path, "workspace")
         self.system_name = platform.system()
 
@@ -38,14 +38,14 @@ class DevEnvInstaller:
         os.chmod(path, mode)
 
     def get_conan_package_folder(self, conan_package):
-        output = self.run_command(f'conan list "{conan_package}" --format=json')
+        output = self.run_command(f'conan list "{conan_package}:*" --format=json')
         try:
             data = json.loads(output)
             packages = []
             
             # Navigate through the JSON structure based on the example
             local_cache = data.get("Local Cache", {})
-            package_ref = local_cache.get("android_sdk/bootstrap@arieo/dev", {})
+            package_ref = local_cache.get(f"{conan_package}", {})
             revisions = package_ref.get("revisions", {})
             
             for revision_id, revision_data in revisions.items():
@@ -56,8 +56,7 @@ class DevEnvInstaller:
                         "settings": package_info.get("info", {}).get("settings", {})
                     })
             
-
-            return self.run_command(f'conan cache path "android_sdk/bootstrap@arieo/dev:{packages[0]["id"]}"').strip()
+            return self.run_command(f'conan cache path "{conan_package}:{packages[0]["id"]}"').strip()
             
         except json.JSONDecodeError as e:
             print(f"Error parsing JSON output: {e}")
@@ -71,9 +70,10 @@ class DevEnvInstaller:
         self.install_conan()
         self.install_android_dev()
         self.install_vs_code_setting()
+        self.install_python()
 
     def install_active_script(self):
-        self.active_scripts_src_folder = os.path.join(self.m_settins_root_path, "active_scripts")
+        self.active_scripts_src_folder = os.path.join(self.m_settings_root_path, "active_scripts")
         self.active_scripts_dest_folder = os.path.join(self.m_workspace_root_path)
 
         # Create destination directory if it doesn't exist
@@ -85,23 +85,47 @@ class DevEnvInstaller:
             for batch_file in batch_files:
                 shutil.copyfile(os.path.join(self.active_scripts_src_folder, "windows", batch_file), os.path.join(self.active_scripts_dest_folder, batch_file))
                 self.make_executable(os.path.join(self.active_scripts_dest_folder, batch_file))
-        if self.system_name == "Linux":
+        elif self.system_name == "Linux":
             # Find all .bat files in source folder
             batch_files = [f for f in os.listdir(os.path.join(self.active_scripts_src_folder, "linux")) if f.endswith('.sh')]
             for batch_file in batch_files:
                 shutil.copyfile(os.path.join(self.active_scripts_src_folder, "linux", batch_file), os.path.join(self.active_scripts_dest_folder, batch_file))
                 self.make_executable(os.path.join(self.active_scripts_dest_folder, batch_file))
-        if self.system_name == "Darwin":
+        elif self.system_name == "Darwin":
             # Find all .bat files in source folder
             batch_files = [f for f in os.listdir(os.path.join(self.active_scripts_src_folder, "macos")) if f.endswith('.sh')]
             for batch_file in batch_files:
                 shutil.copyfile(os.path.join(self.active_scripts_src_folder, "macos", batch_file), os.path.join(self.active_scripts_dest_folder, batch_file))
                 self.make_executable(os.path.join(self.active_scripts_dest_folder, batch_file))
         
+        # copy summary.py
+        shutil.copyfile(os.path.join(self.active_scripts_src_folder, "summary.py"), os.path.join(self.active_scripts_dest_folder, "summary.py"))
+
+    def install_python(self):
+        self.python_setting_folder_path = os.path.join(self.m_settings_root_path, "python")
+        self.python_workspace_folder_path = os.path.join(self.m_workspace_root_path, "python")
+
+        # copy version.txt
+        shutil.copyfile(os.path.join(self.python_setting_folder_path, "version.txt"), os.path.join(self.python_workspace_folder_path, "version.txt"))
+
+        # copy active python script
+        self
+        with open('filename.txt', 'w') as file:
+            if self.system_name == "Windows":
+                shutil.copyfile(os.path.join(self.python_setting_folder_path, "active_python.windows.bat"), os.path.join(self.python_workspace_folder_path, "active_python.windows.bat"))
+                self.make_executable(os.path.join(os.path.join(self.python_workspace_folder_path, "active_python.windows.bat")))
+            elif self.system_name == "Linux":
+                shutil.copyfile(os.path.join(self.python_setting_folder_path, "active_python.linux.sh"), os.path.join(self.python_workspace_folder_path, "active_python.linux.sh"))
+                self.make_executable(os.path.join(os.path.join(self.python_workspace_folder_path, "active_python.linux.bat")))
+            elif self.system_name == "Darwin":
+                shutil.copyfile(os.path.join(self.python_setting_folder_path, "active_python.macos.sh"), os.path.join(self.python_workspace_folder_path, "active_python.macos.sh"))
+                self.make_executable(os.path.join(os.path.join(self.python_workspace_folder_path, "active_python.macos.bat")))
+
+            
 
     def install_conan(self):
         # Create .conan directory 
-        self.m_conan_setting_path = os.path.join(self.m_settins_root_path, "conan")
+        self.m_conan_setting_path = os.path.join(self.m_settings_root_path, "conan")
         self.m_conan_home_path = os.path.join(self.m_workspace_root_path, ".conan")
         self.m_generated_path = os.path.join(self.m_workspace_root_path, "_generated")
 
@@ -140,7 +164,7 @@ class DevEnvInstaller:
                 ], check=True)
             
             # Ubuntu build
-            if self.system_name == "Linux":
+            elif self.system_name == "Linux":
                 ubuntu_output_path = os.path.join(self.m_generated_path, "conan", "builder", "ubuntu")
                 os.makedirs(ubuntu_output_path, exist_ok=True)
                 subprocess.run([
@@ -154,7 +178,7 @@ class DevEnvInstaller:
                 ], check=True)
 
             # Macos build
-            if self.system_name == "Darwin":
+            elif self.system_name == "Darwin":
                 macos_output_path = os.path.join(self.m_generated_path, "conan", "builder", "macos")
                 os.makedirs(macos_output_path, exist_ok=True)
                 subprocess.run([
@@ -173,12 +197,12 @@ class DevEnvInstaller:
 
     def install_android_dev(self):
         # Set destination path (relative to current directory)
-        self.m_android_dev_setting_path = os.path.join(self.m_settins_root_path, "android")
+        self.m_android_dev_setting_path = os.path.join(self.m_settings_root_path, "android")
         self.m_android_dev_root_path = os.path.join(self.m_workspace_root_path, "android")
 
         if not os.path.exists(self.m_android_dev_root_path):
             # dig the android bootstrap package path
-            self.m_android_sdk_bootstrap_root_path = self.get_conan_package_folder("android_sdk/bootstrap@arieo/dev:*")
+            self.m_android_sdk_bootstrap_root_path = self.get_conan_package_folder("android_sdk/bootstrap@arieo/dev")
             print(f"Info: Got android sdk bootstrap root: {self.m_android_sdk_bootstrap_root_path}")
 
             if not self.m_android_sdk_bootstrap_root_path:
@@ -226,7 +250,7 @@ class DevEnvInstaller:
             exit(1)
 
     def install_vs_code_setting(self):
-        self.vs_code_init_user_setting_file_path = os.path.join(self.m_settins_root_path, "vscode", "init_user_settings.json")
+        self.vs_code_init_user_setting_file_path = os.path.join(self.m_settings_root_path, "vscode", "init_user_settings.json")
         self.vs_code_workspace_setting_folder = os.path.join(self.m_workspace_root_path, "vscode", ".config", "User")
 
         # Create destination directory if it doesn't exist
@@ -235,7 +259,7 @@ class DevEnvInstaller:
 
 
 def main():
-    dev_env_installer = DevEnvInstaller()
+    dev_env_installer = WorkspaceInstaller()
     dev_env_installer.install_all()
     
 if __name__ == "__main__":

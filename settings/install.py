@@ -5,6 +5,7 @@ from pathlib import Path
 import subprocess
 import platform
 import json
+import configparser
 
 class WorkspaceInstaller:
     def __init__(self):
@@ -12,7 +13,9 @@ class WorkspaceInstaller:
         self.m_dev_env_root_path = Path(__file__).parent.parent.absolute()
         self.m_settings_root_path = os.path.join(self.m_dev_env_root_path, "settings")
         self.m_workspace_root_path = os.path.join(self.m_dev_env_root_path, "workspace")
-        self.system_name = platform.system()
+        self.m_system_name = platform.system()
+
+        self.m_summary_data = []
 
         return
 
@@ -37,15 +40,15 @@ class WorkspaceInstaller:
         mode |= (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
         os.chmod(path, mode)
 
-    def get_conan_package_folder(self, conan_package):
-        output = self.run_command(f'conan list "{conan_package}:*" --format=json')
+    def get_conan_lib_folder(self, lib_name):
+        output = self.run_command(f'conan list "{lib_name}:*" --format=json')
         try:
             data = json.loads(output)
             packages = []
             
             # Navigate through the JSON structure based on the example
             local_cache = data.get("Local Cache", {})
-            package_ref = local_cache.get(f"{conan_package}", {})
+            package_ref = local_cache.get(f"{lib_name}", {})
             revisions = package_ref.get("revisions", {})
             
             for revision_id, revision_data in revisions.items():
@@ -56,7 +59,7 @@ class WorkspaceInstaller:
                         "settings": package_info.get("info", {}).get("settings", {})
                     })
             
-            return self.run_command(f'conan cache path "{conan_package}:{packages[0]["id"]}"').strip()
+            return self.run_command(f'conan cache path "{lib_name}:{packages[0]["id"]}"').strip()
             
         except json.JSONDecodeError as e:
             print(f"Error parsing JSON output: {e}")
@@ -79,19 +82,19 @@ class WorkspaceInstaller:
         # Create destination directory if it doesn't exist
         os.makedirs(self.active_scripts_dest_folder, exist_ok=True)
 
-        if self.system_name == "Windows":
+        if self.m_system_name == "Windows":
             # Find all .bat files in source folder
             batch_files = [f for f in os.listdir(os.path.join(self.active_scripts_src_folder, "windows")) if f.endswith('.bat')]
             for batch_file in batch_files:
                 shutil.copyfile(os.path.join(self.active_scripts_src_folder, "windows", batch_file), os.path.join(self.active_scripts_dest_folder, batch_file))
                 self.make_executable(os.path.join(self.active_scripts_dest_folder, batch_file))
-        elif self.system_name == "Linux":
+        elif self.m_system_name == "Linux":
             # Find all .bat files in source folder
             batch_files = [f for f in os.listdir(os.path.join(self.active_scripts_src_folder, "linux")) if f.endswith('.sh')]
             for batch_file in batch_files:
                 shutil.copyfile(os.path.join(self.active_scripts_src_folder, "linux", batch_file), os.path.join(self.active_scripts_dest_folder, batch_file))
                 self.make_executable(os.path.join(self.active_scripts_dest_folder, batch_file))
-        elif self.system_name == "Darwin":
+        elif self.m_system_name == "Darwin":
             # Find all .bat files in source folder
             batch_files = [f for f in os.listdir(os.path.join(self.active_scripts_src_folder, "macos")) if f.endswith('.sh')]
             for batch_file in batch_files:
@@ -111,13 +114,13 @@ class WorkspaceInstaller:
         # copy active python script
         self
         with open('filename.txt', 'w') as file:
-            if self.system_name == "Windows":
+            if self.m_system_name == "Windows":
                 shutil.copyfile(os.path.join(self.python_setting_folder_path, "active_python.windows.bat"), os.path.join(self.python_workspace_folder_path, "active_python.windows.bat"))
                 self.make_executable(os.path.join(os.path.join(self.python_workspace_folder_path, "active_python.windows.bat")))
-            elif self.system_name == "Linux":
+            elif self.m_system_name == "Linux":
                 shutil.copyfile(os.path.join(self.python_setting_folder_path, "active_python.linux.sh"), os.path.join(self.python_workspace_folder_path, "active_python.linux.sh"))
                 self.make_executable(os.path.join(os.path.join(self.python_workspace_folder_path, "active_python.linux.bat")))
-            elif self.system_name == "Darwin":
+            elif self.m_system_name == "Darwin":
                 shutil.copyfile(os.path.join(self.python_setting_folder_path, "active_python.macos.sh"), os.path.join(self.python_workspace_folder_path, "active_python.macos.sh"))
                 self.make_executable(os.path.join(os.path.join(self.python_workspace_folder_path, "active_python.macos.bat")))
 
@@ -148,48 +151,32 @@ class WorkspaceInstaller:
             # Detect profile
             subprocess.run(["conan", "profile", "detect", "--force"], check=True)
             
+            conan_profile_file = ""
+            conan_output_path = ""
+
             # Windows build
-            if self.system_name == "Windows":
-                windows_output_path = os.path.join(self.m_generated_path, "conan", "builder", "windows")
-                os.makedirs(windows_output_path, exist_ok=True)
-
-                subprocess.run([
-                    "conan", "install", os.path.join(self.m_conan_setting_path, "conanfile.txt"),
-                    "--update",
-                    "--generator", "CMakeToolchain",
-                    "--generator", "VirtualBuildEnv",
-                    "--output-folder", str(windows_output_path),
-                    "--build", "never",
-                    "--profile", os.path.join(self.m_conan_setting_path, "profiles", "builder", "conan_builder_profile.windows.txt")
-                ], check=True)
-            
+            if self.m_system_name == "Windows":
+                conan_profile_file = os.path.join(self.m_conan_setting_path, "profiles", "builder", "conan_builder_profile.windows.txt")
+                conan_output_path = os.path.join(self.m_generated_path, "conan")
             # Ubuntu build
-            elif self.system_name == "Linux":
-                ubuntu_output_path = os.path.join(self.m_generated_path, "conan", "builder", "ubuntu")
-                os.makedirs(ubuntu_output_path, exist_ok=True)
-                subprocess.run([
-                    "conan", "install", os.path.join(self.m_conan_setting_path, "conanfile.txt"),
-                    "--update",
-                    "--generator", "CMakeToolchain",
-                    "--generator", "VirtualBuildEnv",
-                    "--output-folder", str(ubuntu_output_path),
-                    "--build", "never",
-                    "--profile", os.path.join(self.m_conan_setting_path, "profiles", "builder", "conan_builder_profile.ubuntu.txt")
-                ], check=True)
-
+            elif self.m_system_name == "Linux":
+                conan_profile_file = os.path.join(self.m_conan_setting_path, "profiles", "builder", "conan_builder_profile.ubuntu.txt")
+                conan_output_path = os.path.join(self.m_generated_path, "conan")
             # Macos build
-            elif self.system_name == "Darwin":
-                macos_output_path = os.path.join(self.m_generated_path, "conan", "builder", "macos")
-                os.makedirs(macos_output_path, exist_ok=True)
-                subprocess.run([
-                    "conan", "install", os.path.join(self.m_conan_setting_path, "conanfile.txt"),
-                    "--update",
-                    "--generator", "CMakeToolchain",
-                    "--generator", "VirtualBuildEnv",
-                    "--output-folder", str(macos_output_path),
-                    "--build", "never",
-                    "--profile", os.path.join(self.m_conan_setting_path, "profiles", "builder", "conan_builder_profile.macos.txt")
-                ], check=True)
+            elif self.m_system_name == "Darwin":
+                conan_profile_file = os.path.join(self.m_conan_setting_path, "profiles", "builder", "conan_builder_profile.macos.txt")
+                conan_output_path = os.path.join(self.m_generated_path, "conan")
+
+            os.makedirs(conan_output_path, exist_ok=True)
+            subprocess.run([
+                "conan", "install", os.path.join(self.m_conan_setting_path, "conanfile.txt"),
+                "--update",
+                "--generator", "CMakeToolchain",
+                "--generator", "VirtualBuildEnv",
+                "--output-folder", str(conan_output_path),
+                "--build", "never",
+                "--profile", conan_profile_file
+            ], check=True)
             
         except subprocess.CalledProcessError as e:
             print(f"Command failed with error: {e}")
@@ -202,7 +189,7 @@ class WorkspaceInstaller:
 
         if not os.path.exists(self.m_android_dev_root_path):
             # dig the android bootstrap package path
-            self.m_android_sdk_bootstrap_root_path = self.get_conan_package_folder("android_sdk/bootstrap@arieo/dev")
+            self.m_android_sdk_bootstrap_root_path = self.get_conan_lib_folder("android_sdk/bootstrap@arieo/dev")
             print(f"Info: Got android sdk bootstrap root: {self.m_android_sdk_bootstrap_root_path}")
 
             if not self.m_android_sdk_bootstrap_root_path:
@@ -226,7 +213,7 @@ class WorkspaceInstaller:
         # Install packages
         try:
             android_settings_file = os.path.join(self.m_android_dev_setting_path, "settings.json")
-            if self.system_name == "Windows":
+            if self.m_system_name == "Windows":
                 sdkmanager_exe_path = os.path.join(self.m_android_dev_root_path, "AndroidSDK", "cmdline-tools", "bootstrap", "bin", "sdkmanager.bat")
             else:
                 sdkmanager_exe_path = os.path.join(self.m_android_dev_root_path, "AndroidSDK", "cmdline-tools", "bootstrap", "bin", "sdkmanager")

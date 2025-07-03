@@ -5,6 +5,7 @@ from pathlib import Path
 import subprocess
 import platform
 import json
+import sys
 
 class WorkspaceSummary:
     def __init__(self):
@@ -12,28 +13,69 @@ class WorkspaceSummary:
         self.m_workspace_root_path = Path(__file__).parent.absolute()
         return
 
-    def get_conan_package_info(self):
-        output = self.run_command(f'conan list "*" --format=json')
+    def run_command(self, command: str) -> str:
+        """Run a Conan command and return its output."""
+        try:
+            result = subprocess.run(
+                command,
+                shell=True,
+                check=True,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+            return result.stdout.strip()
+        except subprocess.CalledProcessError as e:
+            print(f"Error running Conan command: {e.stderr}")
+            raise
+
+    def get_python_info(self):
+        print("Python info:")
+        print(f"    Version: {sys.version}")
+        print(f"    Path: {sys.version}")
+        output_data = {
+            "Version": sys.version,
+            "Path" : sys.executable,
+        }
+        return output_data
+
+    def get_conan_info(self):
+        output = self.run_command(f'conan list "*:*" --format=json')
         try:
             data = json.loads(output)
-            packages = []
+            libs_with_first_package = []
             
-            # Navigate through the JSON structure based on the example
-            local_cache = data.get("Local Cache", {})
-            package_ref = local_cache.get(conan_package, {})
-            revisions = package_ref.get("revisions", {})
+            for lib_name, lib_data in data["Local Cache"].items():
+                # Get the first revision (if multiple exist)
+                revision_data = next(iter(lib_data["revisions"].values()))
+                
+                # Extract all package IDs for this library
+                for package_id in revision_data["packages"].keys():
+                    libs_with_first_package.append((lib_name, package_id))
+                    break
             
-            for revision_id, revision_data in revisions.items():
-                for package_id, package_info in revision_data.get("packages", {}).items():
-                    self.run_command(f'conan cache path "android_sdk/bootstrap@arieo/dev:{packages[0]["id"]}"').strip()
-                    packages.append({
-                        "id": package_id,
-                        "revision": revision_id,
-                        "settings": package_info.get("info", {}).get("settings", {})
-                    })
-            
+            output_data = {
+                "Version": self.run_command(f'conan --version'),
+                "Home" : self.run_command(f'conan config home'),
+                "LocalCaches": []
+            }
 
-            return self.run_command(f'conan cache path "android_sdk/bootstrap@arieo/dev:{packages[0]["id"]}"').strip()
+            # Print the results
+            print("Libraries with their first revisions:")
+            for lib, package_id in libs_with_first_package:
+                folder = self.run_command(f'conan cache path "{lib}:{package_id}"').strip()
+                print(f"    fetched package info: {lib}:{package_id} {folder}")
+                output_data["LocalCaches"].append(
+                    {
+                        f"{lib}":
+                        {
+                            "package_id": f"{package_id}",
+                            "folder": f"{folder}",
+                        }
+                    }
+                )
+
+            return output_data
             
         except json.JSONDecodeError as e:
             print(f"Error parsing JSON output: {e}")
@@ -43,6 +85,15 @@ class WorkspaceSummary:
             raise
 
     def generator_summary_json(self):
+        output_jason_data = {
+            "Python": self.get_python_info(),
+            "Conan": self.get_conan_info()
+        }
+
+        json_string = json.dumps(output_jason_data, indent=4)
+        with open(os.path.join(self.m_workspace_root_path, 'summary.json'), 'w', encoding='utf-8') as f:
+            f.write(json_string)
+
         return
 
 def main():

@@ -30,16 +30,26 @@ class WorkspaceSummary:
             raise
 
     def get_python_info(self):
-        print("Python info:")
-        print(f"    Version: {sys.version}")
-        print(f"    Path: {sys.version}")
         output_data = {
             "Version": sys.version,
             "Path" : sys.executable,
         }
         return output_data
 
-    def get_conan_info(self):
+    def get_android_sdk_info(self):
+        output_data = {
+            "SDKRoot": os.getenv('ANDROID_SDK_ROOT')
+        }
+        return output_data
+
+    def get_conan_basic_info(self):
+        output_data = {
+            "Version": self.run_command(f'conan --version'),
+            "Home" : self.run_command(f'conan config home'),
+        }
+        return output_data
+
+    def get_conan_libs_info(self):
         output = self.run_command(f'conan list "*:*" --format=json')
         try:
             data = json.loads(output)
@@ -87,10 +97,13 @@ class WorkspaceSummary:
     def generator_summary_json(self):
         output_jason_data = {
             "Python": self.get_python_info(),
-            "Conan": self.get_conan_info()
+            "AndroidSDK": self.get_android_sdk_info(),
+            "Conan": self.get_conan_basic_info()
+            #"ConanLibs": self.get_conan_libs_info()
         }
 
         json_string = json.dumps(output_jason_data, indent=4)
+        print(json_string)
         with open(os.path.join(self.m_workspace_root_path, 'summary.json'), 'w', encoding='utf-8') as f:
             f.write(json_string)
 

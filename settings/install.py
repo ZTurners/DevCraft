@@ -129,9 +129,10 @@ class WorkspaceInstaller:
     def install_conan(self):
         # Create .conan directory 
         self.m_conan_setting_path = os.path.join(self.m_settings_root_path, "conan")
-        self.m_conan_home_path = os.path.join(self.m_workspace_root_path, ".conan")
-        self.m_generated_path = os.path.join(self.m_workspace_root_path, "_generated")
+        self.m_conan_workspace_path = os.path.join(self.m_workspace_root_path, "conan")
+        self.m_conan_home_path = os.path.join(self.m_conan_workspace_path, ".conan")
 
+        os.makedirs(self.m_conan_workspace_path, exist_ok=True)
         os.makedirs(self.m_conan_home_path, exist_ok=True)
 
         # Set environment variables
@@ -157,15 +158,15 @@ class WorkspaceInstaller:
             # Windows build
             if self.m_system_name == "Windows":
                 conan_profile_file = os.path.join(self.m_conan_setting_path, "profiles", "builder", "conan_builder_profile.windows.txt")
-                conan_output_path = os.path.join(self.m_generated_path, "conan")
+                conan_output_path = os.path.join(self.m_conan_workspace_path)
             # Ubuntu build
             elif self.m_system_name == "Linux":
                 conan_profile_file = os.path.join(self.m_conan_setting_path, "profiles", "builder", "conan_builder_profile.ubuntu.txt")
-                conan_output_path = os.path.join(self.m_generated_path, "conan")
+                conan_output_path = os.path.join(self.m_conan_workspace_path)
             # Macos build
             elif self.m_system_name == "Darwin":
                 conan_profile_file = os.path.join(self.m_conan_setting_path, "profiles", "builder", "conan_builder_profile.macos.txt")
-                conan_output_path = os.path.join(self.m_generated_path, "conan")
+                conan_output_path = os.path.join(self.m_conan_workspace_path)
 
             os.makedirs(conan_output_path, exist_ok=True)
             subprocess.run([
@@ -231,6 +232,8 @@ class WorkspaceInstaller:
             result = subprocess.run(command, check=True)
             print("Command executed successfully:")
             print(result.stdout)
+
+
 
         except Exception as e:
             print(f"Error: Failed to install android sdk packages: {str(e)}")

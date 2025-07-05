@@ -237,9 +237,10 @@ class WorkspaceInstaller:
     def install_android_dev(self):
         # Set destination path (relative to current directory)
         self.m_android_dev_setting_path = os.path.join(self.m_settings_root_path, "android")
-        self.m_android_dev_root_path = os.path.join(self.m_workspace_root_path, "android")
+        self.m_android_dev_workspace_path = os.path.join(self.m_workspace_root_path, "android")
+        self.m_android_sdk_root_path = os.path.join(self.m_android_dev_workspace_path, "AndroidSDK")
 
-        if not os.path.exists(self.m_android_dev_root_path):
+        if not os.path.exists(self.m_android_dev_workspace_path):
             # dig the android bootstrap package path
             self.m_android_sdk_bootstrap_root_path = self.get_conan_lib_folder("android_sdk/bootstrap@arieo/dev")
             print(f"Info: Got android sdk bootstrap root: {self.m_android_sdk_bootstrap_root_path}")
@@ -252,12 +253,12 @@ class WorkspaceInstaller:
                 exit(1)
             
             # Create destination directory if it doesn't exist
-            os.makedirs(self.m_android_dev_root_path, exist_ok=True)
+            os.makedirs(self.m_android_dev_workspace_path, exist_ok=True)
 
             # Copy files from source to destination
-            print(f"Copying Android SDK files to {self.m_android_dev_root_path}")
+            print(f"Copying Android SDK files to {self.m_android_dev_workspace_path}")
             try:
-                shutil.copytree(self.m_android_sdk_bootstrap_root_path, self.m_android_dev_root_path, dirs_exist_ok=True)
+                shutil.copytree(self.m_android_sdk_bootstrap_root_path, self.m_android_dev_workspace_path, dirs_exist_ok=True)
             except Exception as e:
                 print(f"Error: Failed to copy files: {str(e)}")
                 exit(1)
@@ -266,9 +267,9 @@ class WorkspaceInstaller:
         try:
             android_settings_file = os.path.join(self.m_android_dev_setting_path, "settings.json")
             if self.m_system_name == "Windows":
-                sdkmanager_exe_path = os.path.join(self.m_android_dev_root_path, "AndroidSDK", "cmdline-tools", "bootstrap", "bin", "sdkmanager.bat")
+                sdkmanager_exe_path = os.path.join(self.m_android_sdk_root_path, "cmdline-tools", "bootstrap", "bin", "sdkmanager.bat")
             else:
-                sdkmanager_exe_path = os.path.join(self.m_android_dev_root_path, "AndroidSDK", "cmdline-tools", "bootstrap", "bin", "sdkmanager")
+                sdkmanager_exe_path = os.path.join(self.m_android_sdk_root_path, "cmdline-tools", "bootstrap", "bin", "sdkmanager")
 
             with open(android_settings_file, 'r') as f:
                 android_settings_json = json.load(f)
@@ -289,13 +290,13 @@ class WorkspaceInstaller:
 
         # copy active python script
         self.generate_enviroment_set_batch_file(
-            os.path.join(self.m_android_dev_root_path, "active"),
+            os.path.join(self.m_android_dev_workspace_path, "active"),
             set_env_list = [
-                ('ANDROID_SDK_ROOT', self.m_android_dev_root_path)
+                ('ANDROID_SDK_ROOT', self.m_android_sdk_root_path)
             ],
             prepend_env_list = [
-                ('PATH', os.path.join(self.m_android_dev_root_path, "AndroidSDK", "cmdline-tools", "bootstrap", "bin")),
-                ('PATH', os.path.join(self.m_android_dev_root_path, "AndroidSDK", "platform-tools"))
+                ('PATH', os.path.join(self.m_android_sdk_root_path, "cmdline-tools", "bootstrap", "bin")),
+                ('PATH', os.path.join(self.m_android_sdk_root_path, "platform-tools"))
             ]
         )
 

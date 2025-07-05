@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set the workspace root path
-WORKSPACE_ROOT_PATH=$(dirname "$(readlink -f "$0")")
+WORKSPACE_ROOT_PATH=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
 # Call the activation script
 source "${WORKSPACE_ROOT_PATH}/active.macos.sh"

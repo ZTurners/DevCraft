@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set base paths
-WORKSPACE_ROOT_PATH=$(dirname "$(readlink -f "$0")")
+WORKSPACE_ROOT_PATH=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
 # python
 source "${WORKSPACE_ROOT_PATH}/python/active_python.macos.sh"
@@ -15,4 +15,4 @@ source "${WORKSPACE_ROOT_PATH}/conan/conanbuild.sh"
 export ANDROID_SDK_ROOT="$WORKSPACE_ROOT_PATH/android/AndroidSDK"
 
 # summary
-python %WORKSPACE_ROOT_PATH%/summary.py
+python ${WORKSPACE_ROOT_PATH}/summary.py

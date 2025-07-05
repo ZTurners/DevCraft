@@ -119,10 +119,10 @@ class WorkspaceInstaller:
                 self.make_executable(os.path.join(os.path.join(self.python_workspace_folder_path, "active_python.windows.bat")))
             elif self.m_system_name == "Linux":
                 shutil.copyfile(os.path.join(self.python_setting_folder_path, "active_python.linux.sh"), os.path.join(self.python_workspace_folder_path, "active_python.linux.sh"))
-                self.make_executable(os.path.join(os.path.join(self.python_workspace_folder_path, "active_python.linux.bat")))
+                self.make_executable(os.path.join(os.path.join(self.python_workspace_folder_path, "active_python.linux.sh")))
             elif self.m_system_name == "Darwin":
                 shutil.copyfile(os.path.join(self.python_setting_folder_path, "active_python.macos.sh"), os.path.join(self.python_workspace_folder_path, "active_python.macos.sh"))
-                self.make_executable(os.path.join(os.path.join(self.python_workspace_folder_path, "active_python.macos.bat")))
+                self.make_executable(os.path.join(os.path.join(self.python_workspace_folder_path, "active_python.macos.sh")))
 
             
 

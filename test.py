@@ -19,10 +19,10 @@ def main():
         )
     # Macos build
     elif platform.system() == "Darwin":
-        subprocess.Popen(
-            ["bash", "--norc", "-i", "-c", "echo $NEW_VAR"],
-            creationflags=subprocess.CREATE_NEW_CONSOLE
-        )
+        subprocess.Popen([
+            "osascript", "-e",
+            f'tell app "Terminal" to do script "echo $NEW_VAR"'
+        ])
 
 if __name__ == "__main__":
     main()

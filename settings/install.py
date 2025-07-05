@@ -68,6 +68,53 @@ class WorkspaceInstaller:
             print(f"Unexpected error processing JSON: {e}")
             raise
 
+    def generate_enviroment_set_batch_file(self, output_file, set_env_list, prepend_env_list):
+        # Basic check
+        if self.m_system_name == "Windows":
+            output_file = output_file + ".bat"
+            with open(output_file, 'w') as f:
+                f.write("@echo off\n\n")
+                f.write(":: Auto-generated environment setup script (Windows)\n")
+                f.write(":: This script sets and appends environment variables\n\n")
+                
+                # Set commands (overwrite existing values)
+                for var_name, value in set_env_list:
+                    f.write(f'set {var_name}={value}\n')
+                
+                if set_env_list and prepend_env_list:
+                    f.write('\n')
+                
+                # Append commands
+                for var_name, value in prepend_env_list:
+                    f.write(f'set {var_name}={value};%{var_name}%\n')
+                
+                f.write('\necho Environment variables set successfully\n')
+        else:
+            output_file = output_file + ".sh"
+            with open(output_file, 'w') as f:
+                f.write("#!/bin/bash\n\n")
+                f.write("# Auto-generated environment setup script\n")
+                f.write("# This script sets and appends environment variables\n\n")
+                
+                # Write set commands (overwrite existing values)
+                for var_name, value in set_env_list:
+                    f.write(f'export {var_name}="{value}"\n')
+                
+                if set_env_list and prepend_env_list:
+                    f.write('\n')
+                
+                # Write append commands
+                for var_name, value in prepend_env_list:
+                    f.write(f'export {var_name}="{value}:${var_name}"\n')
+                
+                f.write('\necho "Environment variables set successfully"\n')
+        
+        # Make the script executable
+        import os
+        os.chmod(output_file, 0o755)
+        print(f"Bash script generated at: {output_file}")
+
+
     def install_all(self):
         self.install_active_script()
         self.install_conan()
@@ -108,23 +155,27 @@ class WorkspaceInstaller:
         self.python_setting_folder_path = os.path.join(self.m_settings_root_path, "python")
         self.python_workspace_folder_path = os.path.join(self.m_workspace_root_path, "python")
 
-        # copy version.txt
-        shutil.copyfile(os.path.join(self.python_setting_folder_path, "version.txt"), os.path.join(self.python_workspace_folder_path, "version.txt"))
+        # read version.txt
+        with open(os.path.join(self.python_setting_folder_path, "version.txt"), 'r') as file:
+            python_version = file.read()
+        # shutil.copyfile(os.path.join(self.python_setting_folder_path, "version.txt"), os.path.join(self.python_workspace_folder_path, "version.txt"))
+
+        python_root_path = os.path.join(self.python_workspace_folder_path, f"python_{python_version}")
+        python_bin_path = os.path.join(python_root_path, "bin")
+        python_script_path = os.path.join(python_root_path, "scripts")
 
         # copy active python script
-        self
-        with open('filename.txt', 'w') as file:
-            if self.m_system_name == "Windows":
-                shutil.copyfile(os.path.join(self.python_setting_folder_path, "active_python.windows.bat"), os.path.join(self.python_workspace_folder_path, "active_python.windows.bat"))
-                self.make_executable(os.path.join(os.path.join(self.python_workspace_folder_path, "active_python.windows.bat")))
-            elif self.m_system_name == "Linux":
-                shutil.copyfile(os.path.join(self.python_setting_folder_path, "active_python.linux.sh"), os.path.join(self.python_workspace_folder_path, "active_python.linux.sh"))
-                self.make_executable(os.path.join(os.path.join(self.python_workspace_folder_path, "active_python.linux.sh")))
-            elif self.m_system_name == "Darwin":
-                shutil.copyfile(os.path.join(self.python_setting_folder_path, "active_python.macos.sh"), os.path.join(self.python_workspace_folder_path, "active_python.macos.sh"))
-                self.make_executable(os.path.join(os.path.join(self.python_workspace_folder_path, "active_python.macos.sh")))
-
-            
+        self.generate_enviroment_set_batch_file(
+            os.path.join(self.python_workspace_folder_path, "active"),
+            set_env_list = [
+                ('PYTHON_VERSION', python_version)
+            ],
+            prepend_env_list = [
+                ('PATH', python_root_path),
+                ('PATH', python_bin_path),
+                ('PATH', python_script_path)
+            ]
+        )           
 
     def install_conan(self):
         # Create .conan directory 
@@ -232,12 +283,21 @@ class WorkspaceInstaller:
             result = subprocess.run(command, check=True)
             print("Command executed successfully:")
             print(result.stdout)
-
-
-
         except Exception as e:
             print(f"Error: Failed to install android sdk packages: {str(e)}")
             exit(1)
+
+        # copy active python script
+        self.generate_enviroment_set_batch_file(
+            os.path.join(self.m_android_dev_root_path, "active"),
+            set_env_list = [
+                ('ANDROID_SDK_ROOT', self.m_android_dev_root_path)
+            ],
+            prepend_env_list = [
+                ('PATH', os.path.join(self.m_android_dev_root_path, "AndroidSDK", "cmdline-tools", "bootstrap", "bin")),
+                ('PATH', os.path.join(self.m_android_dev_root_path, "AndroidSDK", "platform-tools"))
+            ]
+        )
 
     def install_vs_code_setting(self):
         self.vs_code_init_user_setting_file_path = os.path.join(self.m_settings_root_path, "vscode", "init_user_settings.json")
@@ -246,7 +306,6 @@ class WorkspaceInstaller:
         # Create destination directory if it doesn't exist
         os.makedirs(self.vs_code_workspace_setting_folder, exist_ok=True)
         shutil.copyfile(self.vs_code_init_user_setting_file_path, os.path.join(self.vs_code_workspace_setting_folder, "settings.json"))
-
 
 def main():
     dev_env_installer = WorkspaceInstaller()

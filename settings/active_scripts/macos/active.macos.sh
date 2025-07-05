@@ -7,7 +7,7 @@ WORKSPACE_ROOT_PATH=$(dirname "$0")
 source "${WORKSPACE_ROOT_PATH}/python/active_python.macos.sh"
 
 # conan settings
-export CONAN_HOME="$WORKSPACE_ROOT_PATH/.conan"
+export CONAN_HOME="$WORKSPACE_ROOT_PATH/conan/.conan"
 export CONAN_USE_ALWAYS_SHORT_PATHS=1
 source "${WORKSPACE_ROOT_PATH}/conan/conanbuild.sh"
 

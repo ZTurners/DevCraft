@@ -14,6 +14,7 @@ compiler.runtime_type=Release
 ninja/1.12.1
 cmake/3.31.6
 
+jdk/24.0.1@arieo/dev
 android_sdk/bootstrap@arieo/dev
 gradle/8.14.2@arieo/dev
 

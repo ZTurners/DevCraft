@@ -292,11 +292,14 @@ class WorkspaceInstaller:
         self.generate_enviroment_set_batch_file(
             os.path.join(self.m_android_dev_workspace_path, "active"),
             set_env_list = [
-                ('ANDROID_SDK_ROOT', self.m_android_sdk_root_path)
+                ('ANDROID_SDK_ROOT', self.m_android_sdk_root_path),
+                ('GRADLE_USER_HOME', os.path.join(self.m_android_dev_workspace_path, ".gradle")),
+                ('ANDROID_HOME', self.m_android_sdk_root_path),
+                ('ANDROID_USER_HOME', os.path.join(self.m_android_dev_workspace_path, ".android"))
             ],
             prepend_env_list = [
                 ('PATH', os.path.join(self.m_android_sdk_root_path, "cmdline-tools", "bootstrap", "bin")),
-                ('PATH', os.path.join(self.m_android_sdk_root_path, "platform-tools"))
+                ('PATH', os.path.join(self.m_android_sdk_root_path, "platform-tools")),
             ]
         )
 

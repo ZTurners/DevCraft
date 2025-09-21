@@ -2,7 +2,7 @@
  "remotes": [
   {
     "name": "divineland",
-    "url": "https://divineland.asuscomm.com:10030/artifactory/api/conan/3rd_parties",
+    "url": "https://divineland.asuscomm.com:10031/conan/internal_conan/",
     "verify_ssl": true
   },
   {

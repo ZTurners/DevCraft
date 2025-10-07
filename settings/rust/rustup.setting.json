@@ -1,0 +1,16 @@
+{
+    "platforms": [
+        {
+            "name": "Windows",
+            "url": "https://static.rust-lang.org/rustup/dist/x86_64-pc-windows-msvc/rustup-init.exe"
+        },
+        {
+            "name": "Darwin",
+            "curl_cmd": "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
+        },
+        {
+            "name": "Linux",
+            "curl_cmd": "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
+        }
+    ]
+}

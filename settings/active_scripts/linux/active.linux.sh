@@ -14,5 +14,8 @@ source "${WORKSPACE_ROOT_PATH}/conan/conanbuild.sh"
 # android settings
 source "${WORKSPACE_ROOT_PATH}/android/active.sh"
 
+# rust settings
+source "${WORKSPACE_ROOT_PATH}/rust/active.sh"
+
 # summary
 python ${WORKSPACE_ROOT_PATH}/summary.py

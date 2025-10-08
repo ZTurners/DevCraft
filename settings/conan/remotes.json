@@ -2,7 +2,7 @@
  "remotes": [
   {
     "name": "divineland",
-    "url": "https://divineland.asuscomm.com:10030/conan/internal_conan/",
+    "url": "https://divineland.maidrix.com:10030/conan/internal_conan/",
     "verify_ssl": true
   },
   {

@@ -321,99 +321,90 @@ class WorkspaceInstaller:
         os.makedirs(self.rust_workspace_path, exist_ok=True)
 
         # Read rustup settings
-        rustup_settings_path = os.path.join(self.m_settings_root_path, "rust", "rustup.setting.json")
+        rustup_settings_path = os.path.join(self.m_settings_root_path, "rust", "rustup.download.json")
         with open(rustup_settings_path, 'r') as f:
             rustup_settings = json.load(f)
         
+        # Create rustup home and cargo home in work space
+        os.makedirs(os.path.join(self.rust_workspace_path, ".rustup"), exist_ok=True)
+        os.makedirs(os.path.join(self.rust_workspace_path, ".cargo"), exist_ok=True)
+
+        # Copy settings.toml into it
+        settings_toml_path = os.path.join(self.m_settings_root_path, "rust", "settings.toml")
+        shutil.copyfile(settings_toml_path, os.path.join(self.rust_workspace_path, ".rustup", "settings.toml"))
+
         # Find platform settings for current system
         platform_settings = next((p for p in rustup_settings['platforms'] if p['name'].lower() == self.m_system_name.lower()), None)
         if not platform_settings:
             supported_platforms = [p['name'] for p in rustup_settings['platforms']]
-            raise Exception(f"Platform settings for {self.m_system_name} not found in rustup.setting.json. Supported platforms are: {', '.join(supported_platforms)}")
+            raise Exception(f"Platform settings for {self.m_system_name} not found in rustup.download.json. Supported platforms are: {', '.join(supported_platforms)}")
             
-        if self.m_system_name == "Windows":
-            rustup_url = platform_settings['url']
-            rustup_path = os.path.join(self.rust_workspace_path, "rustup-init.exe")
+        # Setup common paths and environment
+        rust_home = os.path.join(self.rust_workspace_path, ".rustup")
+        cargo_home = os.path.join(self.rust_workspace_path, ".cargo")
+        
+        # Save original environment variables
+        orig_rustup_home = os.environ.get("RUSTUP_HOME")
+        orig_cargo_home = os.environ.get("CARGO_HOME")
+        
+        try:
+            # Set environment for rustup installation
+            os.environ["RUSTUP_HOME"] = rust_home
+            os.environ["CARGO_HOME"] = cargo_home
             
-            def show_progress(count, block_size, total_size):
-                if total_size > 0:
-                    percent = (count * block_size * 100) // total_size
-                    print(f"\rDownloading rustup-init... {percent}% [{count * block_size}/{total_size} bytes]", end="", flush=True)
-                else:
-                    print(f"\rDownloading rustup-init... {count * block_size} bytes", end="", flush=True)
+            if self.m_system_name == "Windows":
+                rustup_url = platform_settings['url']
+                rustup_path = os.path.join(self.rust_workspace_path, "rustup-init.exe")
+                
+                def show_progress(count, block_size, total_size):
+                    if total_size > 0:
+                        percent = (count * block_size * 100) // total_size
+                        print(f"\rDownloading rustup-init... {percent}% [{count * block_size}/{total_size} bytes]", end="", flush=True)
+                    else:
+                        print(f"\rDownloading rustup-init... {count * block_size} bytes", end="", flush=True)
 
-            try:
-                print("Starting download of rustup-init...")
-                urllib.request.urlretrieve(rustup_url, rustup_path, show_progress)
-                print("\nDownload completed.")
+                # Download rustup-init if needed
+                if not os.path.exists(rustup_path):
+                    print("Starting download of rustup-init...")
+                    urllib.request.urlretrieve(rustup_url, rustup_path, show_progress)
+                    print("\nDownload completed.")
+                else:
+                    print("rustup-init.exe already exists, skipping download.")
                 
-                # Make the file executable
+                # Make the file executable and run it
                 self.make_executable(rustup_path)
-                
-                # Run rustup-init with -y flag for non-interactive installation
-                print("Installing Rust...")
-                rust_home = os.path.join(self.rust_workspace_path, ".rustup")
-                cargo_home = os.path.join(self.rust_workspace_path, ".cargo")
-                
-                env = os.environ.copy()
-                env["RUSTUP_HOME"] = rust_home
-                env["CARGO_HOME"] = cargo_home
-                
-                subprocess.run([rustup_path, "-y"], env=env, check=True)
-                
-                # Generate environment activation script
-                self.generate_enviroment_set_batch_file(
-                    os.path.join(self.rust_workspace_path, "active"),
-                    set_env_list=[
-                        ("RUSTUP_HOME", rust_home),
-                        ("CARGO_HOME", cargo_home)
-                    ],
-                    prepend_env_list=[
-                        ("PATH", os.path.join(cargo_home, "bin"))
-                    ]
-                )
-                
-                print("Rust installation completed successfully")
-                
-            except Exception as e:
-                print(f"Error installing Rust: {str(e)}")
-                raise
-        else:
-            try:
-                print("Installing Rust...")
-                rust_home = os.path.join(self.rust_workspace_path, ".rustup")
-                cargo_home = os.path.join(self.rust_workspace_path, ".cargo")
-                
-                env = os.environ.copy()
-                env["RUSTUP_HOME"] = rust_home
-                env["CARGO_HOME"] = cargo_home
-                
-                # Get the curl command from settings
+                subprocess.run([rustup_path, "-y"], check=True)
+            else:
+                # Get and run the curl command for Unix systems
                 curl_cmd = platform_settings.get('curl_cmd')
                 if not curl_cmd:
                     raise Exception(f"curl_cmd not found in settings for {self.m_system_name}")
-                
-                # Run the curl command with environment variables set
-                cmd = f'RUSTUP_HOME="{rust_home}" CARGO_HOME="{cargo_home}" {curl_cmd} -y'
-                subprocess.run(cmd, shell=True, env=env, check=True)
-                
-                # Generate environment activation script
-                self.generate_enviroment_set_batch_file(
-                    os.path.join(self.rust_workspace_path, "active"),
-                    set_env_list=[
-                        ("RUSTUP_HOME", rust_home),
-                        ("CARGO_HOME", cargo_home)
-                    ],
-                    prepend_env_list=[
-                        ("PATH", os.path.join(cargo_home, "bin"))
-                    ]
-                )
-                
-                print("Rust installation completed successfully")
-                
-            except Exception as e:
-                print(f"Error installing Rust: {str(e)}")
-                raise
+                subprocess.run(f'{curl_cmd} -y', shell=True, check=True)
+        finally:
+            # Restore original environment variables
+            if orig_rustup_home:
+                os.environ["RUSTUP_HOME"] = orig_rustup_home
+            else:
+                os.environ.pop("RUSTUP_HOME", None)
+            
+            if orig_cargo_home:
+                os.environ["CARGO_HOME"] = orig_cargo_home
+            else:
+                os.environ.pop("CARGO_HOME", None)
+        
+        # Generate environment activation script
+        self.generate_enviroment_set_batch_file(
+            os.path.join(self.rust_workspace_path, "active"),
+            set_env_list=[
+                ("RUSTUP_HOME", rust_home),
+                ("CARGO_HOME", cargo_home)
+            ],
+            prepend_env_list=[
+                ("PATH", os.path.join(cargo_home, "bin"))
+            ]
+        )
+        
+        print("Rust installation completed successfully")
 
 def main():
     dev_env_installer = WorkspaceInstaller()

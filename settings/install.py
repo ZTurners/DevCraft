@@ -7,6 +7,7 @@ import platform
 import json
 import configparser
 import urllib.request
+import datetime
 
 class WorkspaceInstaller:
     def __init__(self):
@@ -15,8 +16,129 @@ class WorkspaceInstaller:
         self.m_settings_root_path = os.path.join(self.m_dev_env_root_path, "settings")
         self.m_workspace_root_path = os.path.join(self.m_dev_env_root_path, "workspace")
         self.m_system_name = platform.system()
+        self.m_env_vs_path = None
 
         self.m_summary_data = []
+
+    def detect_visual_studio(self):
+        """Detect Visual Studio installation using vswhere."""
+        if self.m_system_name != "Windows":
+            return None
+
+        print("Info: Detecting Visual Studio installation...")
+        # Use our local vswhere from the workspace
+        vswhere_path = os.path.join(self.m_workspace_root_path, "visual_studio", "vswhere.exe")
+        
+        if not os.path.exists(vswhere_path):
+            print(f"Error: vswhere.exe not found at {vswhere_path}")
+            print("Please ensure bootstrap.windows.bat was run successfully.")
+            return None
+        
+        print(f"Using vswhere.exe from: {vswhere_path}")
+
+        try:
+            # First, check for any Visual Studio installation with all details
+            print("Checking for Visual Studio installations...")
+            basic_check = subprocess.run([
+                vswhere_path,
+                '-all', '-legacy', '-prerelease',
+                '-format', 'json'
+            ], capture_output=True, text=True)
+
+            vs_info = json.loads(basic_check.stdout)
+            # Now extract path and version from the found installations
+            vs_path = None
+            vs_version = None
+                        
+            if len(vs_info) == 0:
+                print("No Visual Studio installations found. Please install Visual Studio first.")
+                print("You can download it from: https://visualstudio.microsoft.com/downloads/")
+                exit(1)
+
+            # Search for installation for biggest version
+            for install in vs_info:
+                install_path = install.get('installationPath', '')
+                install_version = install.get('installationVersion', '')
+
+                if not vs_path or (install_version and install_version > vs_version):
+                    vs_path = install_path
+                    vs_version = install_version.split('.')[0] if install_version else None
+            
+            if vs_path and vs_version:
+                print(f"Found Visual Studio {vs_version} at: {vs_path}")
+                # Set environment variables for the current process
+                os.environ['env_vs_path'] = vs_path
+                os.environ['env_vs_version'] = vs_version
+                print(f"env_vs_path: {os.environ['env_vs_path']}")
+                print(f"env_vs_version: {os.environ['env_vs_version']}")
+                
+                # Save detailed VS info to JSON file
+                vs_info_dir = os.path.join(self.m_workspace_root_path, "visual_studio")
+                print(f"Creating directory: {vs_info_dir}")
+                os.makedirs(vs_info_dir, exist_ok=True)
+                
+                vs_info_path = os.path.join(vs_info_dir, "visual_studio_info.json")
+                print(f"Will save VS info to: {vs_info_path}")
+                
+                # Get detailed information about the selected VS instance
+                print("Running vswhere to get detailed information...")
+                detailed_info = subprocess.run([
+                    vswhere_path,
+                    '-all',
+                    '-legacy',
+                    '-prerelease',
+                    '-format', 'json'
+                ], capture_output=True, text=True)
+
+                if detailed_info.returncode != 0:
+                    print(f"Error running vswhere: {detailed_info.stderr}")
+                    print(f"Command output: {detailed_info.stdout}")
+                else:
+                    try:
+                        print("Parsing vswhere output...")
+                        if not detailed_info.stdout.strip():
+                            print("Warning: vswhere returned empty output")
+                        else:
+                            detailed_json = json.loads(detailed_info.stdout)
+                            if not detailed_json:
+                                print("Warning: No VS instances found in JSON output")
+                            else:
+                                # Find the matching VS instance
+                                selected_vs = None
+                                for instance in detailed_json:
+                                    if instance.get('installationPath') == vs_path:
+                                        selected_vs = instance
+                                        break
+                                
+                                if selected_vs:
+                                    # Add additional information
+                                    selected_vs['selected_timestamp'] = datetime.datetime.now().isoformat()
+                                    selected_vs['is_primary_instance'] = True
+                                    selected_vs['detected_path'] = vs_path
+                                    selected_vs['detected_version'] = vs_version
+                                    
+                                    print(f"Writing VS info to: {vs_info_path}")
+                                    with open(vs_info_path, 'w') as f:
+                                        json.dump(selected_vs, f, indent=2)
+                                    print(f"Successfully saved VS info to: {vs_info_path}")
+                                else:
+                                    print(f"Warning: Could not find VS instance with path {vs_path} in vswhere output")
+                    except json.JSONDecodeError as je:
+                        print(f"JSON parsing error: {je}")
+                        print(f"Raw output: {detailed_info.stdout}")
+                    except Exception as e:
+                        print(f"Unexpected error saving VS info: {e}")
+                
+                # Store them for later use
+                self.m_env_vs_path = vs_path
+                self.m_env_vs_version = vs_version
+                return vs_path, vs_version
+        except subprocess.CalledProcessError as e:
+            print(f"Error detecting Visual Studio: {e}")
+        except Exception as e:
+            print(f"Unexpected error during Visual Studio detection: {e}")
+
+        return None
 
         return
 
@@ -119,6 +241,11 @@ class WorkspaceInstaller:
 
 
     def install_all(self):
+        if self.m_system_name == "Windows":
+            vs_info = self.detect_visual_studio()
+            if vs_info:
+                self.m_env_vs_path, self.m_env_vs_version = vs_info
+
         self.install_active_script()
         self.install_conan()
         self.install_android_dev()
@@ -224,7 +351,7 @@ class WorkspaceInstaller:
                 conan_output_path = os.path.join(self.m_conan_workspace_path)
 
             os.makedirs(conan_output_path, exist_ok=True)
-            subprocess.run([
+            conan_cmd = [
                 "conan", "install", os.path.join(self.m_conan_setting_path, "conanfile.txt"),
                 "--update",
                 "--generator", "CMakeToolchain",
@@ -232,7 +359,17 @@ class WorkspaceInstaller:
                 "--output-folder", str(conan_output_path),
                 "--build", "never",
                 "--profile", conan_profile_file
-            ], check=True)
+            ]
+
+            # Add Visual Studio path if available
+            if hasattr(self, 'm_env_vs_path') and self.m_env_vs_path:
+                conan_cmd.extend([
+                    "-c", f"tools.microsoft.msbuild:installation_path={self.m_env_vs_path}",
+                    "-c", f"tools.microsoft.msbuild:vs_version={self.m_env_vs_version}"
+                ])
+                print(f"Using Visual Studio at: {self.m_env_vs_path}")
+
+            subprocess.run(conan_cmd, check=True)
             
         except subprocess.CalledProcessError as e:
             print(f"Command failed with error: {e}")

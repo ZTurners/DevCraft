@@ -28,8 +28,10 @@ tools.build:jobs=8
 tools.cmake.cmaketoolchain:generator=Ninja
 tools.cmake.cmakedeps:new=will_break_next
 
-#tools.microsoft.msbuild:installation_path=X:/conan/msvc/build/2022/Community
-tools.microsoft.msbuild:vs_version=17
-tools.microsoft:winsdk_version=10.0.26100.0
+# Those parameters will be passed from intall.py
+#tools.microsoft.msbuild:installation_path=D:/Program Files/Microsoft Visual Studio/18/Insiders
+#tools.microsoft.msbuild:vs_version=17
+
+tools.microsoft:winsdk_version=10.0.26100.6584
 
 [buildenv]

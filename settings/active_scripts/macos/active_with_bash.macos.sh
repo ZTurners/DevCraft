@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Set the workspace root path
-WORKSPACE_ROOT_PATH=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
+WORKSPACE_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
 # Call the activation script
-source "${WORKSPACE_ROOT_PATH}/active.macos.sh"
+source "${WORKSPACE_ROOT}/active.macos.sh"
 
 # Check the exit status
 if [ $? -ne 0 ]; then

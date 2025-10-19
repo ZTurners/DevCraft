@@ -191,6 +191,166 @@ class WorkspaceInstaller:
             print(f"Unexpected error processing JSON: {e}")
             raise
 
+    def install_sysroot(self):
+        """Install sysroot by downloading and extracting from configured URLs."""
+        sysroot_config_path = os.path.join(self.m_settings_root_path, "sysroot", "config.json")
+        
+        if not os.path.exists(sysroot_config_path):
+            print(f"Error: Sysroot configuration not found at {sysroot_config_path}")
+            exit(1)
+
+        try:
+            with open(sysroot_config_path, 'r') as f:
+                config = json.load(f)
+        except json.JSONDecodeError:
+            print(f"Error: Invalid JSON in sysroot configuration file")
+            exit(1)
+        except Exception as e:
+            print(f"Unexpected error reading sysroot configuration: {e}")
+            exit(1)
+
+
+        print("Checking existing sysroot installations...")
+        
+        if not config.get("sysroot"):
+            print("Error: No sysroot configuration found in config file")
+            exit(1)
+
+        for sysroot in config["sysroot"]:
+            if "download_url" not in sysroot:
+                print(f"Warning: Skipping sysroot {sysroot.get('sysname', 'unknown')} - no download URL provided")
+                continue
+
+            temp_file = None
+            try:
+                # Prepare paths
+                sysroot_name = f"{sysroot['sysname']}_{sysroot['version']}_{sysroot['arch']}"
+                output_dir = os.path.join(self.m_workspace_root_path, "sysroot", sysroot_name)
+
+                # Check if sysroot is already installed
+                if os.path.exists(output_dir) and \
+                   os.path.exists(os.path.join(output_dir, "lib")) and \
+                   os.path.exists(os.path.join(output_dir, "usr")):
+                    print(f"\nSysroot {sysroot_name} is already installed in {output_dir}")
+                    continue
+
+                download_filename = os.path.basename(sysroot["download_url"])
+                temp_file = os.path.join(output_dir, download_filename)
+
+                # Create output directory
+                os.makedirs(output_dir, exist_ok=True)
+                print(f"\nInstalling sysroot for {sysroot_name}")
+                print(f"Download URL: {sysroot['download_url']}")
+                print(f"Output directory: {output_dir}")
+
+                # Download using curl with authentication
+                print(f"Downloading {download_filename}...")
+
+                # Prepare curl command
+                curl_cmd = [
+                    "curl",
+                    "--progress-bar",  # Show download progress
+                    "-L",  # Follow redirects
+                ]
+
+                # Add authentication if needed
+                need_auth = sysroot.get("need_auth", False)
+                if need_auth:                    
+                    # Add credentials to curl command
+                    # Extract domain from URL for display
+                    from urllib.parse import urlparse
+                    domain = urlparse(sysroot["download_url"]).netloc
+                    print(f"\nDownloading from {domain}")
+                    
+                    # Prompt for username only
+                    username = input("Username: ")
+                    curl_cmd.extend(["--user", f"{username}"])  # Curl will prompt for password
+
+                # Add output file specification
+                curl_cmd.extend([
+                    "-o", temp_file,  # Output file
+                    "-f",  # Fail on HTTP errors
+                    "-S",  # Show error
+                    "--retry", "3",  # Retry up to 3 times
+                    "--retry-delay", "5",  # Wait 5 seconds between retries
+                    sysroot["download_url"]
+                ])
+                
+                try:
+                    subprocess.run(curl_cmd, check=True)
+                    
+                    # Verify the downloaded file
+                    if not os.path.exists(temp_file):
+                        raise Exception("Downloaded file does not exist")
+                    
+                    file_size = os.path.getsize(temp_file)
+                    if file_size == 0:
+                        raise Exception("Downloaded file is empty")
+                        
+                    # Try to open the file as a tar.gz to verify its integrity
+                    import tarfile
+                    try:
+                        with tarfile.open(temp_file, "r:gz") as test_tar:
+                            # Test by reading the members list
+                            test_tar.getmembers()
+                    except tarfile.TarError:
+                        raise Exception("Downloaded file is not a valid tar.gz archive")
+                    
+                    print("\nDownload completed and verified.")
+                except subprocess.CalledProcessError as e:
+                    print(f"\nError downloading file: {e}")
+                    if e.returncode == 22:  # HTTP error code
+                        print("Authentication failed or access denied. Please check your credentials.")
+                    elif e.returncode == 6:  # Could not resolve host
+                        print("Could not resolve host. Please check your internet connection.")
+                    elif e.returncode == 28:  # Operation timeout
+                        print("Download timed out. Please try again or check your connection.")
+                    if os.path.exists(temp_file):
+                        os.remove(temp_file)
+                    exit(1)
+                except Exception as e:
+                    print(f"\nError verifying downloaded file: {e}")
+                    if os.path.exists(temp_file):
+                        os.remove(temp_file)
+                    exit(1)
+
+                # Extract the archive
+                print(f"Extracting files to {output_dir}...")
+                import tarfile
+                with tarfile.open(temp_file, "r:gz") as tar:
+                    # Get total number of members
+                    members = tar.getmembers()
+                    total = len(members)
+                    
+                    # Extract with progress
+                    for index, member in enumerate(members, 1):
+                        tar.extract(member, output_dir)
+                        percent = (index * 100) // total
+                        print(f"\rProgress: {percent}% [{index}/{total} files]", end="", flush=True)
+                print("\nExtraction completed.")
+
+                # Clean up the downloaded archive
+                os.remove(temp_file)
+                print("Installation completed successfully.\n")
+
+            except subprocess.CalledProcessError as e:
+                print(f"Error running curl command: {e}")
+                exit(1)
+            except tarfile.TarError as e:
+                print(f"Error extracting sysroot archive: {e}")
+                if os.path.exists(temp_file):
+                    os.remove(temp_file)
+                exit(1)
+            except Exception as e:
+                print(f"Unexpected error during sysroot installation: {e}")
+                if os.path.exists(temp_file):
+                    os.remove(temp_file)
+                exit(1)
+            finally:
+                # Clean up the temp file if it exists
+                if temp_file and os.path.exists(temp_file):
+                    os.remove(temp_file)
+
     def generate_enviroment_set_batch_file(self, output_file, set_env_list, prepend_env_list):
         # Basic check
         if self.m_system_name == "Windows":
@@ -247,11 +407,13 @@ class WorkspaceInstaller:
                 self.m_env_vs_path, self.m_env_vs_version = vs_info
 
         self.install_active_script()
+        self.install_sysroot()
         self.install_conan()
         self.install_android_dev()
         self.install_vs_code_setting()
         self.install_python()
         self.install_rust()
+        
 
     def install_active_script(self):
         self.active_scripts_src_folder = os.path.join(self.m_settings_root_path, "active_scripts")

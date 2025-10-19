@@ -1,7 +1,7 @@
 @echo off
-set WORKSPACE_ROOT_PATH=%~dp0
+set WORKSPACE_ROOT=%~dp0
 
-call %WORKSPACE_ROOT_PATH%active.windows.bat
+call %WORKSPACE_ROOT%active.windows.bat
 
 if %errorlevel% neq 0 (
     echo Error occurred in otherscript.bat

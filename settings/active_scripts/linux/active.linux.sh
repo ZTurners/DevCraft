@@ -17,5 +17,8 @@ source "${WORKSPACE_ROOT}/android/active.sh"
 # rust settings
 source "${WORKSPACE_ROOT}/rust/active.sh"
 
+# SDK settings
+source "${WORKSPACE_ROOT}/sdk/active.sh"
+
 # summary
 python ${WORKSPACE_ROOT}/summary.py

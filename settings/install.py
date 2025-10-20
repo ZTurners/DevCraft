@@ -8,6 +8,8 @@ import json
 import configparser
 import urllib.request
 import datetime
+import zipfile
+import tarfile
 
 class WorkspaceInstaller:
     def __init__(self):
@@ -191,165 +193,260 @@ class WorkspaceInstaller:
             print(f"Unexpected error processing JSON: {e}")
             raise
 
-    def install_sysroot(self):
-        """Install sysroot by downloading and extracting from configured URLs."""
-        sysroot_config_path = os.path.join(self.m_settings_root_path, "sysroot", "config.json")
-        
-        if not os.path.exists(sysroot_config_path):
-            print(f"Error: Sysroot configuration not found at {sysroot_config_path}")
+    def install_from_config(self, config_file_path):
+        """Generic installation function that handles downloading and extracting from configured URLs.
+        Args:
+            config_file_path (str): Path to the configuration JSON file
+        """
+        if not os.path.exists(config_file_path):
+            print(f"Error: Configuration not found at {config_file_path}")
             exit(1)
 
         try:
-            with open(sysroot_config_path, 'r') as f:
+            with open(config_file_path, 'r') as f:
                 config = json.load(f)
         except json.JSONDecodeError:
-            print(f"Error: Invalid JSON in sysroot configuration file")
+            print(f"Error: Invalid JSON in configuration file")
             exit(1)
         except Exception as e:
-            print(f"Unexpected error reading sysroot configuration: {e}")
+            print(f"Unexpected error reading configuration: {e}")
             exit(1)
-
-
-        print("Checking existing sysroot installations...")
         
-        if not config.get("sysroot"):
-            print("Error: No sysroot configuration found in config file")
-            exit(1)
+        # Handle active_batch configuration if present
+        if "active_batch" in config:
+            active_batch = config["active_batch"]
+            if "file_path" in active_batch and "environments" in active_batch:
+                # Process file path, replacing {workspace} with actual path
+                file_path = active_batch["file_path"].replace("${workspace}", self.m_workspace_root_path)
+                
+                # Create the directory if it doesn't exist
+                os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                
+                # Prepare environment lists
+                set_env_list = []
+                prepend_env_list = []
+                
+                # Process set_list
+                if "set_list" in active_batch["environments"]:
+                    for var, value in active_batch["environments"]["set_list"].items():
+                        # Replace workspace variable
+                        value = value.replace("${workspace}", self.m_workspace_root_path)
+                        set_env_list.append((var, value))
+                
+                # Process prepend_list
+                if "prepend_list" in active_batch["environments"]:
+                    for var, value in active_batch["environments"]["prepend_list"].items():
+                        # Replace workspace variable
+                        value = value.replace("${workspace}", self.m_workspace_root_path)
+                        prepend_env_list.append((var, value))
+                
+                # Generate the batch file
+                self.generate_enviroment_set_batch_file(file_path, set_env_list, prepend_env_list)
 
-        for sysroot in config["sysroot"]:
-            if "download_url" not in sysroot:
-                print(f"Warning: Skipping sysroot {sysroot.get('sysname', 'unknown')} - no download URL provided")
-                continue
-
-            temp_file = None
-            try:
-                # Prepare paths
-                sysroot_name = f"{sysroot['sysname']}_{sysroot['version']}_{sysroot['arch']}"
-                output_dir = os.path.join(self.m_workspace_root_path, "sysroot", sysroot_name)
-
-                # Check if sysroot is already installed
-                if os.path.exists(output_dir) and \
-                   os.path.exists(os.path.join(output_dir, "lib")) and \
-                   os.path.exists(os.path.join(output_dir, "usr")):
-                    print(f"\nSysroot {sysroot_name} is already installed in {output_dir}")
+        # Process download items
+        if "downloads" in config:
+            for item in config["downloads"]:
+                if "download_url" not in item:
+                    print(f"Warning: Skipping {node_name} entry - no download URL provided")
                     continue
 
-                download_filename = os.path.basename(sysroot["download_url"])
-                temp_file = os.path.join(output_dir, download_filename)
-
-                # Create output directory
-                os.makedirs(output_dir, exist_ok=True)
-                print(f"\nInstalling sysroot for {sysroot_name}")
-                print(f"Download URL: {sysroot['download_url']}")
-                print(f"Output directory: {output_dir}")
-
-                # Download using curl with authentication
-                print(f"Downloading {download_filename}...")
-
-                # Prepare curl command
-                curl_cmd = [
-                    "curl",
-                    "--progress-bar",  # Show download progress
-                    "-L",  # Follow redirects
-                ]
-
-                # Add authentication if needed
-                need_auth = sysroot.get("need_auth", False)
-                if need_auth:                    
-                    # Add credentials to curl command
-                    # Extract domain from URL for display
-                    from urllib.parse import urlparse
-                    domain = urlparse(sysroot["download_url"]).netloc
-                    print(f"\nDownloading from {domain}")
-                    
-                    # Prompt for username only
-                    username = input("Username: ")
-                    curl_cmd.extend(["--user", f"{username}"])  # Curl will prompt for password
-
-                # Add output file specification
-                curl_cmd.extend([
-                    "-o", temp_file,  # Output file
-                    "-f",  # Fail on HTTP errors
-                    "-S",  # Show error
-                    "--retry", "3",  # Retry up to 3 times
-                    "--retry-delay", "5",  # Wait 5 seconds between retries
-                    sysroot["download_url"]
-                ])
-                
+                temp_file = None
                 try:
-                    subprocess.run(curl_cmd, check=True)
-                    
-                    # Verify the downloaded file
-                    if not os.path.exists(temp_file):
-                        raise Exception("Downloaded file does not exist")
-                    
-                    file_size = os.path.getsize(temp_file)
-                    if file_size == 0:
-                        raise Exception("Downloaded file is empty")
+                    # Parse extra folder path
+                    if "install_folder" in item:
+                        # Replace workspace variable with actual path
+                        output_dir = item["install_folder"].replace("${workspace}", self.m_workspace_root_path)
+                    else:
+                        # Fallback to default location
+                        output_dir = os.path.join(self.m_workspace_root_path, node_name)
+
+                    # Check if already installed
+                    if os.path.exists(output_dir):
+                        print(f"\nAlready installed in {output_dir}")
+                        continue
+
+                    download_filename = os.path.basename(item["download_url"])
+                    # Create download directory in workspace
+                    download_dir = os.path.join(self.m_workspace_root_path, ".download")
+                    os.makedirs(download_dir, exist_ok=True)
+                    temp_file = os.path.join(download_dir, download_filename)
+
+                    # Download using curl with authentication
+                    print(f"Downloading {download_filename}...")
+
+                    # Prepare curl command
+                    curl_cmd = [
+                        "curl",
+                        "--progress-bar",  # Show download progress
+                        "-L",  # Follow redirects
+                    ]
+
+                    # Add authentication if needed
+                    need_auth = item.get("download_auth", False)
+                    if need_auth:                    
+                        from urllib.parse import urlparse
+                        domain = urlparse(item["download_url"]).netloc
+                        print(f"\nDownloading from {domain}")
                         
-                    # Try to open the file as a tar.gz to verify its integrity
-                    import tarfile
-                    try:
-                        with tarfile.open(temp_file, "r:gz") as test_tar:
-                            # Test by reading the members list
-                            test_tar.getmembers()
-                    except tarfile.TarError:
-                        raise Exception("Downloaded file is not a valid tar.gz archive")
+                        username = input("Username: ")
+                        curl_cmd.extend(["--user", f"{username}"])  # Curl will prompt for password
+
+                    # Add output file specification
+                    curl_cmd.extend([
+                        "-o", temp_file,  # Output file
+                        "-f",  # Fail on HTTP errors
+                        "-S",  # Show error
+                        "--retry", "3",  # Retry up to 3 times
+                        "--retry-delay", "5",  # Wait 5 seconds between retries
+                        item["download_url"]
+                    ])
                     
-                    print("\nDownload completed and verified.")
+                    try:
+                        subprocess.run(curl_cmd, check=True)
+                        
+                        # Verify the downloaded file
+                        if not os.path.exists(temp_file):
+                            raise Exception("Downloaded file does not exist")
+                        
+                        file_size = os.path.getsize(temp_file)
+                        if file_size == 0:
+                            raise Exception("Downloaded file is empty")
+                            
+                        # Check file extension to determine archive type
+                        is_zip = temp_file.lower().endswith('.zip')
+                        is_tar_gz = temp_file.lower().endswith('.tar.gz')
+                        is_tar_xz = temp_file.lower().endswith('.tar.xz')
+
+                        if not (is_zip or is_tar_gz or is_tar_xz):
+                            raise Exception("Unsupported archive format. Only .zip, .tar.gz, and .tar.xz are supported")
+
+                        # Verify archive integrity
+                        try:
+                            if is_zip:
+                                with zipfile.ZipFile(temp_file, 'r') as test_zip:
+                                    if test_zip.testzip() is not None:
+                                        raise Exception("ZIP file is corrupted")
+                            else:  # tar.gz or tar.xz
+                                mode = "r:gz" if is_tar_gz else "r:xz"
+                                with tarfile.open(temp_file, mode) as test_tar:
+                                    test_tar.getmembers()
+                        except (zipfile.BadZipFile, tarfile.TarError) as e:
+                            raise Exception(f"Invalid archive file: {str(e)}")
+                        
+                        print("\nDownload completed and verified.")
+
+                        # Extract the archive
+                        print(f"Extracting files to {output_dir}...")
+                        
+                        # Get source folder if specified
+                        src_folder = item.get("src_folder", "")
+                        
+                        if is_zip:
+                            with zipfile.ZipFile(temp_file, 'r') as zip_ref:
+                                # Get all members and filter by src_folder if specified
+                                all_members = zip_ref.namelist()
+                                if src_folder:
+                                    # Only extract files from the specified source folder
+                                    members = [m for m in all_members if m.startswith(src_folder)]
+                                    # Calculate the path prefix to remove
+                                    prefix_len = len(src_folder) + (1 if not src_folder.endswith('/') else 0)
+                                else:
+                                    members = all_members
+                                    prefix_len = 0
+
+                                total = len(members)
+                                
+                                # Extract with progress
+                                for index, member in enumerate(members, 1):
+                                    if src_folder:
+                                        # Remove the src_folder prefix from the path
+                                        target_path = member[prefix_len:]
+                                        if target_path:  # Skip if empty (was the src_folder itself)
+                                            zip_ref.extract(member, output_dir)
+                                            target_file = os.path.join(output_dir, member)
+                                            new_file = os.path.join(output_dir, target_path)
+                                            # Move file to remove src_folder prefix
+                                            os.renames(target_file, new_file)
+                                    else:
+                                        zip_ref.extract(member, output_dir)
+                                    percent = (index * 100) // total
+                                    print(f"\rProgress: {percent}% [{index}/{total} files]", end="", flush=True)
+                        else:  # tar.gz or tar.xz
+                            mode = "r:gz" if is_tar_gz else "r:xz"
+                            with tarfile.open(temp_file, mode) as tar:
+                                # Get all members and filter by src_folder if specified
+                                all_members = tar.getmembers()
+                                if src_folder:
+                                    # Only extract files from the specified source folder
+                                    members = [m for m in all_members if m.name.startswith(src_folder)]
+                                    # Calculate the path prefix to remove
+                                    prefix_len = len(src_folder) + (1 if not src_folder.endswith('/') else 0)
+                                else:
+                                    members = all_members
+                                    prefix_len = 0
+
+                                total = len(members)
+                                
+                                # Extract with progress
+                                for index, member in enumerate(members, 1):
+                                    if src_folder:
+                                        # Remove the src_folder prefix from the path
+                                        member.name = member.name[prefix_len:]
+                                        if member.name:  # Skip if empty (was the src_folder itself)
+                                            tar.extract(member, output_dir)
+                                    else:
+                                        tar.extract(member, output_dir)
+                                    percent = (index * 100) // total
+                                    print(f"\rProgress: {percent}% [{index}/{total} files]", end="", flush=True)
+                        print("\nExtraction completed.")
+
+                        # Clean up the downloaded archive
+                        os.remove(temp_file)
+                        print("Installation completed successfully.\n")
+
+                    except subprocess.CalledProcessError as e:
+                        print(f"\nError downloading file: {e}")
+                        if e.returncode == 22:  # HTTP error code
+                            print("Authentication failed or access denied. Please check your credentials.")
+                        elif e.returncode == 6:  # Could not resolve host
+                            print("Could not resolve host. Please check your internet connection.")
+                        elif e.returncode == 28:  # Operation timeout
+                            print("Download timed out. Please try again or check your connection.")
+                        if os.path.exists(temp_file):
+                            os.remove(temp_file)
+                        exit(1)
+                    except Exception as e:
+                        print(f"\nError verifying downloaded file: {e}")
+                        if os.path.exists(temp_file):
+                            os.remove(temp_file)
+                        exit(1)
+
                 except subprocess.CalledProcessError as e:
-                    print(f"\nError downloading file: {e}")
-                    if e.returncode == 22:  # HTTP error code
-                        print("Authentication failed or access denied. Please check your credentials.")
-                    elif e.returncode == 6:  # Could not resolve host
-                        print("Could not resolve host. Please check your internet connection.")
-                    elif e.returncode == 28:  # Operation timeout
-                        print("Download timed out. Please try again or check your connection.")
+                    print(f"Error running curl command: {e}")
+                    exit(1)
+                except tarfile.TarError as e:
+                    print(f"Error extracting archive: {e}")
                     if os.path.exists(temp_file):
                         os.remove(temp_file)
                     exit(1)
                 except Exception as e:
-                    print(f"\nError verifying downloaded file: {e}")
+                    print(f"Unexpected error during installation: {e}")
                     if os.path.exists(temp_file):
                         os.remove(temp_file)
                     exit(1)
+                finally:
+                    if temp_file and os.path.exists(temp_file):
+                        os.remove(temp_file)
 
-                # Extract the archive
-                print(f"Extracting files to {output_dir}...")
-                import tarfile
-                with tarfile.open(temp_file, "r:gz") as tar:
-                    # Get total number of members
-                    members = tar.getmembers()
-                    total = len(members)
-                    
-                    # Extract with progress
-                    for index, member in enumerate(members, 1):
-                        tar.extract(member, output_dir)
-                        percent = (index * 100) // total
-                        print(f"\rProgress: {percent}% [{index}/{total} files]", end="", flush=True)
-                print("\nExtraction completed.")
+    def install_sysroot(self):
+        """Install sysroot by downloading and extracting from configured URLs."""
+        sysroot_config_path = os.path.join(self.m_settings_root_path, "sysroot", "config.json")
+        self.install_from_config(sysroot_config_path)
 
-                # Clean up the downloaded archive
-                os.remove(temp_file)
-                print("Installation completed successfully.\n")
-
-            except subprocess.CalledProcessError as e:
-                print(f"Error running curl command: {e}")
-                exit(1)
-            except tarfile.TarError as e:
-                print(f"Error extracting sysroot archive: {e}")
-                if os.path.exists(temp_file):
-                    os.remove(temp_file)
-                exit(1)
-            except Exception as e:
-                print(f"Unexpected error during sysroot installation: {e}")
-                if os.path.exists(temp_file):
-                    os.remove(temp_file)
-                exit(1)
-            finally:
-                # Clean up the temp file if it exists
-                if temp_file and os.path.exists(temp_file):
-                    os.remove(temp_file)
+    def install_sdk(self):
+        """Install SDK by downloading and extracting from configured URLs."""
+        sdk_config_path = os.path.join(self.m_settings_root_path, "sdk", "config.json")
+        self.install_from_config(sdk_config_path)
 
     def generate_enviroment_set_batch_file(self, output_file, set_env_list, prepend_env_list):
         # Basic check
@@ -408,6 +505,7 @@ class WorkspaceInstaller:
 
         self.install_active_script()
         self.install_sysroot()
+        self.install_sdk()
         self.install_conan()
         self.install_android_dev()
         self.install_vs_code_setting()

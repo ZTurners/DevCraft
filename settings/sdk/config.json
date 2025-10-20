@@ -24,11 +24,11 @@
     {
       "set_list": 
       {
-        "VULKAN_SDK_HOME": "${workspace}/vulkansdk-windows-x64-1.4.328.1"
+        "VULKAN_SDK_HOME": "${workspace}/sdk/vulkansdk_windows_x64_1.4.328.1/Bin"
       },
       "prepend_list": 
       {
-        "PATH" : "${workspace}/vulkansdk-windows-x64-1.4.328.1/Bin"
+        "PATH" : "${workspace}/sdk/vulkansdk_windows_x64_1.4.328.1/Bin"
       }
     }
   }

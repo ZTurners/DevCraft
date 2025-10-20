@@ -24,7 +24,7 @@
     {
       "set_list": 
       {
-        "VULKAN_SDK_HOME": "${workspace}/sdk/vulkansdk_windows_x64_1.4.328.1/Bin"
+        "VK_LAYER_PATH": "${workspace}/sdk/vulkansdk_windows_x64_1.4.328.1/Bin"
       },
       "prepend_list": 
       {

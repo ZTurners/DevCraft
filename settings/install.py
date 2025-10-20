@@ -343,30 +343,37 @@ class WorkspaceInstaller:
                             
                             if is_zip:
                                 with zipfile.ZipFile(temp_file, 'r') as zip_ref:
-                                    # Get all members and filter by src_folder if specified
+                                    # Get all members and filter by src_folder or unzip_source if specified
                                     all_members = zip_ref.namelist()
-                                    if src_folder:
+                                    unzip_source = item.get("unzip_source", "")
+                                    
+                                    if src_folder or unzip_source:
+                                        # Use either src_folder or unzip_source as the base directory
+                                        base_dir = src_folder if src_folder else unzip_source
                                         # Only extract files from the specified source folder
-                                        members = [m for m in all_members if m.startswith(src_folder)]
-                                        # Calculate the path prefix to remove
-                                        prefix_len = len(src_folder) + (1 if not src_folder.endswith('/') else 0)
+                                        members = [m for m in all_members if m.startswith(base_dir)]
+                                        # Get the base directory to remove
+                                        base_dir_len = len(base_dir) + 1  # +1 for the slash
                                     else:
                                         members = all_members
-                                        prefix_len = 0
+                                        base_dir_len = 0
 
                                     total = len(members)
                                     
                                     # Extract with progress
                                     for index, member in enumerate(members, 1):
-                                        if src_folder:
-                                            # Remove the src_folder prefix from the path
-                                            target_path = member[prefix_len:]
-                                            if target_path:  # Skip if empty (was the src_folder itself)
+                                        if base_dir_len > 0:
+                                            # Remove the base directory prefix from the path
+                                            target_path = member[base_dir_len:]
+                                            if target_path:  # Skip if empty (was the base dir itself)
                                                 zip_ref.extract(member, target_folder)
-                                                target_file = os.path.join(target_folder, member)
-                                                new_file = os.path.join(target_folder, target_path)
-                                                # Move file to remove src_folder prefix
-                                                os.renames(target_file, new_file)
+                                                extracted_path = os.path.join(target_folder, member)
+                                                final_path = os.path.join(target_folder, target_path)
+                                                # Create the parent directory if it doesn't exist
+                                                os.makedirs(os.path.dirname(final_path), exist_ok=True)
+                                                # Move file to remove base directory prefix
+                                                if os.path.exists(extracted_path):
+                                                    shutil.move(extracted_path, final_path)
                                         else:
                                             zip_ref.extract(member, target_folder)
                                         percent = (index * 100) // total

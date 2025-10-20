@@ -206,7 +206,7 @@ class WorkspaceInstaller:
             with open(config_file_path, 'r') as f:
                 config = json.load(f)
         except json.JSONDecodeError:
-            print(f"Error: Invalid JSON in configuration file")
+            print(f"Error: Invalid JSON in configuration file: {config_file_path}")
             exit(1)
         except Exception as e:
             print(f"Unexpected error reading configuration: {e}")
@@ -235,10 +235,12 @@ class WorkspaceInstaller:
                 
                 # Process prepend_list
                 if "prepend_list" in active_batch["environments"]:
-                    for var, value in active_batch["environments"]["prepend_list"].items():
-                        # Replace workspace variable
-                        value = value.replace("${workspace}", self.m_workspace_root_path)
-                        prepend_env_list.append((var, value))
+                    for item in active_batch["environments"]["prepend_list"]:
+                        # Each item is a dictionary with a single key-value pair
+                        for var, value in item.items():
+                            # Replace workspace variable
+                            value = value.replace("${workspace}", self.m_workspace_root_path)
+                            prepend_env_list.append((var, value))
                 
                 # Generate the batch file
                 self.generate_enviroment_set_batch_file(file_path, set_env_list, prepend_env_list)
@@ -272,7 +274,7 @@ class WorkspaceInstaller:
                     temp_file = os.path.join(download_dir, download_filename)
 
                     # Download using curl with authentication
-                    print(f"Downloading {download_filename}...")
+                    print(f"Downloading... {item["download_url"]}")
 
                     # Prepare curl command
                     curl_cmd = [
@@ -440,13 +442,43 @@ class WorkspaceInstaller:
 
     def install_sysroot(self):
         """Install sysroot by downloading and extracting from configured URLs."""
-        sysroot_config_path = os.path.join(self.m_settings_root_path, "sysroot", "config.json")
+        if self.m_system_name == "Windows":
+            sysroot_config_path = os.path.join(self.m_settings_root_path, "sysroot", "sysroot_config.windows.json")
+        elif self.m_system_name == "Linux":
+            sysroot_config_path = os.path.join(self.m_settings_root_path, "sysroot", "sysroot_config.linux.json")
+        elif self.m_system_name == "Darwin":
+            sysroot_config_path = os.path.join(self.m_settings_root_path, "sysroot", "sysroot_config.macos.json")
         self.install_from_config(sysroot_config_path)
 
     def install_sdk(self):
         """Install SDK by downloading and extracting from configured URLs."""
-        sdk_config_path = os.path.join(self.m_settings_root_path, "sdk", "config.json")
+        if self.m_system_name == "Windows":
+            sdk_config_path = os.path.join(self.m_settings_root_path, "sdk", "sdk_config.windows.json")
+        elif self.m_system_name == "Linux":
+            sdk_config_path = os.path.join(self.m_settings_root_path, "sdk", "sdk_config.linux.json")
+        elif self.m_system_name == "Darwin":
+            sdk_config_path = os.path.join(self.m_settings_root_path, "sdk", "sdk_config.macos.json")
         self.install_from_config(sdk_config_path)
+
+    def install_tools(self):
+        """Install tools by downloading and extracting from configured URLs."""
+        if self.m_system_name == "Windows":
+            tools_config_path = os.path.join(self.m_settings_root_path, "tools", "tools_config.windows.json")
+        elif self.m_system_name == "Linux":
+            tools_config_path = os.path.join(self.m_settings_root_path, "tools", "tools_config.linux.json")
+        elif self.m_system_name == "Darwin":
+            tools_config_path = os.path.join(self.m_settings_root_path, "tools", "tools_config.macos.json")
+        self.install_from_config(tools_config_path)
+
+    def install_jdk(self):
+        """Install JDK by downloading and extracting from configured URLs."""
+        if self.m_system_name == "Windows":
+            jdk_config_path = os.path.join(self.m_settings_root_path, "jdk", "jdk_config.windows.json")
+        elif self.m_system_name == "Linux":
+            jdk_config_path = os.path.join(self.m_settings_root_path, "jdk", "jdk_config.linux.json")
+        elif self.m_system_name == "Darwin":
+            jdk_config_path = os.path.join(self.m_settings_root_path, "jdk", "jdk_config.macos.json")
+        self.install_from_config(jdk_config_path)
 
     def generate_enviroment_set_batch_file(self, output_file, set_env_list, prepend_env_list):
         # Basic check
@@ -506,6 +538,8 @@ class WorkspaceInstaller:
         self.install_active_script()
         self.install_sysroot()
         self.install_sdk()
+        self.install_jdk()
+        self.install_tools()
         self.install_conan()
         self.install_android_dev()
         self.install_vs_code_setting()

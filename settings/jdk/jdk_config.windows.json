@@ -1,0 +1,27 @@
+{
+  "downloads": 
+  [
+    {
+      "name": "jdk-25",
+      "download_url": "https://download.oracle.com/java/25/latest/jdk-25_windows-x64_bin.zip",
+      "download_auth": false,
+      "src_folder": "jdk-25",
+      "install_folder": "${workspace}/jdk/jdk-25"
+    }
+  ],
+  "active_batch":
+  {
+    "file_path": "${workspace}/jdk/active",
+    "environments":
+    {
+      "set_list": 
+      {
+        "JAVA_HOME": "${workspace}/jdk/jdk-25"
+      },
+      "prepend_list": 
+      [
+        {"PATH" : "${workspace}/jdk/jdk-25/bin"}
+      ]
+    }
+  }
+}

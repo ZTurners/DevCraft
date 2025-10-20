@@ -20,5 +20,11 @@ source "${WORKSPACE_ROOT}/rust/active.sh"
 # SDK settings
 source "${WORKSPACE_ROOT}/sdk/active.sh"
 
+# JDK settings
+source "${WORKSPACE_ROOT}/jdk/active.sh"
+
+# Tools settings
+source "${WORKSPACE_ROOT}/tools/active.sh"
+
 # summary
 python ${WORKSPACE_ROOT}/summary.py

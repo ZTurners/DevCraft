@@ -1,0 +1,26 @@
+{
+  "downloads": 
+  [
+    {
+      "name": "gradle-9.1.0",
+      "download_url": "https://services.gradle.org/distributions/gradle-9.1.0-bin.zip",
+      "download_auth": false,
+      "src_folder" : "gradle-9.1.0",
+      "install_folder": "${workspace}/tools/gradle-9.1.0"
+    }
+  ],
+  "active_batch":
+  {
+    "file_path": "${workspace}/tools/active",
+    "environments":
+    {
+      "set_list": 
+      {
+      },
+      "prepend_list": 
+      [
+        {"PATH" : "${workspace}/tools/gradle-9.1.0/bin"}
+      ]
+    }
+  }
+}

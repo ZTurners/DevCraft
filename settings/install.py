@@ -10,6 +10,7 @@ import urllib.request
 import datetime
 import zipfile
 import tarfile
+import copy
 
 class WorkspaceInstaller:
     def __init__(self):
@@ -245,163 +246,199 @@ class WorkspaceInstaller:
                 # Generate the batch file
                 self.generate_enviroment_set_batch_file(file_path, set_env_list, prepend_env_list)
 
-        # Process download items
-        if "downloads" in config:
-            for item in config["downloads"]:
+        # Process install items
+        if "install" in config:
+            for item in config["install"]:
                 if "download_url" not in item:
                     print(f"Warning: Skipping {node_name} entry - no download URL provided")
                     continue
 
                 temp_file = None
                 try:
-                    # Parse extra folder path
-                    if "install_folder" in item:
-                        # Replace workspace variable with actual path
-                        output_dir = item["install_folder"].replace("${workspace}", self.m_workspace_root_path)
-                    else:
-                        # Fallback to default location
-                        output_dir = os.path.join(self.m_workspace_root_path, node_name)
-
-                    # Check if already installed
-                    if os.path.exists(output_dir):
-                        print(f"\nAlready installed in {output_dir}")
-                        continue
-
-                    download_filename = os.path.basename(item["download_url"])
-                    # Create download directory in workspace
-                    download_dir = os.path.join(self.m_workspace_root_path, ".download")
-                    os.makedirs(download_dir, exist_ok=True)
-                    temp_file = os.path.join(download_dir, download_filename)
-
-                    # Download using curl with authentication
-                    print(f"Downloading... {item["download_url"]}")
-
-                    # Prepare curl command
-                    curl_cmd = [
-                        "curl",
-                        "--progress-bar",  # Show download progress
-                        "-L",  # Follow redirects
-                    ]
-
-                    # Add authentication if needed
-                    need_auth = item.get("download_auth", False)
-                    if need_auth:                    
-                        from urllib.parse import urlparse
-                        domain = urlparse(item["download_url"]).netloc
-                        print(f"\nDownloading from {domain}")
-                        
-                        username = input("Username: ")
-                        curl_cmd.extend(["--user", f"{username}"])  # Curl will prompt for password
-
-                    # Add output file specification
-                    curl_cmd.extend([
-                        "-o", temp_file,  # Output file
-                        "-f",  # Fail on HTTP errors
-                        "-S",  # Show error
-                        "--retry", "3",  # Retry up to 3 times
-                        "--retry-delay", "5",  # Wait 5 seconds between retries
-                        item["download_url"]
-                    ])
+                    # Check if we have target_folder
+                    target_folder = None
+                    if "target_folder" in item:
+                        target_folder = item["target_folder"].replace("${workspace}", self.m_workspace_root_path)
+                        # Check if already installed
+                        if os.path.exists(target_folder):
+                            print(f"\nFiles already extracted to {target_folder}")
+                            continue
                     
                     try:
-                        subprocess.run(curl_cmd, check=True)
-                        
-                        # Verify the downloaded file
-                        if not os.path.exists(temp_file):
-                            raise Exception("Downloaded file does not exist")
-                        
-                        file_size = os.path.getsize(temp_file)
-                        if file_size == 0:
-                            raise Exception("Downloaded file is empty")
+                        if "download_url" in item:
+                            download_filename = os.path.basename(item["download_url"])
+                            # Create download directory in workspace
+                            download_dir = os.path.join(self.m_workspace_root_path, ".download")
+                            os.makedirs(download_dir, exist_ok=True)
+                            temp_file = os.path.join(download_dir, download_filename)
+
+                            # Download using curl with authentication
+                            print(f"Downloading... {item["download_url"]}")
+
+                            # Prepare curl command
+                            curl_cmd = [
+                                "curl",
+                                "--progress-bar",  # Show download progress
+                                "-L",  # Follow redirects
+                            ]
+
+                            # Add authentication if needed
+                            need_auth = item.get("download_auth", False)
+                            if need_auth:                    
+                                from urllib.parse import urlparse
+                                domain = urlparse(item["download_url"]).netloc
+                                print(f"\nDownloading from {domain}")
+                                
+                                username = input("Username: ")
+                                curl_cmd.extend(["--user", f"{username}"])  # Curl will prompt for password
+
+                            # Add output file specification
+                            curl_cmd.extend([
+                                "-o", temp_file,  # Output file
+                                "-f",  # Fail on HTTP errors
+                                "-S",  # Show error
+                                "--retry", "3",  # Retry up to 3 times
+                                "--retry-delay", "5",  # Wait 5 seconds between retries
+                                item["download_url"]
+                            ])
+                            subprocess.run(curl_cmd, check=True)
                             
-                        # Check file extension to determine archive type
-                        is_zip = temp_file.lower().endswith('.zip')
-                        is_tar_gz = temp_file.lower().endswith('.tar.gz')
-                        is_tar_xz = temp_file.lower().endswith('.tar.xz')
+                            # Verify the downloaded file
+                            if not os.path.exists(temp_file):
+                                raise Exception("Downloaded file does not exist")
+                            
+                            file_size = os.path.getsize(temp_file)
+                            if file_size == 0:
+                                raise Exception("Downloaded file is empty")
+                            print("\nDownload completed and verified.")    
 
-                        if not (is_zip or is_tar_gz or is_tar_xz):
-                            raise Exception("Unsupported archive format. Only .zip, .tar.gz, and .tar.xz are supported")
+                        # Check if we need to unzip the archive
+                        if "unzip_source" in item:
+                            # Check file extension to determine archive type
+                            is_zip = temp_file.lower().endswith('.zip')
+                            is_tar_gz = temp_file.lower().endswith('.tar.gz')
+                            is_tar_xz = temp_file.lower().endswith('.tar.xz')
 
-                        # Verify archive integrity
-                        try:
+                            if not (is_zip or is_tar_gz or is_tar_xz):
+                                raise Exception("Unsupported archive format. Only .zip, .tar.gz, and .tar.xz are supported")
+
+                            # Verify archive integrity
+                            try:
+                                if is_zip:
+                                    with zipfile.ZipFile(temp_file, 'r') as test_zip:
+                                        if test_zip.testzip() is not None:
+                                            raise Exception("ZIP file is corrupted")
+                                else:  # tar.gz or tar.xz
+                                    mode = "r:gz" if is_tar_gz else "r:xz"
+                                    with tarfile.open(temp_file, mode) as test_tar:
+                                        test_tar.getmembers()
+                            except (zipfile.BadZipFile, tarfile.TarError) as e:
+                                raise Exception(f"Invalid archive file: {str(e)}")
+
+                            
+                            print(f"\nExtracting files to {target_folder}...")
+                            
+                            # Get source folder if specified
+                            src_folder = item.get("src_folder", "")
+                            
                             if is_zip:
-                                with zipfile.ZipFile(temp_file, 'r') as test_zip:
-                                    if test_zip.testzip() is not None:
-                                        raise Exception("ZIP file is corrupted")
+                                with zipfile.ZipFile(temp_file, 'r') as zip_ref:
+                                    # Get all members and filter by src_folder if specified
+                                    all_members = zip_ref.namelist()
+                                    if src_folder:
+                                        # Only extract files from the specified source folder
+                                        members = [m for m in all_members if m.startswith(src_folder)]
+                                        # Calculate the path prefix to remove
+                                        prefix_len = len(src_folder) + (1 if not src_folder.endswith('/') else 0)
+                                    else:
+                                        members = all_members
+                                        prefix_len = 0
+
+                                    total = len(members)
+                                    
+                                    # Extract with progress
+                                    for index, member in enumerate(members, 1):
+                                        if src_folder:
+                                            # Remove the src_folder prefix from the path
+                                            target_path = member[prefix_len:]
+                                            if target_path:  # Skip if empty (was the src_folder itself)
+                                                zip_ref.extract(member, target_folder)
+                                                target_file = os.path.join(target_folder, member)
+                                                new_file = os.path.join(target_folder, target_path)
+                                                # Move file to remove src_folder prefix
+                                                os.renames(target_file, new_file)
+                                        else:
+                                            zip_ref.extract(member, target_folder)
+                                        percent = (index * 100) // total
+                                        print(f"\rProgress: {percent}% [{index}/{total} files]", end="", flush=True)
                             else:  # tar.gz or tar.xz
                                 mode = "r:gz" if is_tar_gz else "r:xz"
-                                with tarfile.open(temp_file, mode) as test_tar:
-                                    test_tar.getmembers()
-                        except (zipfile.BadZipFile, tarfile.TarError) as e:
-                            raise Exception(f"Invalid archive file: {str(e)}")
-                        
-                        print("\nDownload completed and verified.")
-
-                        # Extract the archive
-                        print(f"Extracting files to {output_dir}...")
-                        
-                        # Get source folder if specified
-                        src_folder = item.get("src_folder", "")
-                        
-                        if is_zip:
-                            with zipfile.ZipFile(temp_file, 'r') as zip_ref:
-                                # Get all members and filter by src_folder if specified
-                                all_members = zip_ref.namelist()
-                                if src_folder:
-                                    # Only extract files from the specified source folder
-                                    members = [m for m in all_members if m.startswith(src_folder)]
-                                    # Calculate the path prefix to remove
-                                    prefix_len = len(src_folder) + (1 if not src_folder.endswith('/') else 0)
-                                else:
-                                    members = all_members
-                                    prefix_len = 0
-
-                                total = len(members)
-                                
-                                # Extract with progress
-                                for index, member in enumerate(members, 1):
+                                with tarfile.open(temp_file, mode) as tar:
+                                    # Get all members and filter by src_folder if specified
+                                    all_members = tar.getmembers()
                                     if src_folder:
-                                        # Remove the src_folder prefix from the path
-                                        target_path = member[prefix_len:]
-                                        if target_path:  # Skip if empty (was the src_folder itself)
-                                            zip_ref.extract(member, output_dir)
-                                            target_file = os.path.join(output_dir, member)
-                                            new_file = os.path.join(output_dir, target_path)
-                                            # Move file to remove src_folder prefix
-                                            os.renames(target_file, new_file)
+                                        # Only extract files from the specified source folder
+                                        members = [m for m in all_members if m.name.startswith(src_folder)]
+                                        # Get the base directory to remove (1.4.328.1 in case of 1.4.328.1/x86_64)
+                                        base_dir = src_folder.split('/')[0]
+                                        base_dir_len = len(base_dir) + 1  # +1 for the slash
                                     else:
-                                        zip_ref.extract(member, output_dir)
-                                    percent = (index * 100) // total
-                                    print(f"\rProgress: {percent}% [{index}/{total} files]", end="", flush=True)
-                        else:  # tar.gz or tar.xz
-                            mode = "r:gz" if is_tar_gz else "r:xz"
-                            with tarfile.open(temp_file, mode) as tar:
-                                # Get all members and filter by src_folder if specified
-                                all_members = tar.getmembers()
-                                if src_folder:
-                                    # Only extract files from the specified source folder
-                                    members = [m for m in all_members if m.name.startswith(src_folder)]
-                                    # Calculate the path prefix to remove
-                                    prefix_len = len(src_folder) + (1 if not src_folder.endswith('/') else 0)
+                                        members = all_members
+                                        base_dir_len = 0
+
+                                    total = len(members)
+                                    
+                                    # Extract with progress
+                                    for index, member in enumerate(members, 1):
+                                        if src_folder:
+                                            # Create a copy of the member to modify
+                                            new_member = copy.copy(member)
+                                            # Remove the base directory from the path
+                                            new_member.name = member.name[base_dir_len:]
+                                            if new_member.name:  # Skip if empty
+                                                tar.extract(new_member, target_folder)
+                                        else:
+                                            tar.extract(member, target_folder)
+                                        percent = (index * 100) // total
+                                        print(f"\rProgress: {percent}% [{index}/{total} files]", end="", flush=True)
+                            print("\nExtraction completed.")
+
+                        # Check if we have an execute command
+                        if "execute_command" in item:
+                            print("\nExecuting installation command...")
+                            
+                            # Replace variables in the command
+                            command = item["execute_command"]
+                            command = command.replace("${target_folder}", target_folder)
+                            command = command.replace("${download_file}", temp_file)
+                            
+                            # Create output directory if it doesn't exist
+                            os.makedirs(os.path.dirname(target_folder), exist_ok=True)
+                            
+                            # Execute the command
+                            try:
+                                need_admin = item.get("execute_command_as_admin", False)
+                                if need_admin:
+                                    print(f"Running command with administrative privileges: {command}")
+                                    if self.m_system_name == "Windows":
+                                        # Create a PowerShell command to run the process as admin
+                                        ps_command = f'Start-Process -FilePath "{temp_file}" -ArgumentList "install --root={target_folder}" -Verb RunAs -Wait'
+                                        subprocess.run(["powershell", "-Command", ps_command], check=True)
+                                    else:
+                                        # For Linux/macOS, use sudo
+                                        sudo_command = f"sudo {command}"
+                                        subprocess.run(sudo_command, shell=True, check=True)
                                 else:
-                                    members = all_members
-                                    prefix_len = 0
-
-                                total = len(members)
-                                
-                                # Extract with progress
-                                for index, member in enumerate(members, 1):
-                                    if src_folder:
-                                        # Remove the src_folder prefix from the path
-                                        member.name = member.name[prefix_len:]
-                                        if member.name:  # Skip if empty (was the src_folder itself)
-                                            tar.extract(member, output_dir)
-                                    else:
-                                        tar.extract(member, output_dir)
-                                    percent = (index * 100) // total
-                                    print(f"\rProgress: {percent}% [{index}/{total} files]", end="", flush=True)
-                        print("\nExtraction completed.")
-
+                                    print(f"Running command: {command}")
+                                    subprocess.run(command, shell=True, check=True)
+                                print("Command executed successfully.")
+                            except subprocess.CalledProcessError as e:
+                                print(f"Error executing command: {e}")
+                                if need_admin:
+                                    print("Note: This error might be due to insufficient privileges.")
+                                    print("Please ensure you have administrative rights.")
+                                raise
+                        
                         # Clean up the downloaded archive
                         os.remove(temp_file)
                         print("Installation completed successfully.\n")

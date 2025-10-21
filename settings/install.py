@@ -381,14 +381,21 @@ class WorkspaceInstaller:
                             else:  # tar.gz or tar.xz
                                 mode = "r:gz" if is_tar_gz else "r:xz"
                                 with tarfile.open(temp_file, mode) as tar:
-                                    # Get all members and filter by src_folder if specified
+                                    # Get all members and filter by src_folder or unzip_source if specified
                                     all_members = tar.getmembers()
-                                    if src_folder:
-                                        # Only extract files from the specified source folder
-                                        members = [m for m in all_members if m.name.startswith(src_folder)]
-                                        # Get the base directory to remove (1.4.328.1 in case of 1.4.328.1/x86_64)
-                                        base_dir = src_folder.split('/')[0]
-                                        base_dir_len = len(base_dir) + 1  # +1 for the slash
+                                    unzip_source = item.get("unzip_source", "")
+                                    
+                                    if unzip_source or src_folder:
+                                        # Use either src_folder or unzip_source as the path filter
+                                        path_filter = unzip_source if unzip_source else src_folder
+                                        # Only extract files from the specified path
+                                        members = [m for m in all_members if m.name.startswith(path_filter)]
+                                        # For unzip_source, we want to remove the entire prefix
+                                        if unzip_source:
+                                            base_dir_len = len(unzip_source) + 1  # +1 for the slash
+                                        else:
+                                            base_dir = src_folder.split('/')[0]
+                                            base_dir_len = len(base_dir) + 1
                                     else:
                                         members = all_members
                                         base_dir_len = 0
@@ -397,13 +404,15 @@ class WorkspaceInstaller:
                                     
                                     # Extract with progress
                                     for index, member in enumerate(members, 1):
-                                        if src_folder:
+                                        if base_dir_len > 0:
                                             # Create a copy of the member to modify
                                             new_member = copy.copy(member)
-                                            # Remove the base directory from the path
+                                            # Remove the prefix from the path
                                             new_member.name = member.name[base_dir_len:]
                                             if new_member.name:  # Skip if empty
-                                                tar.extract(new_member, target_folder)
+                                                # Check if this is a directory
+                                                if not new_member.name.endswith('/'):
+                                                    tar.extract(new_member, target_folder)
                                         else:
                                             tar.extract(member, target_folder)
                                         percent = (index * 100) // total

@@ -16,6 +16,7 @@
     {
       "set_list": 
       {
+        "GRADLE_USER_HOME": "${workspace}/tools/gradle-9.1.0/.gradle"
       },
       "prepend_list": 
       [

@@ -4,9 +4,21 @@
     {
       "name": "gradle-9.1.0",
       "target_folder": "${workspace}/tools/gradle-9.1.0",
-      "download_url": "https://services.gradle.org/distributions/gradle-9.1.0-bin.zip",
-      "download_auth": false,
-      "unzip_source" : "gradle-9.1.0"
+      "download":
+      {
+        "src": 
+        {
+          "url": "https://services.gradle.org/distributions/gradle-9.1.0-bin.zip",
+          "auth_required": false
+        },
+        "dest": "${workspace}/.downloads/gradle-9.1.0-bin.zip"
+      },
+      "unzip":
+      {
+        "src": "${workspace}/.downloads/gradle-9.1.0-bin.zip",
+        "src_sub_folder": "gradle-9.1.0",
+        "dest": "${workspace}/tools/gradle-9.1.0"
+      }
     }
   ],
   "generator_active_batch":

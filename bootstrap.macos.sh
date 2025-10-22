@@ -3,7 +3,7 @@
 DEV_ENV_ROOT_PATH=$(dirname "$(realpath "$0")")
 DEV_ENV_WORKSPACE_PATH="$DEV_ENV_ROOT_PATH/workspace"
 
-PYTHON_SETTING_FILE="$DEV_ENV_ROOT_PATH/settings/python/version.txt"
+PYTHON_SETTING_FILE="$DEV_ENV_ROOT_PATH/settings/boostrap_python_version.txt"
 # Read the file, trim whitespace, and remove quotes
 PYTHON_VERSION=$(cat "$PYTHON_SETTING_FILE" | xargs | tr -d '"')
 # Check if version was obtained
@@ -19,7 +19,7 @@ echo "Setting PYTHON_VERSION=$PYTHON_VERSION"
 # Configuration
 # PYTHON_VERSION=3.13.5
 PYTHON_URL="https://www.python.org/ftp/python/$PYTHON_VERSION/python-$PYTHON_VERSION-macos11.pkg"
-PYTHON_DOWNLOAD_DIR="$DEV_ENV_WORKSPACE_PATH/.download"
+PYTHON_DOWNLOAD_DIR="$DEV_ENV_WORKSPACE_PATH/.downloads"
 PYTHON_INSTALL_DIR="$DEV_ENV_WORKSPACE_PATH/python/python_$PYTHON_VERSION"
 ADD_TO_SYSTEM_PATH=0
 

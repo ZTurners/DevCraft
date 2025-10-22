@@ -185,16 +185,36 @@ class WorkspaceInstaller:
             value = value.replace("${download_file}", downloaded_file)
         return value
 
-    def _handle_download(self, item, context):
-        """Handle download_url node."""
-        download_filename = os.path.basename(item["download_url"])
-        # Create download directory in workspace
-        download_dir = os.path.join(self.m_workspace_root_path, ".download")
-        os.makedirs(download_dir, exist_ok=True)
-        downloaded_file = os.path.join(download_dir, download_filename)
+    def _handle_download(self, download_config, context):
+        """Handle download node."""
+        # download_config is the child node data: { src: {url, auth_required} or src_url, dest }
+        
+        # Handle src as either nested object or flat src_url
+        if "src" in download_config and isinstance(download_config["src"], dict):
+            src_url = download_config["src"]["url"]
+            need_auth = download_config["src"].get("auth_required", False)
+        else:
+            src_url = download_config.get("src_url", download_config.get("url", ""))
+            need_auth = download_config.get("auth_required", False)
+        
+        downloaded_file = self._formalize_path(download_config["dest"])
+
+        # Check if file already exists
+        if os.path.exists(downloaded_file):
+            file_size = os.path.getsize(downloaded_file)
+            if file_size > 0:
+                print(f"File already exists, skipping download: {downloaded_file}")
+                context['downloaded_file'] = downloaded_file
+                return downloaded_file
+            else:
+                print(f"File exists but is empty, will re-download: {downloaded_file}")
+                os.remove(downloaded_file)
+
+        # Create directory for downloaded file
+        os.makedirs(os.path.dirname(downloaded_file), exist_ok=True)
 
         # Download using curl with authentication
-        print(f"Downloading... {item['download_url']}")
+        print(f"Downloading... {src_url}")
 
         # Prepare curl command
         curl_cmd = [
@@ -204,10 +224,9 @@ class WorkspaceInstaller:
         ]
 
         # Add authentication if needed
-        need_auth = item.get("download_auth", False)
         if need_auth:                    
             from urllib.parse import urlparse
-            domain = urlparse(item["download_url"]).netloc
+            domain = urlparse(src_url).netloc
             print(f"\nDownloading from {domain}")
             
             username = input("Username: ")
@@ -220,7 +239,7 @@ class WorkspaceInstaller:
             "-S",  # Show error
             "--retry", "3",  # Retry up to 3 times
             "--retry-delay", "5",  # Wait 5 seconds between retries
-            item["download_url"]
+            src_url
         ])
         subprocess.run(curl_cmd, check=True)
         
@@ -236,13 +255,25 @@ class WorkspaceInstaller:
         context['downloaded_file'] = downloaded_file
         return downloaded_file
 
-    def _handle_unzip_source(self, item, context):
-        """Handle unzip_source node."""
-        downloaded_file = context.get('downloaded_file')
-        target_folder = context.get('target_folder')
+    def _handle_unzip_source(self, unzip_config, context):
+        """Handle unzip node."""
+        # unzip_config is the child node data: { src, src_sub_folder, dest }
+        
+        downloaded_file = self._replace_variables(unzip_config["src"], context.get('target_folder'), context.get('downloaded_file'))
+        target_folder = self._replace_variables(unzip_config["dest"], context.get('target_folder'), context.get('downloaded_file'))
+        unzip_source = unzip_config.get("src_sub_folder", "")
         
         if not downloaded_file or not target_folder:
             return
+        
+        # Check if target folder already exists
+        if os.path.exists(target_folder) and os.path.isdir(target_folder):
+            # Check if folder has content
+            if os.listdir(target_folder):
+                print(f"Target folder already exists and has content, skipping extraction: {target_folder}")
+                return
+            else:
+                print(f"Target folder exists but is empty, will extract: {target_folder}")
         
         # Check file extension to determine archive type
         is_zip = downloaded_file.lower().endswith('.zip')
@@ -267,18 +298,14 @@ class WorkspaceInstaller:
 
         print(f"\nExtracting files to {target_folder}...")
         
-        # Get source folder if specified
-        src_folder = item.get("src_folder", "")
-        
         if is_zip:
             with zipfile.ZipFile(downloaded_file, 'r') as zip_ref:
-                # Get all members and filter by src_folder or unzip_source if specified
+                # Get all members and filter by unzip_source if specified
                 all_members = zip_ref.namelist()
-                unzip_source = item.get("unzip_source", "")
                 
-                if src_folder or unzip_source:
-                    # Use either src_folder or unzip_source as the base directory
-                    base_dir = src_folder if src_folder else unzip_source
+                if unzip_source:
+                    # Use unzip_source as the base directory
+                    base_dir = unzip_source
                     # Ensure base_dir ends with / for proper prefix matching
                     if base_dir and not base_dir.endswith('/'):
                         base_dir_with_slash = base_dir + '/'
@@ -318,21 +345,16 @@ class WorkspaceInstaller:
         else:  # tar.gz or tar.xz
             mode = "r:gz" if is_tar_gz else "r:xz"
             with tarfile.open(downloaded_file, mode) as tar:
-                # Get all members and filter by src_folder or unzip_source if specified
+                # Get all members and filter by unzip_source if specified
                 all_members = tar.getmembers()
-                unzip_source = item.get("unzip_source", "")
                 
-                if unzip_source or src_folder:
-                    # Use either src_folder or unzip_source as the path filter
-                    path_filter = unzip_source if unzip_source else src_folder
+                if unzip_source:
+                    # Use unzip_source as the path filter
+                    path_filter = unzip_source
                     # Only extract files from the specified path
                     members = [m for m in all_members if m.name.startswith(path_filter)]
-                    # For unzip_source, we want to remove the entire prefix
-                    if unzip_source:
-                        base_dir_len = len(unzip_source) + 1  # +1 for the slash
-                    else:
-                        base_dir = src_folder.split('/')[0]
-                        base_dir_len = len(base_dir) + 1
+                    # Remove the entire prefix
+                    base_dir_len = len(unzip_source) + 1  # +1 for the slash
                 else:
                     members = all_members
                     base_dir_len = 0
@@ -356,9 +378,9 @@ class WorkspaceInstaller:
                     print(f"\rProgress: {percent}% [{index}/{total} files]", end="", flush=True)
         print("\nExtraction completed.")
 
-    def _handle_copy(self, item):
+    def _handle_copy(self, copy_config, context):
         """Handle copy node."""
-        copy_config = item["copy"]
+        # copy_config is the child node data: { src, dest }
         if not isinstance(copy_config, dict) or "src" not in copy_config or "dest" not in copy_config:
             return
         
@@ -392,9 +414,9 @@ class WorkspaceInstaller:
         else:
             print(f"Warning: Source path not found: {src_path}")
 
-    def _handle_make_execute_permission(self, item):
+    def _handle_make_execute_permission(self, permission_paths, context):
         """Handle make_execute_permission node."""
-        permission_paths = item["make_execute_permission"]
+        # permission_paths is the child node data: array of paths
         if not isinstance(permission_paths, list):
             return
         
@@ -425,9 +447,9 @@ class WorkspaceInstaller:
             else:
                 print(f"Warning: Path not found for execute permissions: {path_pattern}")
 
-    def _handle_environments(self, item):
+    def _handle_environments(self, env_config, context):
         """Handle environments node."""
-        env_config = item["environments"]
+        # env_config is the child node data: { set: {...}, prepend: [...] }
         if not isinstance(env_config, dict):
             return
         
@@ -458,19 +480,21 @@ class WorkspaceInstaller:
                             os.environ[var_name] = var_value
                         print(f"  Prepended {var_name}={var_value}")
 
-    def _handle_execute_command(self, item, context):
+    def _handle_execute_command(self, command_config, context):
         """Handle execute_command node."""
+        # command_config is the child node data: either a string or array of command parts
         print("\nExecuting installation command...")
         
         target_folder = context.get('target_folder')
         downloaded_file = context.get('downloaded_file')
         
         # Handle execute_command as either string or array
-        command = item["execute_command"]
-        if isinstance(command, list):
+        if isinstance(command_config, list):
             # If it's an array, join the parts with spaces
-            command = " ".join(command)
-        elif not isinstance(command, str):
+            command = " ".join(command_config)
+        elif isinstance(command_config, str):
+            command = command_config
+        else:
             print("Warning: execute_command must be a string or array")
             command = ""
         
@@ -480,31 +504,16 @@ class WorkspaceInstaller:
             
             # Execute the command
             try:
-                need_admin = item.get("execute_command_as_admin", False)
-                if need_admin:
-                    print(f"Running command with administrative privileges: {command}")
-                    if self.m_system_name == "Windows":
-                        # Create a PowerShell command to run the process as admin
-                        ps_command = f'Start-Process -FilePath "{downloaded_file}" -ArgumentList "install --root={target_folder}" -Verb RunAs -Wait'
-                        subprocess.run(["powershell", "-Command", ps_command], check=True)
-                    else:
-                        # For Linux/macOS, use sudo
-                        sudo_command = f"sudo {command}"
-                        subprocess.run(sudo_command, shell=True, check=True)
-                else:
-                    print(f"Running command: {command}")
-                    subprocess.run(command, shell=True, check=True)
+                print(f"Running command: {command}")
+                subprocess.run(command, shell=True, check=True)
                 print("Command executed successfully.")
             except subprocess.CalledProcessError as e:
                 print(f"Error executing command: {e}")
-                if need_admin:
-                    print("Note: This error might be due to insufficient privileges.")
-                    print("Please ensure you have administrative rights.")
                 raise
 
-    def _handle_generator_active_batch(self, config):
+    def _handle_generator_active_batch(self, generator_active_batch, context):
         """Handle generator_active_batch node."""
-        generator_active_batch = config["generator_active_batch"]
+        # generator_active_batch is the child node data: { file_path, environments }
         if "file_path" not in generator_active_batch or "environments" not in generator_active_batch:
             return
         
@@ -537,82 +546,34 @@ class WorkspaceInstaller:
         # Generate the batch file
         self.generate_enviroment_set_batch_file(file_path, set_env_list, prepend_env_list)
 
-    def _handle_install(self, config):
-        """Handle install node (array of install items)."""
-        if "install" not in config:
-            return
-        
-        for item in config["install"]:
-            downloaded_file = None
-            try:
-                # Process the install item
-                downloaded_file = self._process_install_item(item)
-                
-                # Clean up the downloaded archive
-                if downloaded_file and os.path.exists(downloaded_file):
-                    os.remove(downloaded_file)
-                print("Installation completed successfully.\n")
-
-            except subprocess.CalledProcessError as e:
-                print(f"\nError downloading file: {e}")
-                if e.returncode == 22:  # HTTP error code
-                    print("Authentication failed or access denied. Please check your credentials.")
-                elif e.returncode == 6:  # Could not resolve host
-                    print("Could not resolve host. Please check your internet connection.")
-                elif e.returncode == 28:  # Operation timeout
-                    print("Download timed out. Please try again or check your connection.")
-                if downloaded_file and os.path.exists(downloaded_file):
-                    os.remove(downloaded_file)
-                exit(1)
-            except Exception as e:
-                print(f"\nError during installation: {e}")
-                if downloaded_file and os.path.exists(downloaded_file):
-                    os.remove(downloaded_file)
-                exit(1)
-            finally:
-                if downloaded_file and os.path.exists(downloaded_file):
-                    os.remove(downloaded_file)
-
-    def _process_install_item(self, item):
-        """Process a single install item."""
-        # Create context for sharing data between handlers
-        context = {
-            'target_folder': None,
-            'downloaded_file': None
-        }
-        
-        # Check if we have target_folder
-        if "target_folder" in item:
-            context['target_folder'] = self._replace_variables(item["target_folder"])
-            # Check if already installed (skip if always_execute is true)
-            always_execute = item.get("always_execute", False)
-            if not always_execute and os.path.exists(context['target_folder']):
-                print(f"\nFiles already extracted to {context['target_folder']}")
-                return None
+    def _handle_install(self, install_node, context):
         
         # Define node handlers mapping (with context requirements)
         node_handlers = {
-            'download_url': (self._handle_download, True),
-            'unzip_source': (self._handle_unzip_source, True),
-            'copy': (self._handle_copy, False),
-            'make_execute_permission': (self._handle_make_execute_permission, False),
-            'environments': (self._handle_environments, False),
-            'execute_command': (self._handle_execute_command, True),
+            'download': self._handle_download,
+            'unzip': self._handle_unzip_source,
+            'copy': self._handle_copy,
+            'make_execute_permission': self._handle_make_execute_permission,
+            'environments': self._handle_environments,
+            'execute_command': self._handle_execute_command,
         }
         
-        # Process nodes in order
-        for node_name, (handler, needs_context) in node_handlers.items():
-            if node_name in item:
-                try:
-                    if needs_context:
-                        handler(item, context)
-                    else:
-                        handler(item)
-                except Exception as e:
-                    # Re-raise with context
-                    raise Exception(f"Error processing '{node_name}' node: {e}") from e
-        
-        return context['downloaded_file']
+        # install_node is now a dictionary where keys are install item names
+        # Iterate over each install item
+        for install_item_name, install_item in install_node.items():
+            print(f"\n{'='*60}")
+            print(f"Processing install item: '{install_item_name}'")
+            print(f"{'='*60}")
+            
+            # Process nodes in order for this install item
+            for node_name, handler in node_handlers.items():
+                if node_name in install_item:
+                    try:
+                        print(f"\nProcessing '{node_name}' node for '{install_item_name}'...")
+                        handler(install_item[node_name], context)
+                    except Exception as e:
+                        # Re-raise with context
+                        raise Exception(f"Error processing '{node_name}' node for '{install_item_name}': {e}") from e
 
     def install_from_config(self, config_file_path):
         """Generic installation function that handles downloading and extracting from configured URLs.
@@ -632,18 +593,23 @@ class WorkspaceInstaller:
         except Exception as e:
             print(f"Unexpected error reading configuration: {e}")
             exit(1)
-        
+
+        context = {
+            'config': config
+        }
+
         # Define config-level node handlers mapping
         config_handlers = {
-            'generator_active_batch': self._handle_generator_active_batch,
             'install': self._handle_install,
+            'generator_active_batch': self._handle_generator_active_batch,
         }
         
         # Process config nodes in order
         for node_name, handler in config_handlers.items():
             if node_name in config:
                 try:
-                    handler(config)
+                    print(f"\nProcessing '{node_name}' configuration...")
+                    handler(config[node_name], context)
                 except Exception as e:
                     print(f"Error processing '{node_name}' configuration: {e}")
                     exit(1)
@@ -753,19 +719,36 @@ class WorkspaceInstaller:
             if vs_info:
                 self.m_env_vs_path, self.m_env_vs_version = vs_info
 
-        self.install_python()
-        self.install_active_script()
-        self.install_sysroot()
-        self.install_sdk()
-        self.install_android_sdk()
-        self.install_jdk()
-        self.install_tools()
-        self.install_conan()
-        #self.install_android_dev()
-        self.install_vs_code_setting()
+        # Map system names to settings subdirectory paths
+        system_name_map = {
+            "Windows": os.path.join(self.m_settings_root_path, "windows"),
+            "Linux": os.path.join(self.m_settings_root_path, "linux"),
+            "Darwin": os.path.join(self.m_settings_root_path, "macos")
+        }
         
-        #self.install_rust()
+        # Get the path for current system
+        system_settings_path = system_name_map.get(self.m_system_name)
+        if not system_settings_path:
+            print(f"Error: Unsupported system: {self.m_system_name}")
+            return
         
+        # Check if the system settings path exists
+        if not os.path.exists(system_settings_path):
+            print(f"Warning: Settings path not found: {system_settings_path}")
+            return
+        
+        # Get all JSON files in the system-specific settings folder
+        config_files = [f for f in os.listdir(system_settings_path) 
+                       if f.endswith('.json') and os.path.isfile(os.path.join(system_settings_path, f))]
+        
+        # Process each config file
+        for config_file in sorted(config_files):
+            config_path = os.path.join(system_settings_path, config_file)
+            print(f"\n{'='*70}")
+            print(f"Processing config: {config_file}")
+            print(f"{'='*70}")
+            self.install_from_config(config_path)
+
 
     def install_active_script(self):
         self.active_scripts_src_folder = os.path.join(self.m_settings_root_path, "active_scripts")

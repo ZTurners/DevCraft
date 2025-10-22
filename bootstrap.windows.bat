@@ -21,7 +21,7 @@ if not exist "%VSWHERE_PATH%" (
     :: Python Installer Batch Script
     :: Usage: Just double-click this .bat file to run it (Admin rights required)
     :: Check if jq is available (optional, for more complex JSON parsing)
-    set "PYTHON_SETTING_FILE=%DEV_ENV_ROOT_PATH%/settings/python/version.txt"
+    set "PYTHON_SETTING_FILE=%DEV_ENV_ROOT_PATH%/settings/boostrap_python_version.txt"
     
     :: Read the file into a variable (strip whitespace)
     for /f "delims=" %%i in (%PYTHON_SETTING_FILE%) do (
@@ -46,7 +46,7 @@ if not exist "%VSWHERE_PATH%" (
     :: Configuration - Change these values if needed
     :: PYTHON_VERSION=3.13.5
     set PYTHON_URL=https://www.python.org/ftp/python/%PYTHON_VERSION%/python-%PYTHON_VERSION%-embed-amd64.zip
-    set PYTHON_DOWNLOAD_DIR=%DEV_ENV_WORKSPACE_PATH%/.download
+    set PYTHON_DOWNLOAD_DIR=%DEV_ENV_WORKSPACE_PATH%/.downloads
     set PYTHON_INSTALL_DIR=%DEV_ENV_WORKSPACE_PATH%/python/python_%PYTHON_VERSION%
     set PYTHON_SCRIPTS_DIR=%PYTHON_INSTALL_DIR%/Scripts
     set ADD_TO_SYSTEM_PATH=0

@@ -4,8 +4,21 @@
     {
       "name": "android_sdk_bootstrap",
       "target_folder": "${workspace}/android/android_sdk/cmdline-tools/booststrap",
-      "download_url": "https://dl.google.com/android/repository/commandlinetools-linux-13114758_latest.zip",
-      "unzip_source": "cmdline-tools",
+      "download":
+      {
+        "src": 
+        {
+          "url": "https://dl.google.com/android/repository/commandlinetools-linux-13114758_latest.zip",
+          "auth_required": false
+        },
+        "dest": "${workspace}/.downloads/commandlinetools-linux-13114758_latest.zip"
+      },
+      "unzip":
+      {
+        "src": "${workspace}/.downloads/commandlinetools-linux-13114758_latest.zip",
+        "src_sub_folder": "cmdline-tools",
+        "dest": "${workspace}/android/android_sdk/cmdline-tools/booststrap"
+      },
       "make_execute_permission": [
         "${workspace}/android/android_sdk/cmdline-tools/booststrap/bin"
       ]

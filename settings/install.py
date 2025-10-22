@@ -449,9 +449,6 @@ class WorkspaceInstaller:
 
     def _handle_environments(self, env_config, context):
         """Handle environments node."""
-        # env_config is the child node data: { set: {...}, prepend: [...] }
-        if not isinstance(env_config, dict):
-            return
         
         print("\nSetting environment variables...")
         

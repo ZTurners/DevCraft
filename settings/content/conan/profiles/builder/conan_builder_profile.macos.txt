@@ -8,5 +8,5 @@ os=Macos
 ninja/1.12.1
 cmake/3.31.6
 
-llvm/20.1.1@arieo/dev
-directx_tex/0.4.1@arieo/dev
+#llvm/20.1.1@arieo/dev
+#directx_tex/0.4.1@arieo/dev

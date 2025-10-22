@@ -1,0 +1,63 @@
+{
+  "install": 
+  [
+    {
+      "name": "conan_boostrap",
+      "target_folder": "${workspace}/conan",
+      "always_execute": true,
+      "copy":
+      {
+        "src": "${settings}/conan/content",
+        "dest": "${workspace}/conan"
+      }
+    },
+    {
+      "name": "conan_profile_detect",
+      "always_execute": true,
+      "environments":
+      {
+        "set": 
+        {
+            "CONAN_HOME": "${workspace}/conan",
+            "CONAN_USE_ALWAYS_SHORT_PATHS": "1"
+        },
+        "prepend": 
+        [
+        ]
+      },
+      "execute_command": [
+        "conan", "profile", "detect",
+        "--force"
+      ]
+    },
+    {
+      "name": "conan",
+      "always_execute": true,
+      "execute_command": [
+        "conan", "install", 
+        "${workspace}/conan/conanfile.txt",
+        "--update",
+        "--generator", "CMakeToolchain",
+        "--generator", "VirtualBuildEnv",
+        "--output-folder", "${workspace}/conan",
+        "--build", "never",
+        "--profile", "${workspace}/conan/profiles/builder/conan_builder_profile.macos.txt"
+      ]
+    }
+  ],
+  "active_batch":
+  {
+    "file_path": "${workspace}/conan/active",
+    "environments":
+    {
+        "set_list": 
+        {
+            "JAVA_HOME": "${workspace}/jdk/jdk-25"
+        },
+        "prepend_list": 
+        [
+            {"PATH" : "${workspace}/jdk/jdk-25/bin"}
+        ]
+    }
+  }
+}

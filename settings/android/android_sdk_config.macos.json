@@ -13,7 +13,7 @@
     {
       "name": "android_sdk",
       "target_folder": "${workspace}/android/android_sdk",
-      "always_update": true,
+      "always_execute": true,
       "execute_command": [
         "${workspace}/android/android_sdk/commandline-tools/booststrap/bin/sdkmanager",
         "--sdk_root=${workspace}/android/android_sdk",

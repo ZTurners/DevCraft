@@ -227,9 +227,9 @@ class WorkspaceInstaller:
                     target_folder = None
                     if "target_folder" in item:
                         target_folder = item["target_folder"].replace("${workspace}", self.m_workspace_root_path)
-                        # Check if already installed (skip if always_update is true)
-                        always_update = item.get("always_update", False)
-                        if os.path.exists(target_folder) and not always_update:
+                        # Check if already installed (skip if always_execute is true)
+                        always_execute = item.get("always_execute", False)
+                        if not always_execute and target_folder is not None and os.path.exists(target_folder):
                             print(f"\nFiles already extracted to {target_folder}")
                             continue
                     
@@ -396,6 +396,42 @@ class WorkspaceInstaller:
                                         print(f"\rProgress: {percent}% [{index}/{total} files]", end="", flush=True)
                             print("\nExtraction completed.")
 
+                        # Handle copy operation if specified
+                        if "copy" in item:
+                            copy_config = item["copy"]
+                            if isinstance(copy_config, dict) and "src" in copy_config and "dest" in copy_config:
+                                src_path = copy_config["src"].replace("${workspace}", self.m_workspace_root_path)
+                                src_path = src_path.replace("${settings}", self.m_settings_root_path)
+                                dest_path = copy_config["dest"].replace("${workspace}", self.m_workspace_root_path)
+                                dest_path = dest_path.replace("${settings}", self.m_settings_root_path)
+                                
+                                print(f"\nCopying files from {src_path} to {dest_path}...")
+                                
+                                if os.path.exists(src_path):
+                                    # Create destination directory if it doesn't exist
+                                    os.makedirs(dest_path, exist_ok=True)
+                                    
+                                    if os.path.isdir(src_path):
+                                        # Copy directory contents
+                                        try:
+                                            # Use copytree with dirs_exist_ok to allow overwriting
+                                            shutil.copytree(src_path, dest_path, dirs_exist_ok=True)
+                                            print(f"Successfully copied directory contents")
+                                        except Exception as e:
+                                            print(f"Error copying directory: {e}")
+                                            raise
+                                    else:
+                                        # Copy single file
+                                        try:
+                                            dest_file = os.path.join(dest_path, os.path.basename(src_path))
+                                            shutil.copy2(src_path, dest_file)
+                                            print(f"Successfully copied file")
+                                        except Exception as e:
+                                            print(f"Error copying file: {e}")
+                                            raise
+                                else:
+                                    print(f"Warning: Source path not found: {src_path}")
+
                         # Set execute permissions if specified
                         if "make_execute_permission" in item:
                             permission_paths = item["make_execute_permission"]
@@ -427,6 +463,39 @@ class WorkspaceInstaller:
                                     else:
                                         print(f"Warning: Path not found for execute permissions: {path_pattern}")
 
+                        # Set environment variables if specified
+                        if "environments" in item:
+                            env_config = item["environments"]
+                            if isinstance(env_config, dict):
+                                print("\nSetting environment variables...")
+                                
+                                # Handle "set" environment variables
+                                if "set" in env_config and isinstance(env_config["set"], dict):
+                                    for var_name, var_value in env_config["set"].items():
+                                        # Replace variables in value
+                                        var_value = var_value.replace("${workspace}", self.m_workspace_root_path)
+                                        var_value = var_value.replace("${settings}", self.m_settings_root_path)
+                                        # Set environment variable
+                                        os.environ[var_name] = var_value
+                                        print(f"  Set {var_name}={var_value}")
+                                
+                                # Handle "prepend" environment variables
+                                if "prepend" in env_config and isinstance(env_config["prepend"], list):
+                                    for item_env in env_config["prepend"]:
+                                        if isinstance(item_env, dict):
+                                            for var_name, var_value in item_env.items():
+                                                # Replace variables in value
+                                                var_value = var_value.replace("${workspace}", self.m_workspace_root_path)
+                                                var_value = var_value.replace("${settings}", self.m_settings_root_path)
+                                                # Prepend to existing value
+                                                existing_value = os.environ.get(var_name, "")
+                                                if existing_value:
+                                                    separator = ";" if self.m_system_name == "Windows" else ":"
+                                                    os.environ[var_name] = f"{var_value}{separator}{existing_value}"
+                                                else:
+                                                    os.environ[var_name] = var_value
+                                                print(f"  Prepended {var_name}={var_value}")
+
                         # Check if we have an execute command
                         if "execute_command" in item:
                             print("\nExecuting installation command...")
@@ -447,9 +516,6 @@ class WorkspaceInstaller:
                                     command = command.replace("${target_folder}", target_folder)
                                 if downloaded_file:
                                     command = command.replace("${download_file}", downloaded_file)
-                                
-                                # Create output directory if it doesn't exist
-                                os.makedirs(os.path.dirname(target_folder), exist_ok=True)
                                 
                                 # Execute the command
                                 try:
@@ -673,71 +739,14 @@ class WorkspaceInstaller:
         self.install_from_config(python_config_path)       
 
     def install_conan(self):
-        # Create .conan directory 
-        self.m_conan_setting_path = os.path.join(self.m_settings_root_path, "conan")
-        self.m_conan_workspace_path = os.path.join(self.m_workspace_root_path, "conan")
-        self.m_conan_home_path = os.path.join(self.m_conan_workspace_path, ".conan")
-
-        os.makedirs(self.m_conan_workspace_path, exist_ok=True)
-        os.makedirs(self.m_conan_home_path, exist_ok=True)
-
-        # Set environment variables
-        os.environ["CONAN_HOME"] = self.m_conan_home_path
-        os.environ["CONAN_USE_ALWAYS_SHORT_PATHS"] = "1"
-
-        # copy config files
-        config_files = ["global.conf", "settings.yml", "remotes.json"]
-        for file in config_files:
-            src = Path(self.m_conan_setting_path) / file
-            dst = Path(self.m_conan_home_path) / file
-            if src.exists():
-                shutil.copy2(src, dst)
-        
-        # Run conan commands
-        try:
-            # Detect profile
-            subprocess.run(["conan", "profile", "detect", "--force"], check=True)
-            
-            conan_profile_file = ""
-            conan_output_path = ""
-
-            # Windows build
-            if self.m_system_name == "Windows":
-                conan_profile_file = os.path.join(self.m_conan_setting_path, "profiles", "builder", "conan_builder_profile.windows.txt")
-                conan_output_path = os.path.join(self.m_conan_workspace_path)
-            # Ubuntu build
-            elif self.m_system_name == "Linux":
-                conan_profile_file = os.path.join(self.m_conan_setting_path, "profiles", "builder", "conan_builder_profile.ubuntu.txt")
-                conan_output_path = os.path.join(self.m_conan_workspace_path)
-            # Macos build
-            elif self.m_system_name == "Darwin":
-                conan_profile_file = os.path.join(self.m_conan_setting_path, "profiles", "builder", "conan_builder_profile.macos.txt")
-                conan_output_path = os.path.join(self.m_conan_workspace_path)
-
-            os.makedirs(conan_output_path, exist_ok=True)
-            conan_cmd = [
-                "conan", "install", os.path.join(self.m_conan_setting_path, "conanfile.txt"),
-                "--update",
-                "--generator", "CMakeToolchain",
-                "--generator", "VirtualBuildEnv",
-                "--output-folder", str(conan_output_path),
-                "--build", "never",
-                "--profile", conan_profile_file
-            ]
-
-            # Add Visual Studio path if available
-            if hasattr(self, 'm_env_vs_path') and self.m_env_vs_path:
-                conan_cmd.extend([
-                    "-c", f"tools.microsoft.msbuild:installation_path={self.m_env_vs_path}",
-                    "-c", f"tools.microsoft.msbuild:vs_version={self.m_env_vs_version}"
-                ])
-                print(f"Using Visual Studio at: {self.m_env_vs_path}")
-
-            subprocess.run(conan_cmd, check=True)
-            
-        except subprocess.CalledProcessError as e:
-            print(f"Command failed with error: {e}")
-            exit(1)
+        """Install Conan by downloading and extracting from configured URLs."""
+        if self.m_system_name == "Windows":
+            conan_config_path = os.path.join(self.m_settings_root_path, "conan", "conan_config.windows.json")
+        elif self.m_system_name == "Linux":
+            conan_config_path = os.path.join(self.m_settings_root_path, "conan", "conan_config.linux.json")
+        elif self.m_system_name == "Darwin":
+            conan_config_path = os.path.join(self.m_settings_root_path, "conan", "conan_config.macos.json")
+        self.install_from_config(conan_config_path)
 
     def install_vs_code_setting(self):
         self.vs_code_init_user_setting_file_path = os.path.join(self.m_settings_root_path, "vscode", "init_user_settings.json")

@@ -1,9 +1,8 @@
 {
   "install": 
-  [
+  {
+    "android_sdk_bootstrap":
     {
-      "name": "android_sdk_bootstrap",
-      "target_folder": "${workspace}/android/android_sdk/cmdline-tools/booststrap",
       "download":
       {
         "src": 
@@ -17,18 +16,16 @@
       {
         "src": "${workspace}/.downloads/commandlinetools-mac-13114758_latest.zip",
         "src_sub_folder": "cmdline-tools",
-        "dest": "${workspace}/android/android_sdk/cmdline-tools/booststrap"
+        "dest": "${workspace}/android/android_sdk/cmdline-tools/bootstrap"
       },
       "make_execute_permission": [
-        "${workspace}/android/android_sdk/cmdline-tools/booststrap/bin"
+        "${workspace}/android/android_sdk/cmdline-tools/bootstrap/bin"
       ]
     },
+    "android_sdk":
     {
-      "name": "android_sdk",
-      "target_folder": "${workspace}/android/android_sdk",
-      "always_execute": true,
       "execute_command": [
-        "${workspace}/android/android_sdk/commandline-tools/booststrap/bin/sdkmanager",
+        "${workspace}/android/android_sdk/cmdline-tools/bootstrap/bin/sdkmanager",
         "--sdk_root=${workspace}/android/android_sdk",
         "--install",
         "\"ndk;29.0.13599879\"",
@@ -38,19 +35,19 @@
         "\"cmdline-tools;19.0\""
       ]
     }
-  ],
+  },
   "generator_active_batch":
   {
     "file_path": "${workspace}/android/android_sdk/active",
     "environments":
     {
-      "set_list": 
+      "set": 
       {
         "ANDROID_SDK_ROOT": "${workspace}/android/android_sdk",
         "ANDROID_HOME": "${workspace}/android/android_sdk",
         "ANDROID_USER_HOME": "${workspace}/android/.android"
       },
-      "prepend_list": 
+      "prepend": 
       [
         {"PATH" : "${workspace}/android/android_sdk/cmdline-tools/bin"},
         {"PATH" : "${workspace}/android/android_sdk/platform-tools"}

@@ -46,11 +46,11 @@
     "file_path": "${workspace}/sdk/active",
     "environments":
     {
-      "set_list": 
+      "set": 
       {
         "VK_LAYER_PATH": "${workspace}/sdk/vulkansdk_windows_x64_1.4.328.1/Bin"
       },
-      "prepend_list": 
+      "prepend": 
       [
         {"PATH" : "${workspace}/sdk/vulkansdk_windows_x64_1.4.328.1/Bin"}
       ]

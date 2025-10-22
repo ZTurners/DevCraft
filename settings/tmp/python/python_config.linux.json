@@ -11,11 +11,11 @@
     "file_path": "${workspace}/python/active",
     "environments":
     {
-      "set_list": 
+      "set": 
       {
         "PYTHON_HOME": "${workspace}/python/python-3.13.5"
       },
-      "prepend_list": 
+      "prepend": 
       [
         {"PATH" : "${workspace}/python/python-3.13.5"},
         {"PATH" : "${workspace}/python/python-3.13.5/bin"},

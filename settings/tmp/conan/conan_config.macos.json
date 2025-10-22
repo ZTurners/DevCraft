@@ -50,11 +50,11 @@
     "file_path": "${workspace}/conan/active",
     "environments":
     {
-        "set_list": 
+        "set": 
         {
             "JAVA_HOME": "${workspace}/jdk/jdk-25"
         },
-        "prepend_list": 
+        "prepend": 
         [
             {"PATH" : "${workspace}/jdk/jdk-25/bin"}
         ]

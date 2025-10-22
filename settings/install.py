@@ -527,16 +527,16 @@ class WorkspaceInstaller:
         set_env_list = []
         prepend_env_list = []
         
-        # Process set_list
-        if "set_list" in generator_active_batch["environments"]:
-            for var, value in generator_active_batch["environments"]["set_list"].items():
+        # Process set
+        if "set" in generator_active_batch["environments"]:
+            for var, value in generator_active_batch["environments"]["set"].items():
                 # Replace workspace variable
                 value = self._formalize_path(value)
                 set_env_list.append((var, value))
         
-        # Process prepend_list
-        if "prepend_list" in generator_active_batch["environments"]:
-            for item in generator_active_batch["environments"]["prepend_list"]:
+        # Process prepend
+        if "prepend" in generator_active_batch["environments"]:
+            for item in generator_active_batch["environments"]["prepend"]:
                 # Each item is a dictionary with a single key-value pair
                 for var, value in item.items():
                     # Replace workspace variable

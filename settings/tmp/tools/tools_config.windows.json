@@ -26,11 +26,11 @@
     "file_path": "${workspace}/tools/active",
     "environments":
     {
-      "set_list": 
+      "set": 
       {
         "GRADLE_USER_HOME": "${workspace}/tools/gradle-9.1.0/.gradle"
       },
-      "prepend_list": 
+      "prepend": 
       [
         {"PATH" : "${workspace}/tools/gradle-9.1.0/bin"}
       ]

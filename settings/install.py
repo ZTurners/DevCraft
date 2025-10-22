@@ -663,30 +663,14 @@ class WorkspaceInstaller:
         shutil.copyfile(os.path.join(self.active_scripts_src_folder, "summary.py"), os.path.join(self.active_scripts_dest_folder, "summary.py"))
 
     def install_python(self):
-        self.python_setting_folder_path = os.path.join(self.m_settings_root_path, "python")
-        self.python_workspace_folder_path = os.path.join(self.m_workspace_root_path, "python")
-
-        # read version.txt
-        with open(os.path.join(self.python_setting_folder_path, "version.txt"), 'r') as file:
-            python_version = file.read()
-        # shutil.copyfile(os.path.join(self.python_setting_folder_path, "version.txt"), os.path.join(self.python_workspace_folder_path, "version.txt"))
-
-        python_root_path = os.path.join(self.python_workspace_folder_path, f"python_{python_version}")
-        python_bin_path = os.path.join(python_root_path, "bin")
-        python_script_path = os.path.join(python_root_path, "scripts")
-
-        # copy active python script
-        self.generate_enviroment_set_batch_file(
-            os.path.join(self.python_workspace_folder_path, "active"),
-            set_env_list = [
-                ('PYTHON_VERSION', python_version)
-            ],
-            prepend_env_list = [
-                ('PATH', python_root_path),
-                ('PATH', python_bin_path),
-                ('PATH', python_script_path)
-            ]
-        )           
+        """Install Python by downloading and extracting from configured URLs."""
+        if self.m_system_name == "Windows":
+            python_config_path = os.path.join(self.m_settings_root_path, "python", "python_config.windows.json")
+        elif self.m_system_name == "Linux":
+            python_config_path = os.path.join(self.m_settings_root_path, "python", "python_config.linux.json")
+        elif self.m_system_name == "Darwin":
+            python_config_path = os.path.join(self.m_settings_root_path, "python", "python_config.macos.json")
+        self.install_from_config(python_config_path)       
 
     def install_conan(self):
         # Create .conan directory 
@@ -754,75 +738,6 @@ class WorkspaceInstaller:
         except subprocess.CalledProcessError as e:
             print(f"Command failed with error: {e}")
             exit(1)
-
-    def install_android_dev(self):
-        # Set destination path (relative to current directory)
-        self.m_android_dev_setting_path = os.path.join(self.m_settings_root_path, "android")
-        self.m_android_dev_workspace_path = os.path.join(self.m_workspace_root_path, "android")
-        self.m_android_sdk_root_path = os.path.join(self.m_android_dev_workspace_path, "AndroidSDK")
-
-        if not os.path.exists(self.m_android_dev_workspace_path):
-            # dig the android bootstrap package path
-            self.m_android_sdk_bootstrap_root_path = self.get_conan_lib_folder("android_sdk/bootstrap@arieo/dev")
-            print(f"Info: Got android sdk bootstrap root: {self.m_android_sdk_bootstrap_root_path}")
-
-            if not self.m_android_sdk_bootstrap_root_path:
-                print("Error: ANDROID_SDK_BOOTSTRAP_ROOT environment variable is not set")
-                exit(1)
-            if not os.path.exists(self.m_android_sdk_bootstrap_root_path):
-                print(f"Error: Source directory does not exist: {self.m_android_sdk_bootstrap_root_path}")
-                exit(1)
-            
-            # Create destination directory if it doesn't exist
-            os.makedirs(self.m_android_dev_workspace_path, exist_ok=True)
-
-            # Copy files from source to destination
-            print(f"Copying Android SDK files to {self.m_android_dev_workspace_path}")
-            try:
-                shutil.copytree(self.m_android_sdk_bootstrap_root_path, self.m_android_dev_workspace_path, dirs_exist_ok=True)
-            except Exception as e:
-                print(f"Error: Failed to copy files: {str(e)}")
-                exit(1)
-
-        # Install packages
-        try:
-            android_settings_file = os.path.join(self.m_android_dev_setting_path, "settings.json")
-            if self.m_system_name == "Windows":
-                sdkmanager_exe_path = os.path.join(self.m_android_sdk_root_path, "cmdline-tools", "bootstrap", "bin", "sdkmanager.bat")
-            else:
-                sdkmanager_exe_path = os.path.join(self.m_android_sdk_root_path, "cmdline-tools", "bootstrap", "bin", "sdkmanager")
-
-            with open(android_settings_file, 'r') as f:
-                android_settings_json = json.load(f)
-            
-            # Get the list of packages to install (now nested under android_sdk)
-            android_install_packages = android_settings_json['android_sdk']['install_packages']
-
-            # Construct the sdkmanager command
-            print(f"Installing Android SDK packages ... {str(android_install_packages)}")
-            command = [sdkmanager_exe_path, '--install'] + android_install_packages
-            
-            result = subprocess.run(command, check=True)
-            print("Command executed successfully:")
-            print(result.stdout)
-        except Exception as e:
-            print(f"Error: Failed to install android sdk packages: {str(e)}")
-            exit(1)
-
-        # copy active python script
-        self.generate_enviroment_set_batch_file(
-            os.path.join(self.m_android_dev_workspace_path, "active"),
-            set_env_list = [
-                ('ANDROID_SDK_ROOT', self.m_android_sdk_root_path),
-                ('GRADLE_USER_HOME', os.path.join(self.m_android_dev_workspace_path, ".gradle")),
-                ('ANDROID_HOME', self.m_android_sdk_root_path),
-                ('ANDROID_USER_HOME', os.path.join(self.m_android_dev_workspace_path, ".android"))
-            ],
-            prepend_env_list = [
-                ('PATH', os.path.join(self.m_android_sdk_root_path, "cmdline-tools", "bootstrap", "bin")),
-                ('PATH', os.path.join(self.m_android_sdk_root_path, "platform-tools")),
-            ]
-        )
 
     def install_vs_code_setting(self):
         self.vs_code_init_user_setting_file_path = os.path.join(self.m_settings_root_path, "vscode", "init_user_settings.json")

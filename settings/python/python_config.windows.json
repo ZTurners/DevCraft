@@ -1,0 +1,26 @@
+{
+  "install": 
+  [
+    {
+      "name": "python-3.13.5",
+      "target_folder": "${workspace}/python/python-3.13.5"
+    }
+  ],
+  "active_batch":
+  {
+    "file_path": "${workspace}/python/active",
+    "environments":
+    {
+      "set_list": 
+      {
+        "PYTHON_HOME": "${workspace}/python/python-3.13.5"
+      },
+      "prepend_list": 
+      [
+        {"PATH" : "${workspace}/python/python-3.13.5"},
+        {"PATH" : "${workspace}/python/python-3.13.5/bin"},
+        {"PATH" : "${workspace}/python/python-3.13.5/scripts"}
+      ]
+    }
+  }
+}

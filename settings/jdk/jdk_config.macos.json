@@ -5,7 +5,7 @@
       "name": "jdk-25",
       "target_folder": "${workspace}/jdk/jdk-25",
       "download_url": "https://download.oracle.com/java/25/latest/jdk-25_macos-aarch64_bin.tar.gz",
-      "unzip_source": "jdk-25"
+      "unzip_source": "./jdk-25.0.1.jdk/Contents/Home"
     }
   ],
   "active_batch":

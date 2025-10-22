@@ -166,34 +166,6 @@ class WorkspaceInstaller:
         mode |= (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
         os.chmod(path, mode)
 
-    def get_conan_lib_folder(self, lib_name):
-        output = self.run_command(f'conan list "{lib_name}:*" --format=json')
-        try:
-            data = json.loads(output)
-            packages = []
-            
-            # Navigate through the JSON structure based on the example
-            local_cache = data.get("Local Cache", {})
-            package_ref = local_cache.get(f"{lib_name}", {})
-            revisions = package_ref.get("revisions", {})
-            
-            for revision_id, revision_data in revisions.items():
-                for package_id, package_info in revision_data.get("packages", {}).items():
-                    packages.append({
-                        "id": package_id,
-                        "revision": revision_id,
-                        "settings": package_info.get("info", {}).get("settings", {})
-                    })
-            
-            return self.run_command(f'conan cache path "{lib_name}:{packages[0]["id"]}"').strip()
-            
-        except json.JSONDecodeError as e:
-            print(f"Error parsing JSON output: {e}")
-            raise
-        except Exception as e:
-            print(f"Unexpected error processing JSON: {e}")
-            raise
-
     def install_from_config(self, config_file_path):
         """Generic installation function that handles downloading and extracting from configured URLs.
         Args:
@@ -249,18 +221,15 @@ class WorkspaceInstaller:
         # Process install items
         if "install" in config:
             for item in config["install"]:
-                if "download_url" not in item:
-                    print(f"Warning: Skipping {node_name} entry - no download URL provided")
-                    continue
-
-                temp_file = None
+                downloaded_file = None
                 try:
                     # Check if we have target_folder
                     target_folder = None
                     if "target_folder" in item:
                         target_folder = item["target_folder"].replace("${workspace}", self.m_workspace_root_path)
-                        # Check if already installed
-                        if os.path.exists(target_folder):
+                        # Check if already installed (skip if always_update is true)
+                        always_update = item.get("always_update", False)
+                        if os.path.exists(target_folder) and not always_update:
                             print(f"\nFiles already extracted to {target_folder}")
                             continue
                     
@@ -270,7 +239,7 @@ class WorkspaceInstaller:
                             # Create download directory in workspace
                             download_dir = os.path.join(self.m_workspace_root_path, ".download")
                             os.makedirs(download_dir, exist_ok=True)
-                            temp_file = os.path.join(download_dir, download_filename)
+                            downloaded_file = os.path.join(download_dir, download_filename)
 
                             # Download using curl with authentication
                             print(f"Downloading... {item["download_url"]}")
@@ -294,7 +263,7 @@ class WorkspaceInstaller:
 
                             # Add output file specification
                             curl_cmd.extend([
-                                "-o", temp_file,  # Output file
+                                "-o", downloaded_file,  # Output file
                                 "-f",  # Fail on HTTP errors
                                 "-S",  # Show error
                                 "--retry", "3",  # Retry up to 3 times
@@ -304,10 +273,10 @@ class WorkspaceInstaller:
                             subprocess.run(curl_cmd, check=True)
                             
                             # Verify the downloaded file
-                            if not os.path.exists(temp_file):
+                            if not os.path.exists(downloaded_file):
                                 raise Exception("Downloaded file does not exist")
                             
-                            file_size = os.path.getsize(temp_file)
+                            file_size = os.path.getsize(downloaded_file)
                             if file_size == 0:
                                 raise Exception("Downloaded file is empty")
                             print("\nDownload completed and verified.")    
@@ -315,9 +284,9 @@ class WorkspaceInstaller:
                         # Check if we need to unzip the archive
                         if "unzip_source" in item:
                             # Check file extension to determine archive type
-                            is_zip = temp_file.lower().endswith('.zip')
-                            is_tar_gz = temp_file.lower().endswith('.tar.gz')
-                            is_tar_xz = temp_file.lower().endswith('.tar.xz')
+                            is_zip = downloaded_file.lower().endswith('.zip')
+                            is_tar_gz = downloaded_file.lower().endswith('.tar.gz')
+                            is_tar_xz = downloaded_file.lower().endswith('.tar.xz')
 
                             if not (is_zip or is_tar_gz or is_tar_xz):
                                 raise Exception("Unsupported archive format. Only .zip, .tar.gz, and .tar.xz are supported")
@@ -325,12 +294,12 @@ class WorkspaceInstaller:
                             # Verify archive integrity
                             try:
                                 if is_zip:
-                                    with zipfile.ZipFile(temp_file, 'r') as test_zip:
+                                    with zipfile.ZipFile(downloaded_file, 'r') as test_zip:
                                         if test_zip.testzip() is not None:
                                             raise Exception("ZIP file is corrupted")
                                 else:  # tar.gz or tar.xz
                                     mode = "r:gz" if is_tar_gz else "r:xz"
-                                    with tarfile.open(temp_file, mode) as test_tar:
+                                    with tarfile.open(downloaded_file, mode) as test_tar:
                                         test_tar.getmembers()
                             except (zipfile.BadZipFile, tarfile.TarError) as e:
                                 raise Exception(f"Invalid archive file: {str(e)}")
@@ -342,7 +311,7 @@ class WorkspaceInstaller:
                             src_folder = item.get("src_folder", "")
                             
                             if is_zip:
-                                with zipfile.ZipFile(temp_file, 'r') as zip_ref:
+                                with zipfile.ZipFile(downloaded_file, 'r') as zip_ref:
                                     # Get all members and filter by src_folder or unzip_source if specified
                                     all_members = zip_ref.namelist()
                                     unzip_source = item.get("unzip_source", "")
@@ -350,10 +319,15 @@ class WorkspaceInstaller:
                                     if src_folder or unzip_source:
                                         # Use either src_folder or unzip_source as the base directory
                                         base_dir = src_folder if src_folder else unzip_source
+                                        # Ensure base_dir ends with / for proper prefix matching
+                                        if base_dir and not base_dir.endswith('/'):
+                                            base_dir_with_slash = base_dir + '/'
+                                        else:
+                                            base_dir_with_slash = base_dir
                                         # Only extract files from the specified source folder
-                                        members = [m for m in all_members if m.startswith(base_dir)]
+                                        members = [m for m in all_members if m.startswith(base_dir_with_slash) or m == base_dir]
                                         # Get the base directory to remove
-                                        base_dir_len = len(base_dir) + 1  # +1 for the slash
+                                        base_dir_len = len(base_dir_with_slash)
                                     else:
                                         members = all_members
                                         base_dir_len = 0
@@ -366,21 +340,24 @@ class WorkspaceInstaller:
                                             # Remove the base directory prefix from the path
                                             target_path = member[base_dir_len:]
                                             if target_path:  # Skip if empty (was the base dir itself)
-                                                zip_ref.extract(member, target_folder)
-                                                extracted_path = os.path.join(target_folder, member)
+                                                # Read the file content
+                                                file_data = zip_ref.read(member)
                                                 final_path = os.path.join(target_folder, target_path)
-                                                # Create the parent directory if it doesn't exist
+                                                
+                                                # Create parent directory if needed
                                                 os.makedirs(os.path.dirname(final_path), exist_ok=True)
-                                                # Move file to remove base directory prefix
-                                                if os.path.exists(extracted_path):
-                                                    shutil.move(extracted_path, final_path)
+                                                
+                                                # Write the file directly to the target location
+                                                if not member.endswith('/'):
+                                                    with open(final_path, 'wb') as f:
+                                                        f.write(file_data)
                                         else:
                                             zip_ref.extract(member, target_folder)
                                         percent = (index * 100) // total
                                         print(f"\rProgress: {percent}% [{index}/{total} files]", end="", flush=True)
                             else:  # tar.gz or tar.xz
                                 mode = "r:gz" if is_tar_gz else "r:xz"
-                                with tarfile.open(temp_file, mode) as tar:
+                                with tarfile.open(downloaded_file, mode) as tar:
                                     # Get all members and filter by src_folder or unzip_source if specified
                                     all_members = tar.getmembers()
                                     unzip_source = item.get("unzip_source", "")
@@ -419,44 +396,88 @@ class WorkspaceInstaller:
                                         print(f"\rProgress: {percent}% [{index}/{total} files]", end="", flush=True)
                             print("\nExtraction completed.")
 
+                        # Set execute permissions if specified
+                        if "make_execute_permission" in item:
+                            permission_paths = item["make_execute_permission"]
+                            if isinstance(permission_paths, list):
+                                print("\nSetting execute permissions...")
+                                for path_pattern in permission_paths:
+                                    # Replace workspace variable
+                                    path_pattern = path_pattern.replace("${workspace}", self.m_workspace_root_path)
+                                    
+                                    if os.path.exists(path_pattern):
+                                        # Check if it's a directory or file
+                                        if os.path.isdir(path_pattern):
+                                            # Recursively set execute permissions for all files in the directory
+                                            for root, dirs, files in os.walk(path_pattern):
+                                                for filename in files:
+                                                    file_path = os.path.join(root, filename)
+                                                    try:
+                                                        self.make_executable(file_path)
+                                                    except Exception as e:
+                                                        print(f"Warning: Could not set execute permission for {file_path}: {e}")
+                                            print(f"Set execute permissions for all files in: {path_pattern}")
+                                        else:
+                                            # It's a single file
+                                            try:
+                                                self.make_executable(path_pattern)
+                                                print(f"Set execute permission for: {path_pattern}")
+                                            except Exception as e:
+                                                print(f"Warning: Could not set execute permission for {path_pattern}: {e}")
+                                    else:
+                                        print(f"Warning: Path not found for execute permissions: {path_pattern}")
+
                         # Check if we have an execute command
                         if "execute_command" in item:
                             print("\nExecuting installation command...")
                             
-                            # Replace variables in the command
+                            # Handle execute_command as either string or array
                             command = item["execute_command"]
-                            command = command.replace("${target_folder}", target_folder)
-                            command = command.replace("${download_file}", temp_file)
+                            if isinstance(command, list):
+                                # If it's an array, join the parts with spaces
+                                command = " ".join(command)
+                            elif not isinstance(command, str):
+                                print("Warning: execute_command must be a string or array")
+                                command = ""
                             
-                            # Create output directory if it doesn't exist
-                            os.makedirs(os.path.dirname(target_folder), exist_ok=True)
-                            
-                            # Execute the command
-                            try:
-                                need_admin = item.get("execute_command_as_admin", False)
-                                if need_admin:
-                                    print(f"Running command with administrative privileges: {command}")
-                                    if self.m_system_name == "Windows":
-                                        # Create a PowerShell command to run the process as admin
-                                        ps_command = f'Start-Process -FilePath "{temp_file}" -ArgumentList "install --root={target_folder}" -Verb RunAs -Wait'
-                                        subprocess.run(["powershell", "-Command", ps_command], check=True)
+                            if command:
+                                # Replace variables in the command
+                                command = command.replace("${workspace}", self.m_workspace_root_path)
+                                if target_folder:
+                                    command = command.replace("${target_folder}", target_folder)
+                                if downloaded_file:
+                                    command = command.replace("${download_file}", downloaded_file)
+                                
+                                # Create output directory if it doesn't exist
+                                os.makedirs(os.path.dirname(target_folder), exist_ok=True)
+                                
+                                # Execute the command
+                                try:
+                                    need_admin = item.get("execute_command_as_admin", False)
+                                    if need_admin:
+                                        print(f"Running command with administrative privileges: {command}")
+                                        if self.m_system_name == "Windows":
+                                            # Create a PowerShell command to run the process as admin
+                                            ps_command = f'Start-Process -FilePath "{downloaded_file}" -ArgumentList "install --root={target_folder}" -Verb RunAs -Wait'
+                                            subprocess.run(["powershell", "-Command", ps_command], check=True)
+                                        else:
+                                            # For Linux/macOS, use sudo
+                                            sudo_command = f"sudo {command}"
+                                            subprocess.run(sudo_command, shell=True, check=True)
                                     else:
-                                        # For Linux/macOS, use sudo
-                                        sudo_command = f"sudo {command}"
-                                        subprocess.run(sudo_command, shell=True, check=True)
-                                else:
-                                    print(f"Running command: {command}")
-                                    subprocess.run(command, shell=True, check=True)
-                                print("Command executed successfully.")
-                            except subprocess.CalledProcessError as e:
-                                print(f"Error executing command: {e}")
-                                if need_admin:
-                                    print("Note: This error might be due to insufficient privileges.")
-                                    print("Please ensure you have administrative rights.")
-                                raise
+                                        print(f"Running command: {command}")
+                                        subprocess.run(command, shell=True, check=True)
+                                    print("Command executed successfully.")
+                                except subprocess.CalledProcessError as e:
+                                    print(f"Error executing command: {e}")
+                                    if need_admin:
+                                        print("Note: This error might be due to insufficient privileges.")
+                                        print("Please ensure you have administrative rights.")
+                                    raise
                         
                         # Clean up the downloaded archive
-                        os.remove(temp_file)
+                        if downloaded_file and os.path.exists(downloaded_file):
+                            os.remove(downloaded_file)
                         print("Installation completed successfully.\n")
 
                     except subprocess.CalledProcessError as e:
@@ -467,13 +488,13 @@ class WorkspaceInstaller:
                             print("Could not resolve host. Please check your internet connection.")
                         elif e.returncode == 28:  # Operation timeout
                             print("Download timed out. Please try again or check your connection.")
-                        if os.path.exists(temp_file):
-                            os.remove(temp_file)
+                        if downloaded_file and os.path.exists(downloaded_file):
+                            os.remove(downloaded_file)
                         exit(1)
                     except Exception as e:
                         print(f"\nError verifying downloaded file: {e}")
-                        if os.path.exists(temp_file):
-                            os.remove(temp_file)
+                        if downloaded_file and os.path.exists(downloaded_file):
+                            os.remove(downloaded_file)
                         exit(1)
 
                 except subprocess.CalledProcessError as e:
@@ -481,17 +502,17 @@ class WorkspaceInstaller:
                     exit(1)
                 except tarfile.TarError as e:
                     print(f"Error extracting archive: {e}")
-                    if os.path.exists(temp_file):
-                        os.remove(temp_file)
+                    if downloaded_file and os.path.exists(downloaded_file):
+                        os.remove(downloaded_file)
                     exit(1)
                 except Exception as e:
                     print(f"Unexpected error during installation: {e}")
-                    if os.path.exists(temp_file):
-                        os.remove(temp_file)
+                    if downloaded_file and os.path.exists(downloaded_file):
+                        os.remove(downloaded_file)
                     exit(1)
                 finally:
-                    if temp_file and os.path.exists(temp_file):
-                        os.remove(temp_file)
+                    if downloaded_file and os.path.exists(downloaded_file):
+                        os.remove(downloaded_file)
 
     def install_sysroot(self):
         """Install sysroot by downloading and extracting from configured URLs."""
@@ -532,6 +553,16 @@ class WorkspaceInstaller:
         elif self.m_system_name == "Darwin":
             jdk_config_path = os.path.join(self.m_settings_root_path, "jdk", "jdk_config.macos.json")
         self.install_from_config(jdk_config_path)
+
+    def install_android_sdk(self):
+        """Install Android by downloading and extracting from configured URLs."""
+        if self.m_system_name == "Windows":
+            android_config_path = os.path.join(self.m_settings_root_path, "android", "android_sdk_config.windows.json")
+        elif self.m_system_name == "Linux":
+            android_config_path = os.path.join(self.m_settings_root_path, "android", "android_sdk_config.linux.json")
+        elif self.m_system_name == "Darwin":
+            android_config_path = os.path.join(self.m_settings_root_path, "android", "android_sdk_config.macos.json")
+        self.install_from_config(android_config_path)
 
     def generate_enviroment_set_batch_file(self, output_file, set_env_list, prepend_env_list):
         # Basic check
@@ -588,16 +619,18 @@ class WorkspaceInstaller:
             if vs_info:
                 self.m_env_vs_path, self.m_env_vs_version = vs_info
 
+        self.install_python()
         self.install_active_script()
         self.install_sysroot()
         self.install_sdk()
+        self.install_android_sdk()
         self.install_jdk()
         self.install_tools()
         self.install_conan()
-        self.install_android_dev()
+        #self.install_android_dev()
         self.install_vs_code_setting()
-        self.install_python()
-        self.install_rust()
+        
+        #self.install_rust()
         
 
     def install_active_script(self):

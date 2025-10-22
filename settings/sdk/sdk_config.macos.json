@@ -3,7 +3,7 @@
   [
 
   ],
-  "active_batch":
+  "generator_active_batch":
   {
     "file_path": "${workspace}/sdk/active",
     "environments":

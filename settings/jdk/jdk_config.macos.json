@@ -8,7 +8,7 @@
       "unzip_source": "./jdk-25.0.1.jdk/Contents/Home"
     }
   ],
-  "active_batch":
+  "generator_active_batch":
   {
     "file_path": "${workspace}/jdk/active",
     "environments":

@@ -20,7 +20,6 @@ class WorkspaceInstaller:
         self.m_workspace_root_path = os.path.join(self.m_dev_env_root_path, "workspace")
         self.m_system_name = platform.system()
         self.m_env_vs_path = None
-
         self.m_summary_data = []
 
     def detect_visual_studio(self):
@@ -166,6 +165,455 @@ class WorkspaceInstaller:
         mode |= (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
         os.chmod(path, mode)
 
+    def _formalize_path(self, path):
+        """Formalize a path by replacing workspace and settings variables."""
+        if not isinstance(path, str):
+            return path
+        path = path.replace("${workspace}", self.m_workspace_root_path)
+        path = path.replace("${settings}", self.m_settings_root_path)
+        return path
+
+    def _replace_variables(self, value, target_folder=None, downloaded_file=None):
+        """Replace variables in a string with their actual values."""
+        if not isinstance(value, str):
+            return value
+        value = value.replace("${workspace}", self.m_workspace_root_path)
+        value = value.replace("${settings}", self.m_settings_root_path)
+        if target_folder:
+            value = value.replace("${target_folder}", target_folder)
+        if downloaded_file:
+            value = value.replace("${download_file}", downloaded_file)
+        return value
+
+    def _handle_download(self, item, context):
+        """Handle download_url node."""
+        download_filename = os.path.basename(item["download_url"])
+        # Create download directory in workspace
+        download_dir = os.path.join(self.m_workspace_root_path, ".download")
+        os.makedirs(download_dir, exist_ok=True)
+        downloaded_file = os.path.join(download_dir, download_filename)
+
+        # Download using curl with authentication
+        print(f"Downloading... {item['download_url']}")
+
+        # Prepare curl command
+        curl_cmd = [
+            "curl",
+            "--progress-bar",  # Show download progress
+            "-L",  # Follow redirects
+        ]
+
+        # Add authentication if needed
+        need_auth = item.get("download_auth", False)
+        if need_auth:                    
+            from urllib.parse import urlparse
+            domain = urlparse(item["download_url"]).netloc
+            print(f"\nDownloading from {domain}")
+            
+            username = input("Username: ")
+            curl_cmd.extend(["--user", f"{username}"])  # Curl will prompt for password
+
+        # Add output file specification
+        curl_cmd.extend([
+            "-o", downloaded_file,  # Output file
+            "-f",  # Fail on HTTP errors
+            "-S",  # Show error
+            "--retry", "3",  # Retry up to 3 times
+            "--retry-delay", "5",  # Wait 5 seconds between retries
+            item["download_url"]
+        ])
+        subprocess.run(curl_cmd, check=True)
+        
+        # Verify the downloaded file
+        if not os.path.exists(downloaded_file):
+            raise Exception("Downloaded file does not exist")
+        
+        file_size = os.path.getsize(downloaded_file)
+        if file_size == 0:
+            raise Exception("Downloaded file is empty")
+        print("\nDownload completed and verified.")
+        
+        context['downloaded_file'] = downloaded_file
+        return downloaded_file
+
+    def _handle_unzip_source(self, item, context):
+        """Handle unzip_source node."""
+        downloaded_file = context.get('downloaded_file')
+        target_folder = context.get('target_folder')
+        
+        if not downloaded_file or not target_folder:
+            return
+        
+        # Check file extension to determine archive type
+        is_zip = downloaded_file.lower().endswith('.zip')
+        is_tar_gz = downloaded_file.lower().endswith('.tar.gz')
+        is_tar_xz = downloaded_file.lower().endswith('.tar.xz')
+
+        if not (is_zip or is_tar_gz or is_tar_xz):
+            raise Exception("Unsupported archive format. Only .zip, .tar.gz, and .tar.xz are supported")
+
+        # Verify archive integrity
+        try:
+            if is_zip:
+                with zipfile.ZipFile(downloaded_file, 'r') as test_zip:
+                    if test_zip.testzip() is not None:
+                        raise Exception("ZIP file is corrupted")
+            else:  # tar.gz or tar.xz
+                mode = "r:gz" if is_tar_gz else "r:xz"
+                with tarfile.open(downloaded_file, mode) as test_tar:
+                    test_tar.getmembers()
+        except (zipfile.BadZipFile, tarfile.TarError) as e:
+            raise Exception(f"Invalid archive file: {str(e)}")
+
+        print(f"\nExtracting files to {target_folder}...")
+        
+        # Get source folder if specified
+        src_folder = item.get("src_folder", "")
+        
+        if is_zip:
+            with zipfile.ZipFile(downloaded_file, 'r') as zip_ref:
+                # Get all members and filter by src_folder or unzip_source if specified
+                all_members = zip_ref.namelist()
+                unzip_source = item.get("unzip_source", "")
+                
+                if src_folder or unzip_source:
+                    # Use either src_folder or unzip_source as the base directory
+                    base_dir = src_folder if src_folder else unzip_source
+                    # Ensure base_dir ends with / for proper prefix matching
+                    if base_dir and not base_dir.endswith('/'):
+                        base_dir_with_slash = base_dir + '/'
+                    else:
+                        base_dir_with_slash = base_dir
+                    # Only extract files from the specified source folder
+                    members = [m for m in all_members if m.startswith(base_dir_with_slash) or m == base_dir]
+                    # Get the base directory to remove
+                    base_dir_len = len(base_dir_with_slash)
+                else:
+                    members = all_members
+                    base_dir_len = 0
+
+                total = len(members)
+                
+                # Extract with progress
+                for index, member in enumerate(members, 1):
+                    if base_dir_len > 0:
+                        # Remove the base directory prefix from the path
+                        target_path = member[base_dir_len:]
+                        if target_path:  # Skip if empty (was the base dir itself)
+                            # Read the file content
+                            file_data = zip_ref.read(member)
+                            final_path = os.path.join(target_folder, target_path)
+                            
+                            # Create parent directory if needed
+                            os.makedirs(os.path.dirname(final_path), exist_ok=True)
+                            
+                            # Write the file directly to the target location
+                            if not member.endswith('/'):
+                                with open(final_path, 'wb') as f:
+                                    f.write(file_data)
+                    else:
+                        zip_ref.extract(member, target_folder)
+                    percent = (index * 100) // total
+                    print(f"\rProgress: {percent}% [{index}/{total} files]", end="", flush=True)
+        else:  # tar.gz or tar.xz
+            mode = "r:gz" if is_tar_gz else "r:xz"
+            with tarfile.open(downloaded_file, mode) as tar:
+                # Get all members and filter by src_folder or unzip_source if specified
+                all_members = tar.getmembers()
+                unzip_source = item.get("unzip_source", "")
+                
+                if unzip_source or src_folder:
+                    # Use either src_folder or unzip_source as the path filter
+                    path_filter = unzip_source if unzip_source else src_folder
+                    # Only extract files from the specified path
+                    members = [m for m in all_members if m.name.startswith(path_filter)]
+                    # For unzip_source, we want to remove the entire prefix
+                    if unzip_source:
+                        base_dir_len = len(unzip_source) + 1  # +1 for the slash
+                    else:
+                        base_dir = src_folder.split('/')[0]
+                        base_dir_len = len(base_dir) + 1
+                else:
+                    members = all_members
+                    base_dir_len = 0
+
+                total = len(members)
+                
+                # Extract with progress
+                for index, member in enumerate(members, 1):
+                    if base_dir_len > 0:
+                        # Create a copy of the member to modify
+                        new_member = copy.copy(member)
+                        # Remove the prefix from the path
+                        new_member.name = member.name[base_dir_len:]
+                        if new_member.name:  # Skip if empty
+                            # Check if this is a directory
+                            if not new_member.name.endswith('/'):
+                                tar.extract(new_member, target_folder)
+                    else:
+                        tar.extract(member, target_folder)
+                    percent = (index * 100) // total
+                    print(f"\rProgress: {percent}% [{index}/{total} files]", end="", flush=True)
+        print("\nExtraction completed.")
+
+    def _handle_copy(self, item):
+        """Handle copy node."""
+        copy_config = item["copy"]
+        if not isinstance(copy_config, dict) or "src" not in copy_config or "dest" not in copy_config:
+            return
+        
+        src_path = self._replace_variables(copy_config["src"])
+        dest_path = self._replace_variables(copy_config["dest"])
+        
+        print(f"\nCopying files from {src_path} to {dest_path}...")
+        
+        if os.path.exists(src_path):
+            # Create destination directory if it doesn't exist
+            os.makedirs(dest_path, exist_ok=True)
+            
+            if os.path.isdir(src_path):
+                # Copy directory contents
+                try:
+                    # Use copytree with dirs_exist_ok to allow overwriting
+                    shutil.copytree(src_path, dest_path, dirs_exist_ok=True)
+                    print(f"Successfully copied directory contents")
+                except Exception as e:
+                    print(f"Error copying directory: {e}")
+                    raise
+            else:
+                # Copy single file
+                try:
+                    dest_file = os.path.join(dest_path, os.path.basename(src_path))
+                    shutil.copy2(src_path, dest_file)
+                    print(f"Successfully copied file")
+                except Exception as e:
+                    print(f"Error copying file: {e}")
+                    raise
+        else:
+            print(f"Warning: Source path not found: {src_path}")
+
+    def _handle_make_execute_permission(self, item):
+        """Handle make_execute_permission node."""
+        permission_paths = item["make_execute_permission"]
+        if not isinstance(permission_paths, list):
+            return
+        
+        print("\nSetting execute permissions...")
+        for path_pattern in permission_paths:
+            # Replace workspace variable
+            path_pattern = self._replace_variables(path_pattern)
+            
+            if os.path.exists(path_pattern):
+                # Check if it's a directory or file
+                if os.path.isdir(path_pattern):
+                    # Recursively set execute permissions for all files in the directory
+                    for root, dirs, files in os.walk(path_pattern):
+                        for filename in files:
+                            file_path = os.path.join(root, filename)
+                            try:
+                                self.make_executable(file_path)
+                            except Exception as e:
+                                print(f"Warning: Could not set execute permission for {file_path}: {e}")
+                    print(f"Set execute permissions for all files in: {path_pattern}")
+                else:
+                    # It's a single file
+                    try:
+                        self.make_executable(path_pattern)
+                        print(f"Set execute permission for: {path_pattern}")
+                    except Exception as e:
+                        print(f"Warning: Could not set execute permission for {path_pattern}: {e}")
+            else:
+                print(f"Warning: Path not found for execute permissions: {path_pattern}")
+
+    def _handle_environments(self, item):
+        """Handle environments node."""
+        env_config = item["environments"]
+        if not isinstance(env_config, dict):
+            return
+        
+        print("\nSetting environment variables...")
+        
+        # Handle "set" environment variables
+        if "set" in env_config and isinstance(env_config["set"], dict):
+            for var_name, var_value in env_config["set"].items():
+                # Replace variables in value
+                var_value = self._replace_variables(var_value)
+                # Set environment variable
+                os.environ[var_name] = var_value
+                print(f"  Set {var_name}={var_value}")
+        
+        # Handle "prepend" environment variables
+        if "prepend" in env_config and isinstance(env_config["prepend"], list):
+            for item_env in env_config["prepend"]:
+                if isinstance(item_env, dict):
+                    for var_name, var_value in item_env.items():
+                        # Replace variables in value
+                        var_value = self._replace_variables(var_value)
+                        # Prepend to existing value
+                        existing_value = os.environ.get(var_name, "")
+                        if existing_value:
+                            separator = ";" if self.m_system_name == "Windows" else ":"
+                            os.environ[var_name] = f"{var_value}{separator}{existing_value}"
+                        else:
+                            os.environ[var_name] = var_value
+                        print(f"  Prepended {var_name}={var_value}")
+
+    def _handle_execute_command(self, item, context):
+        """Handle execute_command node."""
+        print("\nExecuting installation command...")
+        
+        target_folder = context.get('target_folder')
+        downloaded_file = context.get('downloaded_file')
+        
+        # Handle execute_command as either string or array
+        command = item["execute_command"]
+        if isinstance(command, list):
+            # If it's an array, join the parts with spaces
+            command = " ".join(command)
+        elif not isinstance(command, str):
+            print("Warning: execute_command must be a string or array")
+            command = ""
+        
+        if command:
+            # Replace variables in the command
+            command = self._replace_variables(command, target_folder, downloaded_file)
+            
+            # Execute the command
+            try:
+                need_admin = item.get("execute_command_as_admin", False)
+                if need_admin:
+                    print(f"Running command with administrative privileges: {command}")
+                    if self.m_system_name == "Windows":
+                        # Create a PowerShell command to run the process as admin
+                        ps_command = f'Start-Process -FilePath "{downloaded_file}" -ArgumentList "install --root={target_folder}" -Verb RunAs -Wait'
+                        subprocess.run(["powershell", "-Command", ps_command], check=True)
+                    else:
+                        # For Linux/macOS, use sudo
+                        sudo_command = f"sudo {command}"
+                        subprocess.run(sudo_command, shell=True, check=True)
+                else:
+                    print(f"Running command: {command}")
+                    subprocess.run(command, shell=True, check=True)
+                print("Command executed successfully.")
+            except subprocess.CalledProcessError as e:
+                print(f"Error executing command: {e}")
+                if need_admin:
+                    print("Note: This error might be due to insufficient privileges.")
+                    print("Please ensure you have administrative rights.")
+                raise
+
+    def _handle_generator_active_batch(self, config):
+        """Handle generator_active_batch node."""
+        generator_active_batch = config["generator_active_batch"]
+        if "file_path" not in generator_active_batch or "environments" not in generator_active_batch:
+            return
+        
+        # Process file path, replacing {workspace} with actual path
+        file_path = self._formalize_path(generator_active_batch["file_path"])
+        
+        # Create the directory if it doesn't exist
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        
+        # Prepare environment lists
+        set_env_list = []
+        prepend_env_list = []
+        
+        # Process set_list
+        if "set_list" in generator_active_batch["environments"]:
+            for var, value in generator_active_batch["environments"]["set_list"].items():
+                # Replace workspace variable
+                value = self._formalize_path(value)
+                set_env_list.append((var, value))
+        
+        # Process prepend_list
+        if "prepend_list" in generator_active_batch["environments"]:
+            for item in generator_active_batch["environments"]["prepend_list"]:
+                # Each item is a dictionary with a single key-value pair
+                for var, value in item.items():
+                    # Replace workspace variable
+                    value = self._formalize_path(value)
+                    prepend_env_list.append((var, value))
+        
+        # Generate the batch file
+        self.generate_enviroment_set_batch_file(file_path, set_env_list, prepend_env_list)
+
+    def _handle_install(self, config):
+        """Handle install node (array of install items)."""
+        if "install" not in config:
+            return
+        
+        for item in config["install"]:
+            downloaded_file = None
+            try:
+                # Process the install item
+                downloaded_file = self._process_install_item(item)
+                
+                # Clean up the downloaded archive
+                if downloaded_file and os.path.exists(downloaded_file):
+                    os.remove(downloaded_file)
+                print("Installation completed successfully.\n")
+
+            except subprocess.CalledProcessError as e:
+                print(f"\nError downloading file: {e}")
+                if e.returncode == 22:  # HTTP error code
+                    print("Authentication failed or access denied. Please check your credentials.")
+                elif e.returncode == 6:  # Could not resolve host
+                    print("Could not resolve host. Please check your internet connection.")
+                elif e.returncode == 28:  # Operation timeout
+                    print("Download timed out. Please try again or check your connection.")
+                if downloaded_file and os.path.exists(downloaded_file):
+                    os.remove(downloaded_file)
+                exit(1)
+            except Exception as e:
+                print(f"\nError during installation: {e}")
+                if downloaded_file and os.path.exists(downloaded_file):
+                    os.remove(downloaded_file)
+                exit(1)
+            finally:
+                if downloaded_file and os.path.exists(downloaded_file):
+                    os.remove(downloaded_file)
+
+    def _process_install_item(self, item):
+        """Process a single install item."""
+        # Create context for sharing data between handlers
+        context = {
+            'target_folder': None,
+            'downloaded_file': None
+        }
+        
+        # Check if we have target_folder
+        if "target_folder" in item:
+            context['target_folder'] = self._replace_variables(item["target_folder"])
+            # Check if already installed (skip if always_execute is true)
+            always_execute = item.get("always_execute", False)
+            if not always_execute and os.path.exists(context['target_folder']):
+                print(f"\nFiles already extracted to {context['target_folder']}")
+                return None
+        
+        # Define node handlers mapping (with context requirements)
+        node_handlers = {
+            'download_url': (self._handle_download, True),
+            'unzip_source': (self._handle_unzip_source, True),
+            'copy': (self._handle_copy, False),
+            'make_execute_permission': (self._handle_make_execute_permission, False),
+            'environments': (self._handle_environments, False),
+            'execute_command': (self._handle_execute_command, True),
+        }
+        
+        # Process nodes in order
+        for node_name, (handler, needs_context) in node_handlers.items():
+            if node_name in item:
+                try:
+                    if needs_context:
+                        handler(item, context)
+                    else:
+                        handler(item)
+                except Exception as e:
+                    # Re-raise with context
+                    raise Exception(f"Error processing '{node_name}' node: {e}") from e
+        
+        return context['downloaded_file']
+
     def install_from_config(self, config_file_path):
         """Generic installation function that handles downloading and extracting from configured URLs.
         Args:
@@ -185,400 +633,20 @@ class WorkspaceInstaller:
             print(f"Unexpected error reading configuration: {e}")
             exit(1)
         
-        # Handle active_batch configuration if present
-        if "active_batch" in config:
-            active_batch = config["active_batch"]
-            if "file_path" in active_batch and "environments" in active_batch:
-                # Process file path, replacing {workspace} with actual path
-                file_path = active_batch["file_path"].replace("${workspace}", self.m_workspace_root_path)
-                
-                # Create the directory if it doesn't exist
-                os.makedirs(os.path.dirname(file_path), exist_ok=True)
-                
-                # Prepare environment lists
-                set_env_list = []
-                prepend_env_list = []
-                
-                # Process set_list
-                if "set_list" in active_batch["environments"]:
-                    for var, value in active_batch["environments"]["set_list"].items():
-                        # Replace workspace variable
-                        value = value.replace("${workspace}", self.m_workspace_root_path)
-                        set_env_list.append((var, value))
-                
-                # Process prepend_list
-                if "prepend_list" in active_batch["environments"]:
-                    for item in active_batch["environments"]["prepend_list"]:
-                        # Each item is a dictionary with a single key-value pair
-                        for var, value in item.items():
-                            # Replace workspace variable
-                            value = value.replace("${workspace}", self.m_workspace_root_path)
-                            prepend_env_list.append((var, value))
-                
-                # Generate the batch file
-                self.generate_enviroment_set_batch_file(file_path, set_env_list, prepend_env_list)
-
-        # Process install items
-        if "install" in config:
-            for item in config["install"]:
-                downloaded_file = None
+        # Define config-level node handlers mapping
+        config_handlers = {
+            'generator_active_batch': self._handle_generator_active_batch,
+            'install': self._handle_install,
+        }
+        
+        # Process config nodes in order
+        for node_name, handler in config_handlers.items():
+            if node_name in config:
                 try:
-                    # Check if we have target_folder
-                    target_folder = None
-                    if "target_folder" in item:
-                        target_folder = item["target_folder"].replace("${workspace}", self.m_workspace_root_path)
-                        # Check if already installed (skip if always_execute is true)
-                        always_execute = item.get("always_execute", False)
-                        if not always_execute and target_folder is not None and os.path.exists(target_folder):
-                            print(f"\nFiles already extracted to {target_folder}")
-                            continue
-                    
-                    try:
-                        if "download_url" in item:
-                            download_filename = os.path.basename(item["download_url"])
-                            # Create download directory in workspace
-                            download_dir = os.path.join(self.m_workspace_root_path, ".download")
-                            os.makedirs(download_dir, exist_ok=True)
-                            downloaded_file = os.path.join(download_dir, download_filename)
-
-                            # Download using curl with authentication
-                            print(f"Downloading... {item["download_url"]}")
-
-                            # Prepare curl command
-                            curl_cmd = [
-                                "curl",
-                                "--progress-bar",  # Show download progress
-                                "-L",  # Follow redirects
-                            ]
-
-                            # Add authentication if needed
-                            need_auth = item.get("download_auth", False)
-                            if need_auth:                    
-                                from urllib.parse import urlparse
-                                domain = urlparse(item["download_url"]).netloc
-                                print(f"\nDownloading from {domain}")
-                                
-                                username = input("Username: ")
-                                curl_cmd.extend(["--user", f"{username}"])  # Curl will prompt for password
-
-                            # Add output file specification
-                            curl_cmd.extend([
-                                "-o", downloaded_file,  # Output file
-                                "-f",  # Fail on HTTP errors
-                                "-S",  # Show error
-                                "--retry", "3",  # Retry up to 3 times
-                                "--retry-delay", "5",  # Wait 5 seconds between retries
-                                item["download_url"]
-                            ])
-                            subprocess.run(curl_cmd, check=True)
-                            
-                            # Verify the downloaded file
-                            if not os.path.exists(downloaded_file):
-                                raise Exception("Downloaded file does not exist")
-                            
-                            file_size = os.path.getsize(downloaded_file)
-                            if file_size == 0:
-                                raise Exception("Downloaded file is empty")
-                            print("\nDownload completed and verified.")    
-
-                        # Check if we need to unzip the archive
-                        if "unzip_source" in item:
-                            # Check file extension to determine archive type
-                            is_zip = downloaded_file.lower().endswith('.zip')
-                            is_tar_gz = downloaded_file.lower().endswith('.tar.gz')
-                            is_tar_xz = downloaded_file.lower().endswith('.tar.xz')
-
-                            if not (is_zip or is_tar_gz or is_tar_xz):
-                                raise Exception("Unsupported archive format. Only .zip, .tar.gz, and .tar.xz are supported")
-
-                            # Verify archive integrity
-                            try:
-                                if is_zip:
-                                    with zipfile.ZipFile(downloaded_file, 'r') as test_zip:
-                                        if test_zip.testzip() is not None:
-                                            raise Exception("ZIP file is corrupted")
-                                else:  # tar.gz or tar.xz
-                                    mode = "r:gz" if is_tar_gz else "r:xz"
-                                    with tarfile.open(downloaded_file, mode) as test_tar:
-                                        test_tar.getmembers()
-                            except (zipfile.BadZipFile, tarfile.TarError) as e:
-                                raise Exception(f"Invalid archive file: {str(e)}")
-
-                            
-                            print(f"\nExtracting files to {target_folder}...")
-                            
-                            # Get source folder if specified
-                            src_folder = item.get("src_folder", "")
-                            
-                            if is_zip:
-                                with zipfile.ZipFile(downloaded_file, 'r') as zip_ref:
-                                    # Get all members and filter by src_folder or unzip_source if specified
-                                    all_members = zip_ref.namelist()
-                                    unzip_source = item.get("unzip_source", "")
-                                    
-                                    if src_folder or unzip_source:
-                                        # Use either src_folder or unzip_source as the base directory
-                                        base_dir = src_folder if src_folder else unzip_source
-                                        # Ensure base_dir ends with / for proper prefix matching
-                                        if base_dir and not base_dir.endswith('/'):
-                                            base_dir_with_slash = base_dir + '/'
-                                        else:
-                                            base_dir_with_slash = base_dir
-                                        # Only extract files from the specified source folder
-                                        members = [m for m in all_members if m.startswith(base_dir_with_slash) or m == base_dir]
-                                        # Get the base directory to remove
-                                        base_dir_len = len(base_dir_with_slash)
-                                    else:
-                                        members = all_members
-                                        base_dir_len = 0
-
-                                    total = len(members)
-                                    
-                                    # Extract with progress
-                                    for index, member in enumerate(members, 1):
-                                        if base_dir_len > 0:
-                                            # Remove the base directory prefix from the path
-                                            target_path = member[base_dir_len:]
-                                            if target_path:  # Skip if empty (was the base dir itself)
-                                                # Read the file content
-                                                file_data = zip_ref.read(member)
-                                                final_path = os.path.join(target_folder, target_path)
-                                                
-                                                # Create parent directory if needed
-                                                os.makedirs(os.path.dirname(final_path), exist_ok=True)
-                                                
-                                                # Write the file directly to the target location
-                                                if not member.endswith('/'):
-                                                    with open(final_path, 'wb') as f:
-                                                        f.write(file_data)
-                                        else:
-                                            zip_ref.extract(member, target_folder)
-                                        percent = (index * 100) // total
-                                        print(f"\rProgress: {percent}% [{index}/{total} files]", end="", flush=True)
-                            else:  # tar.gz or tar.xz
-                                mode = "r:gz" if is_tar_gz else "r:xz"
-                                with tarfile.open(downloaded_file, mode) as tar:
-                                    # Get all members and filter by src_folder or unzip_source if specified
-                                    all_members = tar.getmembers()
-                                    unzip_source = item.get("unzip_source", "")
-                                    
-                                    if unzip_source or src_folder:
-                                        # Use either src_folder or unzip_source as the path filter
-                                        path_filter = unzip_source if unzip_source else src_folder
-                                        # Only extract files from the specified path
-                                        members = [m for m in all_members if m.name.startswith(path_filter)]
-                                        # For unzip_source, we want to remove the entire prefix
-                                        if unzip_source:
-                                            base_dir_len = len(unzip_source) + 1  # +1 for the slash
-                                        else:
-                                            base_dir = src_folder.split('/')[0]
-                                            base_dir_len = len(base_dir) + 1
-                                    else:
-                                        members = all_members
-                                        base_dir_len = 0
-
-                                    total = len(members)
-                                    
-                                    # Extract with progress
-                                    for index, member in enumerate(members, 1):
-                                        if base_dir_len > 0:
-                                            # Create a copy of the member to modify
-                                            new_member = copy.copy(member)
-                                            # Remove the prefix from the path
-                                            new_member.name = member.name[base_dir_len:]
-                                            if new_member.name:  # Skip if empty
-                                                # Check if this is a directory
-                                                if not new_member.name.endswith('/'):
-                                                    tar.extract(new_member, target_folder)
-                                        else:
-                                            tar.extract(member, target_folder)
-                                        percent = (index * 100) // total
-                                        print(f"\rProgress: {percent}% [{index}/{total} files]", end="", flush=True)
-                            print("\nExtraction completed.")
-
-                        # Handle copy operation if specified
-                        if "copy" in item:
-                            copy_config = item["copy"]
-                            if isinstance(copy_config, dict) and "src" in copy_config and "dest" in copy_config:
-                                src_path = copy_config["src"].replace("${workspace}", self.m_workspace_root_path)
-                                src_path = src_path.replace("${settings}", self.m_settings_root_path)
-                                dest_path = copy_config["dest"].replace("${workspace}", self.m_workspace_root_path)
-                                dest_path = dest_path.replace("${settings}", self.m_settings_root_path)
-                                
-                                print(f"\nCopying files from {src_path} to {dest_path}...")
-                                
-                                if os.path.exists(src_path):
-                                    # Create destination directory if it doesn't exist
-                                    os.makedirs(dest_path, exist_ok=True)
-                                    
-                                    if os.path.isdir(src_path):
-                                        # Copy directory contents
-                                        try:
-                                            # Use copytree with dirs_exist_ok to allow overwriting
-                                            shutil.copytree(src_path, dest_path, dirs_exist_ok=True)
-                                            print(f"Successfully copied directory contents")
-                                        except Exception as e:
-                                            print(f"Error copying directory: {e}")
-                                            raise
-                                    else:
-                                        # Copy single file
-                                        try:
-                                            dest_file = os.path.join(dest_path, os.path.basename(src_path))
-                                            shutil.copy2(src_path, dest_file)
-                                            print(f"Successfully copied file")
-                                        except Exception as e:
-                                            print(f"Error copying file: {e}")
-                                            raise
-                                else:
-                                    print(f"Warning: Source path not found: {src_path}")
-
-                        # Set execute permissions if specified
-                        if "make_execute_permission" in item:
-                            permission_paths = item["make_execute_permission"]
-                            if isinstance(permission_paths, list):
-                                print("\nSetting execute permissions...")
-                                for path_pattern in permission_paths:
-                                    # Replace workspace variable
-                                    path_pattern = path_pattern.replace("${workspace}", self.m_workspace_root_path)
-                                    
-                                    if os.path.exists(path_pattern):
-                                        # Check if it's a directory or file
-                                        if os.path.isdir(path_pattern):
-                                            # Recursively set execute permissions for all files in the directory
-                                            for root, dirs, files in os.walk(path_pattern):
-                                                for filename in files:
-                                                    file_path = os.path.join(root, filename)
-                                                    try:
-                                                        self.make_executable(file_path)
-                                                    except Exception as e:
-                                                        print(f"Warning: Could not set execute permission for {file_path}: {e}")
-                                            print(f"Set execute permissions for all files in: {path_pattern}")
-                                        else:
-                                            # It's a single file
-                                            try:
-                                                self.make_executable(path_pattern)
-                                                print(f"Set execute permission for: {path_pattern}")
-                                            except Exception as e:
-                                                print(f"Warning: Could not set execute permission for {path_pattern}: {e}")
-                                    else:
-                                        print(f"Warning: Path not found for execute permissions: {path_pattern}")
-
-                        # Set environment variables if specified
-                        if "environments" in item:
-                            env_config = item["environments"]
-                            if isinstance(env_config, dict):
-                                print("\nSetting environment variables...")
-                                
-                                # Handle "set" environment variables
-                                if "set" in env_config and isinstance(env_config["set"], dict):
-                                    for var_name, var_value in env_config["set"].items():
-                                        # Replace variables in value
-                                        var_value = var_value.replace("${workspace}", self.m_workspace_root_path)
-                                        var_value = var_value.replace("${settings}", self.m_settings_root_path)
-                                        # Set environment variable
-                                        os.environ[var_name] = var_value
-                                        print(f"  Set {var_name}={var_value}")
-                                
-                                # Handle "prepend" environment variables
-                                if "prepend" in env_config and isinstance(env_config["prepend"], list):
-                                    for item_env in env_config["prepend"]:
-                                        if isinstance(item_env, dict):
-                                            for var_name, var_value in item_env.items():
-                                                # Replace variables in value
-                                                var_value = var_value.replace("${workspace}", self.m_workspace_root_path)
-                                                var_value = var_value.replace("${settings}", self.m_settings_root_path)
-                                                # Prepend to existing value
-                                                existing_value = os.environ.get(var_name, "")
-                                                if existing_value:
-                                                    separator = ";" if self.m_system_name == "Windows" else ":"
-                                                    os.environ[var_name] = f"{var_value}{separator}{existing_value}"
-                                                else:
-                                                    os.environ[var_name] = var_value
-                                                print(f"  Prepended {var_name}={var_value}")
-
-                        # Check if we have an execute command
-                        if "execute_command" in item:
-                            print("\nExecuting installation command...")
-                            
-                            # Handle execute_command as either string or array
-                            command = item["execute_command"]
-                            if isinstance(command, list):
-                                # If it's an array, join the parts with spaces
-                                command = " ".join(command)
-                            elif not isinstance(command, str):
-                                print("Warning: execute_command must be a string or array")
-                                command = ""
-                            
-                            if command:
-                                # Replace variables in the command
-                                command = command.replace("${workspace}", self.m_workspace_root_path)
-                                if target_folder:
-                                    command = command.replace("${target_folder}", target_folder)
-                                if downloaded_file:
-                                    command = command.replace("${download_file}", downloaded_file)
-                                
-                                # Execute the command
-                                try:
-                                    need_admin = item.get("execute_command_as_admin", False)
-                                    if need_admin:
-                                        print(f"Running command with administrative privileges: {command}")
-                                        if self.m_system_name == "Windows":
-                                            # Create a PowerShell command to run the process as admin
-                                            ps_command = f'Start-Process -FilePath "{downloaded_file}" -ArgumentList "install --root={target_folder}" -Verb RunAs -Wait'
-                                            subprocess.run(["powershell", "-Command", ps_command], check=True)
-                                        else:
-                                            # For Linux/macOS, use sudo
-                                            sudo_command = f"sudo {command}"
-                                            subprocess.run(sudo_command, shell=True, check=True)
-                                    else:
-                                        print(f"Running command: {command}")
-                                        subprocess.run(command, shell=True, check=True)
-                                    print("Command executed successfully.")
-                                except subprocess.CalledProcessError as e:
-                                    print(f"Error executing command: {e}")
-                                    if need_admin:
-                                        print("Note: This error might be due to insufficient privileges.")
-                                        print("Please ensure you have administrative rights.")
-                                    raise
-                        
-                        # Clean up the downloaded archive
-                        if downloaded_file and os.path.exists(downloaded_file):
-                            os.remove(downloaded_file)
-                        print("Installation completed successfully.\n")
-
-                    except subprocess.CalledProcessError as e:
-                        print(f"\nError downloading file: {e}")
-                        if e.returncode == 22:  # HTTP error code
-                            print("Authentication failed or access denied. Please check your credentials.")
-                        elif e.returncode == 6:  # Could not resolve host
-                            print("Could not resolve host. Please check your internet connection.")
-                        elif e.returncode == 28:  # Operation timeout
-                            print("Download timed out. Please try again or check your connection.")
-                        if downloaded_file and os.path.exists(downloaded_file):
-                            os.remove(downloaded_file)
-                        exit(1)
-                    except Exception as e:
-                        print(f"\nError verifying downloaded file: {e}")
-                        if downloaded_file and os.path.exists(downloaded_file):
-                            os.remove(downloaded_file)
-                        exit(1)
-
-                except subprocess.CalledProcessError as e:
-                    print(f"Error running curl command: {e}")
-                    exit(1)
-                except tarfile.TarError as e:
-                    print(f"Error extracting archive: {e}")
-                    if downloaded_file and os.path.exists(downloaded_file):
-                        os.remove(downloaded_file)
-                    exit(1)
+                    handler(config)
                 except Exception as e:
-                    print(f"Unexpected error during installation: {e}")
-                    if downloaded_file and os.path.exists(downloaded_file):
-                        os.remove(downloaded_file)
+                    print(f"Error processing '{node_name}' configuration: {e}")
                     exit(1)
-                finally:
-                    if downloaded_file and os.path.exists(downloaded_file):
-                        os.remove(downloaded_file)
 
     def install_sysroot(self):
         """Install sysroot by downloading and extracting from configured URLs."""

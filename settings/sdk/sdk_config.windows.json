@@ -21,7 +21,7 @@
       "unzip_source": "1.4.328.1/x86_64"
     }
   ],
-  "active_batch":
+  "generator_active_batch":
   {
     "file_path": "${workspace}/sdk/active",
     "environments":

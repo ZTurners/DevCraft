@@ -9,7 +9,7 @@
       "unzip_source" : "gradle-9.1.0"
     }
   ],
-  "active_batch":
+  "generator_active_batch":
   {
     "file_path": "${workspace}/tools/active",
     "environments":

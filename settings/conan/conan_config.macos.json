@@ -45,7 +45,7 @@
       ]
     }
   ],
-  "active_batch":
+  "generator_active_batch":
   {
     "file_path": "${workspace}/conan/active",
     "environments":

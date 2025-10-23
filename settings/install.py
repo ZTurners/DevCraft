@@ -192,7 +192,7 @@ class WorkspaceInstaller:
             file_size = os.path.getsize(downloaded_file)
             if file_size > 0:
                 print(f"File already exists, skipping download: {downloaded_file}")
-                return downloaded_file
+                return
             else:
                 print(f"File exists but is empty, will re-download: {downloaded_file}")
                 os.remove(downloaded_file)
@@ -238,28 +238,26 @@ class WorkspaceInstaller:
         if file_size == 0:
             raise Exception("Downloaded file is empty")
         print("\nDownload completed and verified.")
-        
-        return downloaded_file
 
     def _handle_unzip_source(self, unzip_config, context):
         """Handle unzip node."""
         # unzip_config is the child node data: { src, src_sub_folder, dest }
         
         downloaded_file = self._formalize_path(unzip_config["src"])
-        target_folder = self._formalize_path(unzip_config["dest"])
+        dest_folder = self._formalize_path(unzip_config["dest"])
         unzip_source = unzip_config.get("src_sub_folder", "")
         
-        if not downloaded_file or not target_folder:
+        if not downloaded_file or not dest_folder:
             return
         
         # Check if target folder already exists
-        if os.path.exists(target_folder) and os.path.isdir(target_folder):
+        if os.path.exists(dest_folder) and os.path.isdir(dest_folder):
             # Check if folder has content
-            if os.listdir(target_folder):
-                print(f"Target folder already exists and has content, skipping extraction: {target_folder}")
+            if os.listdir(dest_folder):
+                print(f"Target folder already exists and has content, skipping extraction: {dest_folder}")
                 return
             else:
-                print(f"Target folder exists but is empty, will extract: {target_folder}")
+                print(f"Target folder exists but is empty, will extract: {dest_folder}")
         
         # Check file extension to determine archive type
         is_zip = downloaded_file.lower().endswith('.zip')
@@ -282,7 +280,7 @@ class WorkspaceInstaller:
         except (zipfile.BadZipFile, tarfile.TarError) as e:
             raise Exception(f"Invalid archive file: {str(e)}")
 
-        print(f"\nExtracting files to {target_folder}...")
+        print(f"\nExtracting files to {dest_folder}...")
         
         if is_zip:
             with zipfile.ZipFile(downloaded_file, 'r') as zip_ref:
@@ -315,7 +313,7 @@ class WorkspaceInstaller:
                         if target_path:  # Skip if empty (was the base dir itself)
                             # Read the file content
                             file_data = zip_ref.read(member)
-                            final_path = os.path.join(target_folder, target_path)
+                            final_path = os.path.join(dest_folder, target_path)
                             
                             # Create parent directory if needed
                             os.makedirs(os.path.dirname(final_path), exist_ok=True)
@@ -325,7 +323,7 @@ class WorkspaceInstaller:
                                 with open(final_path, 'wb') as f:
                                     f.write(file_data)
                     else:
-                        zip_ref.extract(member, target_folder)
+                        zip_ref.extract(member, dest_folder)
                     percent = (index * 100) // total
                     print(f"\rProgress: {percent}% [{index}/{total} files]", end="", flush=True)
         else:  # tar.gz or tar.xz
@@ -357,9 +355,9 @@ class WorkspaceInstaller:
                         if new_member.name:  # Skip if empty
                             # Check if this is a directory
                             if not new_member.name.endswith('/'):
-                                tar.extract(new_member, target_folder)
+                                tar.extract(new_member, dest_folder)
                     else:
-                        tar.extract(member, target_folder)
+                        tar.extract(member, dest_folder)
                     percent = (index * 100) // total
                     print(f"\rProgress: {percent}% [{index}/{total} files]", end="", flush=True)
         print("\nExtraction completed.")
@@ -561,6 +559,29 @@ class WorkspaceInstaller:
             print(f"\n{'='*60}")
             print(f"Processing install item: '{install_item_name}'")
             print(f"{'='*60}")
+            
+            # Check if any node has a dest field and if it exists, skip the entire install item
+            should_skip = False
+            for node_name in node_handlers.keys():
+                if node_name in install_item:
+                    node_data = install_item[node_name]
+                    dest_path = None
+                    
+                    # Extract dest based on node structure
+                    if isinstance(node_data, dict):
+                        dest_path = node_data.get("dest")
+                    
+                    # If dest exists, check if the path exists
+                    if dest_path:
+                        dest_path = self._formalize_path(dest_path)
+                        if os.path.exists(dest_path):
+                            print(f"Destination already exists: {dest_path}")
+                            print(f"Skipping install item: '{install_item_name}'")
+                            should_skip = True
+                            break
+            
+            if should_skip:
+                continue
             
             # Process nodes in order for this install item
             for node_name, handler in node_handlers.items():

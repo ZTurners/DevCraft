@@ -29,7 +29,7 @@
           "copy_only=1",
           "--root=${workspace}/.tmp/vulkan/vulkansdk_macos_x86_64_1.4.328.1"
         ],
-        "target_folder": "${workspace}/vulkan/vulkansdk_macos_x86_64_1.4.328.1"
+        "dest": "${workspace}/vulkan/vulkansdk_macos_x86_64_1.4.328.1"
       },
       "copy":
       {
@@ -58,7 +58,7 @@
   },
   "generator_active_batch":
   {
-    "file_path": "${workspace}/sdk/active",
+    "file_path": "${workspace}/vulkan/active",
     "environments":
     {
       "set": 

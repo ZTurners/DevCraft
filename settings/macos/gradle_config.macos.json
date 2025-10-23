@@ -22,7 +22,7 @@
   },
   "generator_active_batch":
   {
-    "file_path": "${workspace}/tools/active",
+    "file_path": "${workspace}/gradle/active",
     "environments":
     {
       "set": 

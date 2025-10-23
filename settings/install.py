@@ -467,10 +467,15 @@ class WorkspaceInstaller:
         """Handle execute node."""
         print("\nExecuting installation command...")
         
-        # Handle new object format: { command: [...], target_folder: "..." }
+        # Handle new object format: { command: [...], dest: "..." }
         if isinstance(command_config, dict):
             cmd_list = command_config.get("command", [])
-            cmd_target_folder = self._formalize_path(command_config.get("target_folder", ""))
+            cmd_dest = self._formalize_path(command_config.get("dest", ""))
+            
+            # Skip if dest folder exists
+            if cmd_dest and os.path.exists(cmd_dest):
+                print(f"Dest folder already exists: {cmd_dest}, skipping execute.")
+                return
             
             # Build command string from list, replacing variables
             command_parts = []

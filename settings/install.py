@@ -173,7 +173,7 @@ class WorkspaceInstaller:
         path = path.replace("${settings}", self.m_settings_root_path)
         return path
 
-    def _handle_download(self, download_config, context):
+    def _process_download(self, download_config, context):
         """Handle download node."""
         # download_config is the child node data: { src: {url, auth_required} or src_url, dest }
         
@@ -239,7 +239,7 @@ class WorkspaceInstaller:
             raise Exception("Downloaded file is empty")
         print("\nDownload completed and verified.")
 
-    def _handle_unzip_source(self, unzip_config, context):
+    def _process_unzip_source(self, unzip_config, context):
         """Handle unzip node."""
         # unzip_config is the child node data: { src, src_sub_folder, dest }
         
@@ -362,7 +362,7 @@ class WorkspaceInstaller:
                     print(f"\rProgress: {percent}% [{index}/{total} files]", end="", flush=True)
         print("\nExtraction completed.")
 
-    def _handle_copy(self, copy_config, context):
+    def _process_copy(self, copy_config, context):
         """Handle copy node."""
         # copy_config is the child node data: { src, dest }
         if not isinstance(copy_config, dict) or "src" not in copy_config or "dest" not in copy_config:
@@ -398,7 +398,7 @@ class WorkspaceInstaller:
         else:
             print(f"Warning: Source path not found: {src_path}")
 
-    def _handle_make_execute_permission(self, permission_paths, context):
+    def _process_make_execute_permission(self, permission_paths, context):
         """Handle make_execute_permission node."""
         # permission_paths is the child node data: array of paths
         if not isinstance(permission_paths, list):
@@ -431,7 +431,7 @@ class WorkspaceInstaller:
             else:
                 print(f"Warning: Path not found for execute permissions: {path_pattern}")
 
-    def _handle_environments(self, env_config, context):
+    def _process_environments(self, env_config, context):
         """Handle environments node."""
         
         print("\nSetting environment variables...")
@@ -461,7 +461,7 @@ class WorkspaceInstaller:
                             os.environ[var_name] = var_value
                         print(f"  Prepended {var_name}={var_value}")
 
-    def _handle_execute(self, command_config, context):
+    def _process_execute(self, command_config, context):
         """Handle execute node."""
         print("\nExecuting installation command...")
         
@@ -506,7 +506,7 @@ class WorkspaceInstaller:
                 print(f"Error executing command: {e}")
                 raise
 
-    def _handle_generator_active_batch(self, generator_active_batch, context):
+    def _process_generator_active_batch(self, generator_active_batch, context):
         """Handle generator_active_batch node."""
         # generator_active_batch is the child node data: { file_path, environments }
         if "file_path" not in generator_active_batch or "environments" not in generator_active_batch:
@@ -541,16 +541,16 @@ class WorkspaceInstaller:
         # Generate the batch file
         self.generate_enviroment_set_batch_file(file_path, set_env_list, prepend_env_list)
 
-    def _handle_install(self, install_node, context):
+    def _process_install(self, install_node, context):
         
         # Define node handlers mapping (with context requirements)
         node_handlers = {
-            'download': self._handle_download,
-            'unzip': self._handle_unzip_source,
-            'copy': self._handle_copy,
-            'make_execute_permission': self._handle_make_execute_permission,
-            'environments': self._handle_environments,
-            'execute': self._handle_execute,
+            'download': self._process_download,
+            'unzip': self._process_unzip_source,
+            'copy': self._process_copy,
+            'make_execute_permission': self._process_make_execute_permission,
+            'environments': self._process_environments,
+            'execute': self._process_execute,
         }
         
         # install_node is now a dictionary where keys are install item names
@@ -618,8 +618,8 @@ class WorkspaceInstaller:
 
         # Define config-level node handlers mapping
         config_handlers = {
-            'install': self._handle_install,
-            'generator_active_batch': self._handle_generator_active_batch,
+            'install': self._process_install,
+            'generator_active_batch': self._process_generator_active_batch,
         }
         
         # Process config nodes in order

@@ -173,18 +173,6 @@ class WorkspaceInstaller:
         path = path.replace("${settings}", self.m_settings_root_path)
         return path
 
-    def _replace_variables(self, value, target_folder=None, downloaded_file=None):
-        """Replace variables in a string with their actual values."""
-        if not isinstance(value, str):
-            return value
-        value = value.replace("${workspace}", self.m_workspace_root_path)
-        value = value.replace("${settings}", self.m_settings_root_path)
-        if target_folder:
-            value = value.replace("${target_folder}", target_folder)
-        if downloaded_file:
-            value = value.replace("${download_file}", downloaded_file)
-        return value
-
     def _handle_download(self, download_config, context):
         """Handle download node."""
         # download_config is the child node data: { src: {url, auth_required} or src_url, dest }
@@ -204,7 +192,6 @@ class WorkspaceInstaller:
             file_size = os.path.getsize(downloaded_file)
             if file_size > 0:
                 print(f"File already exists, skipping download: {downloaded_file}")
-                context['downloaded_file'] = downloaded_file
                 return downloaded_file
             else:
                 print(f"File exists but is empty, will re-download: {downloaded_file}")
@@ -252,15 +239,14 @@ class WorkspaceInstaller:
             raise Exception("Downloaded file is empty")
         print("\nDownload completed and verified.")
         
-        context['downloaded_file'] = downloaded_file
         return downloaded_file
 
     def _handle_unzip_source(self, unzip_config, context):
         """Handle unzip node."""
         # unzip_config is the child node data: { src, src_sub_folder, dest }
         
-        downloaded_file = self._replace_variables(unzip_config["src"], context.get('target_folder'), context.get('downloaded_file'))
-        target_folder = self._replace_variables(unzip_config["dest"], context.get('target_folder'), context.get('downloaded_file'))
+        downloaded_file = self._formalize_path(unzip_config["src"])
+        target_folder = self._formalize_path(unzip_config["dest"])
         unzip_source = unzip_config.get("src_sub_folder", "")
         
         if not downloaded_file or not target_folder:
@@ -384,8 +370,8 @@ class WorkspaceInstaller:
         if not isinstance(copy_config, dict) or "src" not in copy_config or "dest" not in copy_config:
             return
         
-        src_path = self._replace_variables(copy_config["src"])
-        dest_path = self._replace_variables(copy_config["dest"])
+        src_path = self._formalize_path(copy_config["src"])
+        dest_path = self._formalize_path(copy_config["dest"])
         
         print(f"\nCopying files from {src_path} to {dest_path}...")
         
@@ -423,7 +409,7 @@ class WorkspaceInstaller:
         print("\nSetting execute permissions...")
         for path_pattern in permission_paths:
             # Replace workspace variable
-            path_pattern = self._replace_variables(path_pattern)
+            path_pattern = self._formalize_path(path_pattern)
             
             if os.path.exists(path_pattern):
                 # Check if it's a directory or file
@@ -456,7 +442,7 @@ class WorkspaceInstaller:
         if "set" in env_config and isinstance(env_config["set"], dict):
             for var_name, var_value in env_config["set"].items():
                 # Replace variables in value
-                var_value = self._replace_variables(var_value)
+                var_value = self._formalize_path(var_value)
                 # Set environment variable
                 os.environ[var_name] = var_value
                 print(f"  Set {var_name}={var_value}")
@@ -467,7 +453,7 @@ class WorkspaceInstaller:
                 if isinstance(item_env, dict):
                     for var_name, var_value in item_env.items():
                         # Replace variables in value
-                        var_value = self._replace_variables(var_value)
+                        var_value = self._formalize_path(var_value)
                         # Prepend to existing value
                         existing_value = os.environ.get(var_name, "")
                         if existing_value:
@@ -477,28 +463,37 @@ class WorkspaceInstaller:
                             os.environ[var_name] = var_value
                         print(f"  Prepended {var_name}={var_value}")
 
-    def _handle_execute_command(self, command_config, context):
-        """Handle execute_command node."""
-        # command_config is the child node data: either a string or array of command parts
+    def _handle_execute(self, command_config, context):
+        """Handle execute node."""
         print("\nExecuting installation command...")
         
-        target_folder = context.get('target_folder')
-        downloaded_file = context.get('downloaded_file')
-        
-        # Handle execute_command as either string or array
-        if isinstance(command_config, list):
+        # Handle new object format: { command: [...], target_folder: "..." }
+        if isinstance(command_config, dict):
+            cmd_list = command_config.get("command", [])
+            cmd_target_folder = self._formalize_path(command_config.get("target_folder", ""))
+            
+            # Build command string from list, replacing variables
+            command_parts = []
+            for part in cmd_list:
+                part = self._formalize_path(part)
+                command_parts.append(part)
+            
+            command = " ".join(command_parts)
+        # Handle old format: string or array
+        elif isinstance(command_config, list):
             # If it's an array, join the parts with spaces
             command = " ".join(command_config)
+            # Replace variables in the command
+            command = self._formalize_path(command)
         elif isinstance(command_config, str):
             command = command_config
+            # Replace variables in the command
+            command = self._formalize_path(command)
         else:
-            print("Warning: execute_command must be a string or array")
+            print("Warning: execute must be an object, string, or array")
             command = ""
         
         if command:
-            # Replace variables in the command
-            command = self._replace_variables(command, target_folder, downloaded_file)
-            
             # Execute the command
             try:
                 print(f"Running command: {command}")
@@ -552,7 +547,7 @@ class WorkspaceInstaller:
             'copy': self._handle_copy,
             'make_execute_permission': self._handle_make_execute_permission,
             'environments': self._handle_environments,
-            'execute_command': self._handle_execute_command,
+            'execute': self._handle_execute,
         }
         
         # install_node is now a dictionary where keys are install item names

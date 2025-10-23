@@ -18,8 +18,7 @@
         "install",
         "copy_only=1",
         "--root=${target_folder}"
-      ],
-      "execute_command_as_admin": false
+      ]
     },
     {
       "name": "vulkansdk-linux-x86_64-1.4.328.1",

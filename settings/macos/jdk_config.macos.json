@@ -1,9 +1,8 @@
 {
   "install": 
-  [
+  {
+    "jdk-25":
     {
-      "name": "jdk-25",
-      "target_folder": "${workspace}/jdk/jdk-25",
       "download":
       {
         "src": 
@@ -20,7 +19,7 @@
         "dest": "${workspace}/jdk/jdk-25"
       }
     }
-  ],
+  },
   "generator_active_batch":
   {
     "file_path": "${workspace}/jdk/active",

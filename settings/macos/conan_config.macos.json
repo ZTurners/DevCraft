@@ -22,23 +22,29 @@
         [
         ]
       },
-      "execute_command": [
-        "conan", "profile", "detect",
-        "--force"
-      ]
+      "execute":
+      {
+        "command": [
+          "conan", "profile", "detect",
+          "--force"
+        ]
+      }
     },
     "conan":
     {
-      "execute_command": [
-        "conan", "install", 
-        "${settings}/content/conan/conanfile.txt",
-        "--update",
-        "--generator", "CMakeToolchain",
-        "--generator", "VirtualBuildEnv",
-        "--output-folder", "${workspace}/conan",
-        "--build", "never",
-        "--profile", "${settings}/content/conan/profiles/builder/conan_builder_profile.macos.txt"
-      ]
+      "execute":
+      {
+        "command": [
+          "conan", "install", 
+          "${settings}/content/conan/conanfile.txt",
+          "--update",
+          "--generator", "CMakeToolchain",
+          "--generator", "VirtualBuildEnv",
+          "--output-folder", "${workspace}/conan",
+          "--build", "never",
+          "--profile", "${settings}/content/conan/profiles/builder/conan_builder_profile.macos.txt"
+        ]
+      }
     }
   },
   "generator_active_batch":

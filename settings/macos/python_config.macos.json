@@ -1,11 +1,10 @@
 {
   "install": 
-  [
+  {
+    "python-3.13.5":
     {
-      "name": "python-3.13.5",
-      "target_folder": "${workspace}/python/python-3.13.5"
     }
-  ],
+  },
   "generator_active_batch":
   {
     "file_path": "${workspace}/python/active",

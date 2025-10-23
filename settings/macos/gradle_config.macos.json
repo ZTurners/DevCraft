@@ -1,9 +1,8 @@
 {
   "install": 
-  [
+  {
+    "gradle-9.1.0":
     {
-      "name": "gradle-9.1.0",
-      "target_folder": "${workspace}/tools/gradle-9.1.0",
       "download":
       {
         "src": 
@@ -17,10 +16,10 @@
       {
         "src": "${workspace}/.downloads/gradle-9.1.0-bin.zip",
         "src_sub_folder": "gradle-9.1.0",
-        "dest": "${workspace}/tools/gradle-9.1.0"
+        "dest": "${workspace}/gradle/gradle-9.1.0"
       }
     }
-  ],
+  },
   "generator_active_batch":
   {
     "file_path": "${workspace}/tools/active",
@@ -28,11 +27,11 @@
     {
       "set": 
       {
-        "GRADLE_USER_HOME": "${workspace}/tools/gradle-9.1.0/.gradle"
+        "GRADLE_USER_HOME": "${workspace}/gradle/gradle-9.1.0/.gradle"
       },
       "prepend": 
       [
-        {"PATH" : "${workspace}/tools/gradle-9.1.0/bin"}
+        {"PATH" : "${workspace}/gradle/gradle-9.1.0/bin"}
       ]
     }
   }

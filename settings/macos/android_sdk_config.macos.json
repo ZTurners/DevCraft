@@ -24,16 +24,19 @@
     },
     "android_sdk":
     {
-      "execute_command": [
-        "${workspace}/android/android_sdk/cmdline-tools/bootstrap/bin/sdkmanager",
-        "--sdk_root=${workspace}/android/android_sdk",
-        "--install",
-        "\"ndk;29.0.13599879\"",
-        "\"build-tools;36.0.0-rc5\"",
-        "\"ndk-bundle\"",
-        "\"platform-tools\"",
-        "\"cmdline-tools;19.0\""
-      ]
+      "execute":
+      {
+        "command": [
+          "${workspace}/android/android_sdk/cmdline-tools/bootstrap/bin/sdkmanager",
+          "--sdk_root=${workspace}/android/android_sdk",
+          "--install",
+          "\"ndk;29.0.13599879\"",
+          "\"build-tools;36.0.0-rc5\"",
+          "\"ndk-bundle\"",
+          "\"platform-tools\"",
+          "\"cmdline-tools;19.0\""
+        ]
+      }
     }
   },
   "generator_active_batch":

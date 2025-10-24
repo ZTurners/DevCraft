@@ -22,6 +22,18 @@
         "${workspace}/android/android_sdk/cmdline-tools/bootstrap/bin"
       ]
     },
+    "android_sdk_license":
+    {
+      "execute":
+      {
+        "command": [
+          "yes | ",
+          "${workspace}/android/android_sdk/cmdline-tools/bootstrap/bin/sdkmanager",
+          "--sdk_root=${workspace}/android/android_sdk",
+          "--licenses"
+        ]
+      }
+    }, 
     "android_sdk":
     {
       "execute":

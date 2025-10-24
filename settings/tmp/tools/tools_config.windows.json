@@ -8,8 +8,7 @@
       {
         "src": 
         {
-          "url": "https://services.gradle.org/distributions/gradle-9.1.0-bin.zip",
-          "auth_required": false
+          "url": "https://services.gradle.org/distributions/gradle-9.1.0-bin.zip"
         },
         "dest": "${workspace}/.downloads/gradle-9.1.0-bin.zip"
       },

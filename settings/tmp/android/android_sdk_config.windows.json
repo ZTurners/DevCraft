@@ -8,8 +8,7 @@
       {
         "src": 
         {
-          "url": "https://dl.google.com/android/repository/commandlinetools-win-13114758_latest.zip",
-          "auth_required": false
+          "url": "https://dl.google.com/android/repository/commandlinetools-win-13114758_latest.zip"
         },
         "dest": "${workspace}/.downloads/commandlinetools-win-13114758_latest.zip"
       },

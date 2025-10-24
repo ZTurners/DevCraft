@@ -1,0 +1,25 @@
+{
+    "install": {
+        "xcode": {
+            "environments": {
+                "set": {
+                    "DEVELOPER_DIR": "${workspace}/xcode"
+                }
+            },
+            "execute": {
+                "command": [
+                    "xcode-select", 
+                    "--install"
+                ]
+            }
+        }
+    },
+    "generator_active_batch":{
+        "file_path": "${workspace}/xcode/active",
+        "environments": {
+            "set": {
+                "DEVELOPER_DIR": "${workspace}/xcode"
+            }
+        }
+    }
+}

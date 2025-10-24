@@ -8,8 +8,7 @@
       {
         "src": 
         {
-          "url": "https://sdk.lunarg.com/sdk/download/1.4.328.1/windows/vulkansdk-windows-X64-1.4.328.1.exe",
-          "auth_required": false
+          "url": "https://sdk.lunarg.com/sdk/download/1.4.328.1/windows/vulkansdk-windows-X64-1.4.328.1.exe"
         },
         "dest": "${workspace}/.downloads/vulkansdk-windows-X64-1.4.328.1.exe"
       },
@@ -27,8 +26,7 @@
       {
         "src": 
         {
-          "url": "https://sdk.lunarg.com/sdk/download/1.4.328.1/linux/vulkansdk-linux-x86_64-1.4.328.1.tar.xz",
-          "auth_required": false
+          "url": "https://sdk.lunarg.com/sdk/download/1.4.328.1/linux/vulkansdk-linux-x86_64-1.4.328.1.tar.xz"
         },
         "dest": "${workspace}/.downloads/vulkansdk-linux-x86_64-1.4.328.1.tar.xz"
       },

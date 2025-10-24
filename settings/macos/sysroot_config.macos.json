@@ -11,8 +11,7 @@
       {
         "src": 
         {
-          "url": "https://github.com/BigElderK/DevCraftArtifactory/releases/download/init/ubuntu_amd64_24_04_sysroot.tar.gz",
-          "auth_required": false
+          "url": "https://github.com/BigElderK/DevCraftArtifactory/releases/download/init/ubuntu_amd64_24_04_sysroot.tar.gz"
         },
         "dest": "${workspace}/.downloads/ubuntu_amd64_24_04_sysroot.tar.gz"
       },
@@ -29,8 +28,7 @@
       {
         "src": 
         {
-          "url": "https://github.com/BigElderK/DevCraftArtifactory/releases/download/init/raspberry_arm64_bookworm_sysroot.tar.xz",
-          "auth_required": false
+          "url": "https://github.com/BigElderK/DevCraftArtifactory/releases/download/init/raspberry_arm64_bookworm_sysroot.tar.xz"
         },
         "dest": "${workspace}/.downloads/raspberry_arm64_bookworm_sysroot.tar.xz"
       },

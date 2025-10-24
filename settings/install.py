@@ -559,39 +559,27 @@ class WorkspaceInstaller:
             print(f"\n{'='*60}")
             print(f"Processing install item: '{install_item_name}'")
             print(f"{'='*60}")
-            
-            # Check if any node has a dest field and if it exists, skip the entire install item
-            should_skip = False
-            for node_name in node_handlers.keys():
-                if node_name in install_item:
-                    node_data = install_item[node_name]
-                    dest_path = None
-                    
-                    # Extract dest based on node structure
-                    if isinstance(node_data, dict):
-                        dest_path = node_data.get("dest")
-                    
-                    # If dest exists, check if the path exists
-                    if dest_path:
-                        dest_path = self._formalize_path(dest_path)
-                        if os.path.exists(dest_path):
-                            print(f"Destination already exists: {dest_path}")
-                            print(f"Skipping install item: '{install_item_name}'")
-                            should_skip = True
-                            break
-            
-            if should_skip:
-                continue
-            
+                        
             # Process nodes in order for this install item
-            for node_name, handler in node_handlers.items():
-                if node_name in install_item:
+            for install_step_name, handler in node_handlers.items():
+                if install_step_name in install_item:
                     try:
-                        print(f"\nProcessing '{node_name}' node for '{install_item_name}'...")
-                        handler(install_item[node_name], context)
+                        # Check if operation node has a dest field and if it exists, skip the entire install item
+                        if isinstance(install_item[install_step_name], dict):
+                            dest_path = install_item[install_step_name].get("dest")
+                            # If dest exists, check if the path exists
+                            if dest_path:
+                                dest_path = self._formalize_path(dest_path)
+                                if os.path.exists(dest_path):
+                                    print(f"Destination already exists: {dest_path}")
+                                    print(f"Skipping install step: '{install_step_name}'")
+                                    continue
+
+                        print(f"\nProcessing '{install_step_name}' for '{install_item_name}'...")
+                        handler(install_item[install_step_name], context)
                     except Exception as e:
                         # Re-raise with context
-                        raise Exception(f"Error processing '{node_name}' node for '{install_item_name}': {e}") from e
+                        raise Exception(f"Error processing '{install_step_name}' for '{install_item_name}': {e}") from e
 
     def install_from_config(self, config_file_path):
         """Generic installation function that handles downloading and extracting from configured URLs.

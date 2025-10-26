@@ -1,15 +1,12 @@
 {
     "install": {
-        "xcode": {
-            "environments": {
-                "set": {
-                    "DEVELOPER_DIR": "${workspace}/xcode"
-                }
-            },
+        "check_xcodes": {
             "execute": {
                 "command": [
-                    "xcode-select", 
-                    "--install"
+                    "if path=$(xcode-select -p 2>/dev/null);",
+                    " then mkdir -pv ${workspace}/xcode/CommandLineTools && ln -sfv \"$path\" ${workspace}/xcode/CommandLineTools; ",
+                    " else echo \"Error: xcode-select failed - install Xcode or Command Line Tools\"; ",
+                    "fi"
                 ]
             }
         }
@@ -18,7 +15,7 @@
         "file_path": "${workspace}/xcode/active",
         "environments": {
             "set": {
-                "DEVELOPER_DIR": "${workspace}/xcode"
+                "DEVELOPER_DIR": "${workspace}/xcode/CommandLineTools"
             }
         }
     }

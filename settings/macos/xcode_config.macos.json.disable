@@ -13,7 +13,7 @@
                 "src_sub_folder": "xcodes/1.6.2/bin",
                 "dest": "${workspace}/xcodes"
             },
-            "make_executable_permission": [
+            "make_execute_permission": [
                 "${workspace}/xcodes/xcodes"
             ],
             "execute": {

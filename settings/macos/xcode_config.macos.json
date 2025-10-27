@@ -5,7 +5,7 @@
                 "command": [
                     "if path=$(xcode-select -p 2>/dev/null);",
                     " then mkdir -pv ${workspace}/xcode && ln -sfv \"$path\" ${workspace}/xcode/; ",
-                    " else echo \"Error: xcode-select failed - install Xcode or Command Line Tools\"; ",
+                    " else echo \"Error: xcode-select failed - install Xcode or Command Line Tools manually\"; ",
                     "fi"
                 ]
             }

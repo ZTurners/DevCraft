@@ -567,10 +567,11 @@ class WorkspaceInstaller:
                         # Check if operation node has a dest field and if it exists, skip the entire install item
                         if isinstance(install_item[install_step_name], dict):
                             dest_path = install_item[install_step_name].get("dest")
+                            force_update = install_item[install_step_name].get("force_update", False)
                             # If dest exists, check if the path exists
                             if dest_path:
                                 dest_path = self._formalize_path(dest_path)
-                                if os.path.exists(dest_path):
+                                if os.path.exists(dest_path) and not force_update:
                                     print(f"Destination already exists: {dest_path}")
                                     print(f"Skipping install step: '{install_step_name}'")
                                     continue

@@ -374,12 +374,12 @@ class WorkspaceInstaller:
         print(f"\nCopying files from {src_path} to {dest_path}...")
         
         if os.path.exists(src_path):
-            # Create destination directory if it doesn't exist
-            os.makedirs(dest_path, exist_ok=True)
             
             if os.path.isdir(src_path):
                 # Copy directory contents
                 try:
+                    # Create destination directory if it doesn't exist
+                    os.makedirs(dest_path, exist_ok=True)
                     # Use copytree with dirs_exist_ok to allow overwriting
                     shutil.copytree(src_path, dest_path, dirs_exist_ok=True)
                     print(f"Successfully copied directory contents")
@@ -389,7 +389,9 @@ class WorkspaceInstaller:
             else:
                 # Copy single file
                 try:
-                    dest_file = os.path.join(dest_path, os.path.basename(src_path))
+                    dest_file = dest_path
+                    # create parent folder if not exists
+                    os.makedirs(os.path.dirname(dest_file), exist_ok=True)
                     shutil.copy2(src_path, dest_file)
                     print(f"Successfully copied file")
                 except Exception as e:

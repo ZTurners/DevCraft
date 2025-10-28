@@ -89,19 +89,18 @@ if not exist "%VSWHERE_PATH%" (
     :: Configure Python environment
     echo Configuring Python ...
     :: Dynamically find the ._pth file
-    set PTH_FILE=
     
     for %%f in ("%PYTHON_INSTALL_DIR%\python*._pth") do set PTH_FILE=%%f
     for %%f in ("%PYTHON_INSTALL_DIR%\python*.zip") do set PYTHON_ZIP_FILE=%%f
+    
+    if not defined PTH_FILE (
+        echo ERROR: Could not find python*._pth file in %PYTHON_INSTALL_DIR%
+        pause
+        exit /b
+    )
     echo Found ._pth file: %PTH_FILE%
     
     if not exist "%PTH_FILE%.bak" (
-        if not defined PTH_FILE (
-            echo ERROR: Could not find python*._pth file in %PYTHON_INSTALL_DIR%
-            pause
-            exit /b
-        )
-
         :: Backup original ._pth file
         copy "%PTH_FILE%" "%PTH_FILE%.bak" >nul
 

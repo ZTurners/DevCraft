@@ -1,0 +1,37 @@
+{
+  "install": 
+  {
+    "gradle-9.1.0":
+    {
+      "download":
+      {
+        "src": 
+        {
+          "url": "https://services.gradle.org/distributions/gradle-9.1.0-bin.zip"
+        },
+        "dest": "${workspace}/.downloads/gradle-9.1.0-bin.zip"
+      },
+      "unzip":
+      {
+        "src": "${workspace}/.downloads/gradle-9.1.0-bin.zip",
+        "src_sub_folder": "gradle-9.1.0",
+        "dest": "${workspace}/gradle/gradle-9.1.0"
+      }
+    }
+  },
+  "generator_active_batch":
+  {
+    "file_path": "${workspace}/gradle/active",
+    "environments":
+    {
+      "set": 
+      {
+        "GRADLE_USER_HOME": "${workspace}/gradle/gradle-9.1.0/.gradle"
+      },
+      "prepend": 
+      [
+        {"PATH" : "${workspace}/gradle/gradle-9.1.0/bin"}
+      ]
+    }
+  }
+}

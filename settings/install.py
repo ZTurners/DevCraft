@@ -167,10 +167,12 @@ class WorkspaceInstaller:
 
     def _formalize_path(self, path):
         """Formalize a path by replacing workspace and settings variables."""
-        if not isinstance(path, str):
+        if not isinstance(path, str) or path == "":
             return path
         path = path.replace("${workspace}", self.m_workspace_root_path)
         path = path.replace("${settings}", self.m_settings_root_path)
+        path = os.path.normpath(path)
+        
         return path
 
     def _process_download(self, download_config, context):
@@ -248,11 +250,11 @@ class WorkspaceInstaller:
         """Handle unzip node."""
         # unzip_config is the child node data: { src, src_sub_folder, dest }
         
-        downloaded_file = self._formalize_path(unzip_config["src"])
+        src_zip_file = self._formalize_path(unzip_config["src"])
         dest_folder = self._formalize_path(unzip_config["dest"])
         unzip_source = unzip_config.get("src_sub_folder", "")
-        
-        if not downloaded_file or not dest_folder:
+
+        if not src_zip_file or not dest_folder:
             return
         
         # Check if target folder already exists
@@ -265,9 +267,9 @@ class WorkspaceInstaller:
                 print(f"Target folder exists but is empty, will extract: {dest_folder}")
         
         # Check file extension to determine archive type
-        is_zip = downloaded_file.lower().endswith('.zip')
-        is_tar_gz = downloaded_file.lower().endswith('.tar.gz')
-        is_tar_xz = downloaded_file.lower().endswith('.tar.xz')
+        is_zip = src_zip_file.lower().endswith('.zip')
+        is_tar_gz = src_zip_file.lower().endswith('.tar.gz')
+        is_tar_xz = src_zip_file.lower().endswith('.tar.xz')
 
         if not (is_zip or is_tar_gz or is_tar_xz):
             raise Exception("Unsupported archive format. Only .zip, .tar.gz, and .tar.xz are supported")
@@ -275,12 +277,12 @@ class WorkspaceInstaller:
         # Verify archive integrity
         try:
             if is_zip:
-                with zipfile.ZipFile(downloaded_file, 'r') as test_zip:
+                with zipfile.ZipFile(src_zip_file, 'r') as test_zip:
                     if test_zip.testzip() is not None:
                         raise Exception("ZIP file is corrupted")
             else:  # tar.gz or tar.xz
                 mode = "r:gz" if is_tar_gz else "r:xz"
-                with tarfile.open(downloaded_file, mode) as test_tar:
+                with tarfile.open(src_zip_file, mode) as test_tar:
                     test_tar.getmembers()
         except (zipfile.BadZipFile, tarfile.TarError) as e:
             raise Exception(f"Invalid archive file: {str(e)}")
@@ -288,7 +290,7 @@ class WorkspaceInstaller:
         print(f"\nExtracting files to {dest_folder}...")
         
         if is_zip:
-            with zipfile.ZipFile(downloaded_file, 'r') as zip_ref:
+            with zipfile.ZipFile(src_zip_file, 'r') as zip_ref:
                 # Get all members and filter by unzip_source if specified
                 all_members = zip_ref.namelist()
                 
@@ -333,7 +335,7 @@ class WorkspaceInstaller:
                     print(f"\rProgress: {percent}% [{index}/{total} files]", end="", flush=True)
         else:  # tar.gz or tar.xz
             mode = "r:gz" if is_tar_gz else "r:xz"
-            with tarfile.open(downloaded_file, mode) as tar:
+            with tarfile.open(src_zip_file, mode) as tar:
                 # Get all members and filter by unzip_source if specified
                 all_members = tar.getmembers()
                 
@@ -475,12 +477,6 @@ class WorkspaceInstaller:
         # Handle new object format: { command: [...], dest: "..." }
         if isinstance(command_config, dict):
             cmd_list = command_config.get("command", [])
-            cmd_dest = self._formalize_path(command_config.get("dest", ""))
-            
-            # Skip if dest folder exists
-            if cmd_dest and os.path.exists(cmd_dest):
-                print(f"Dest folder already exists: {cmd_dest}, skipping execute.")
-                return
             
             # Build command string from list, replacing variables
             command_parts = []
@@ -573,7 +569,7 @@ class WorkspaceInstaller:
                     try:
                         # Check if operation node has a dest field and if it exists, skip the entire install item
                         if isinstance(install_item[install_step_name], dict):
-                            dest_path = install_item[install_step_name].get("dest")
+                            dest_path = install_item[install_step_name].get("dest", None)
                             force_update = install_item[install_step_name].get("force_update", False)
                             # If dest exists, check if the path exists
                             if dest_path:
@@ -627,56 +623,6 @@ class WorkspaceInstaller:
                 except Exception as e:
                     print(f"Error processing '{node_name}' configuration: {e}")
                     exit(1)
-
-    def install_sysroot(self):
-        """Install sysroot by downloading and extracting from configured URLs."""
-        if self.m_system_name == "Windows":
-            sysroot_config_path = os.path.join(self.m_settings_root_path, "sysroot", "sysroot_config.windows.json")
-        elif self.m_system_name == "Linux":
-            sysroot_config_path = os.path.join(self.m_settings_root_path, "sysroot", "sysroot_config.linux.json")
-        elif self.m_system_name == "Darwin":
-            sysroot_config_path = os.path.join(self.m_settings_root_path, "sysroot", "sysroot_config.macos.json")
-        self.install_from_config(sysroot_config_path)
-
-    def install_sdk(self):
-        """Install SDK by downloading and extracting from configured URLs."""
-        if self.m_system_name == "Windows":
-            sdk_config_path = os.path.join(self.m_settings_root_path, "sdk", "sdk_config.windows.json")
-        elif self.m_system_name == "Linux":
-            sdk_config_path = os.path.join(self.m_settings_root_path, "sdk", "sdk_config.linux.json")
-        elif self.m_system_name == "Darwin":
-            sdk_config_path = os.path.join(self.m_settings_root_path, "sdk", "sdk_config.macos.json")
-        self.install_from_config(sdk_config_path)
-
-    def install_tools(self):
-        """Install tools by downloading and extracting from configured URLs."""
-        if self.m_system_name == "Windows":
-            tools_config_path = os.path.join(self.m_settings_root_path, "tools", "tools_config.windows.json")
-        elif self.m_system_name == "Linux":
-            tools_config_path = os.path.join(self.m_settings_root_path, "tools", "tools_config.linux.json")
-        elif self.m_system_name == "Darwin":
-            tools_config_path = os.path.join(self.m_settings_root_path, "tools", "tools_config.macos.json")
-        self.install_from_config(tools_config_path)
-
-    def install_jdk(self):
-        """Install JDK by downloading and extracting from configured URLs."""
-        if self.m_system_name == "Windows":
-            jdk_config_path = os.path.join(self.m_settings_root_path, "jdk", "jdk_config.windows.json")
-        elif self.m_system_name == "Linux":
-            jdk_config_path = os.path.join(self.m_settings_root_path, "jdk", "jdk_config.linux.json")
-        elif self.m_system_name == "Darwin":
-            jdk_config_path = os.path.join(self.m_settings_root_path, "jdk", "jdk_config.macos.json")
-        self.install_from_config(jdk_config_path)
-
-    def install_android_sdk(self):
-        """Install Android by downloading and extracting from configured URLs."""
-        if self.m_system_name == "Windows":
-            android_config_path = os.path.join(self.m_settings_root_path, "android", "android_sdk_config.windows.json")
-        elif self.m_system_name == "Linux":
-            android_config_path = os.path.join(self.m_settings_root_path, "android", "android_sdk_config.linux.json")
-        elif self.m_system_name == "Darwin":
-            android_config_path = os.path.join(self.m_settings_root_path, "android", "android_sdk_config.macos.json")
-        self.install_from_config(android_config_path)
 
     def generate_enviroment_set_batch_file(self, output_file, set_env_list, prepend_env_list):
         # Basic check
@@ -763,63 +709,6 @@ class WorkspaceInstaller:
             print(f"{'='*70}")
             self.install_from_config(config_path)
 
-
-    def install_active_script(self):
-        self.active_scripts_src_folder = os.path.join(self.m_settings_root_path, "active_scripts")
-        self.active_scripts_dest_folder = os.path.join(self.m_workspace_root_path)
-
-        # Create destination directory if it doesn't exist
-        os.makedirs(self.active_scripts_dest_folder, exist_ok=True)
-
-        if self.m_system_name == "Windows":
-            # Find all .bat files in source folder
-            batch_files = [f for f in os.listdir(os.path.join(self.active_scripts_src_folder, "windows")) if f.endswith('.bat')]
-            for batch_file in batch_files:
-                shutil.copyfile(os.path.join(self.active_scripts_src_folder, "windows", batch_file), os.path.join(self.active_scripts_dest_folder, batch_file))
-                self.make_executable(os.path.join(self.active_scripts_dest_folder, batch_file))
-        elif self.m_system_name == "Linux":
-            # Find all .bat files in source folder
-            batch_files = [f for f in os.listdir(os.path.join(self.active_scripts_src_folder, "linux")) if f.endswith('.sh')]
-            for batch_file in batch_files:
-                shutil.copyfile(os.path.join(self.active_scripts_src_folder, "linux", batch_file), os.path.join(self.active_scripts_dest_folder, batch_file))
-                self.make_executable(os.path.join(self.active_scripts_dest_folder, batch_file))
-        elif self.m_system_name == "Darwin":
-            # Find all .bat files in source folder
-            batch_files = [f for f in os.listdir(os.path.join(self.active_scripts_src_folder, "macos")) if f.endswith('.sh')]
-            for batch_file in batch_files:
-                shutil.copyfile(os.path.join(self.active_scripts_src_folder, "macos", batch_file), os.path.join(self.active_scripts_dest_folder, batch_file))
-                self.make_executable(os.path.join(self.active_scripts_dest_folder, batch_file))
-        
-        # copy summary.py
-        shutil.copyfile(os.path.join(self.active_scripts_src_folder, "summary.py"), os.path.join(self.active_scripts_dest_folder, "summary.py"))
-
-    def install_python(self):
-        """Install Python by downloading and extracting from configured URLs."""
-        if self.m_system_name == "Windows":
-            python_config_path = os.path.join(self.m_settings_root_path, "python", "python_config.windows.json")
-        elif self.m_system_name == "Linux":
-            python_config_path = os.path.join(self.m_settings_root_path, "python", "python_config.linux.json")
-        elif self.m_system_name == "Darwin":
-            python_config_path = os.path.join(self.m_settings_root_path, "python", "python_config.macos.json")
-        self.install_from_config(python_config_path)       
-
-    def install_conan(self):
-        """Install Conan by downloading and extracting from configured URLs."""
-        if self.m_system_name == "Windows":
-            conan_config_path = os.path.join(self.m_settings_root_path, "conan", "conan_config.windows.json")
-        elif self.m_system_name == "Linux":
-            conan_config_path = os.path.join(self.m_settings_root_path, "conan", "conan_config.linux.json")
-        elif self.m_system_name == "Darwin":
-            conan_config_path = os.path.join(self.m_settings_root_path, "conan", "conan_config.macos.json")
-        self.install_from_config(conan_config_path)
-
-    def install_vs_code_setting(self):
-        self.vs_code_init_user_setting_file_path = os.path.join(self.m_settings_root_path, "vscode", "init_user_settings.json")
-        self.vs_code_workspace_setting_folder = os.path.join(self.m_workspace_root_path, "vscode", ".config", "User")
-
-        # Create destination directory if it doesn't exist
-        os.makedirs(self.vs_code_workspace_setting_folder, exist_ok=True)
-        shutil.copyfile(self.vs_code_init_user_setting_file_path, os.path.join(self.vs_code_workspace_setting_folder, "settings.json"))
 
     def install_rust(self):
         """Install Rust using rustup"""

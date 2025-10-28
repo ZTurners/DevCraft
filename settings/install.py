@@ -185,6 +185,7 @@ class WorkspaceInstaller:
             src_url = download_config.get("src_url", download_config.get("url", ""))
             need_auth = download_config.get("auth_required", False)
         
+        downloading_file = self._formalize_path(download_config["dest"]) + ".downloading"
         downloaded_file = self._formalize_path(download_config["dest"])
 
         # Check if file already exists
@@ -221,8 +222,8 @@ class WorkspaceInstaller:
 
         # Add output file specification
         curl_cmd.extend([
-            "-o", downloaded_file,  # Output file
-            "-f",  # Fail on HTTP errors
+            "-o", downloading_file,  # Output file
+            "-C", "-",  # Resume download
             "-S",  # Show error
             "--retry", "3",  # Retry up to 3 times
             "--retry-delay", "5",  # Wait 5 seconds between retries
@@ -231,12 +232,16 @@ class WorkspaceInstaller:
         subprocess.run(curl_cmd, check=True)
         
         # Verify the downloaded file
-        if not os.path.exists(downloaded_file):
+        if not os.path.exists(downloading_file):
             raise Exception("Downloaded file does not exist")
         
-        file_size = os.path.getsize(downloaded_file)
+        file_size = os.path.getsize(downloading_file)
         if file_size == 0:
             raise Exception("Downloaded file is empty")
+        
+        # Rename the downloading file to final name
+        os.rename(downloading_file, downloaded_file)
+
         print("\nDownload completed and verified.")
 
     def _process_unzip_source(self, unzip_config, context):

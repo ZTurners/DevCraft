@@ -53,7 +53,7 @@
   },
   "generator_active_batch":
   {
-    "file_path": "${workspace}/android/android_sdk/active",
+    "file_path": "${workspace}/android/active",
     "environments":
     {
       "set": 

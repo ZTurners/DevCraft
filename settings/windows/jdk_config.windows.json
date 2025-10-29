@@ -14,7 +14,7 @@
       "unzip":
       {
         "src": "${workspace}/.downloads/jdk-25_windows-x64_bin.zip",
-        "src_sub_folder": "./jdk-25.0.1.jdk/Contents/Home",
+        "src_sub_folder": "jdk-25.0.1",
         "dest": "${workspace}/jdk/jdk-25"
       }
     }

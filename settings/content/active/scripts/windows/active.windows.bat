@@ -25,4 +25,4 @@ call %WORKSPACE_ROOT%/sdk/active.bat
 call %WORKSPACE_ROOT%/tools/active.bat
 
 :: summary
-python %WORKSPACE_ROOT%/summary.py
+:: python %WORKSPACE_ROOT%/summary.py

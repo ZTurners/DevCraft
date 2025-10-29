@@ -5,7 +5,7 @@
     {
       "copy":
       {
-        "src": "${settings}/content/bootstrap/scripts/macos",
+        "src": "${settings}/content/active/scripts/macos",
         "dest": "${workspace}",
         "force_update": true
       },
@@ -15,5 +15,5 @@
         "${workspace}/active.macos.sh"
       ]
     }
-  }
+  } 
 }

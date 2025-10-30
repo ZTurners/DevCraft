@@ -47,7 +47,7 @@ if not exist "%VSWHERE_PATH%" (
     :: PYTHON_VERSION=3.13.5
     set PYTHON_URL=https://www.python.org/ftp/python/%PYTHON_VERSION%/python-%PYTHON_VERSION%-embed-amd64.zip
     set PYTHON_DOWNLOAD_DIR=%DEV_ENV_ROOT_PATH%/.downloads
-    set PYTHON_INSTALL_DIR=%DEV_ENV_WORKSPACE_PATH%/python/python-%PYTHON_VERSION%
+    set PYTHON_INSTALL_DIR=%DEV_ENV_WORKSPACE_PATH%/python/versions/%PYTHON_VERSION%
     set PYTHON_SCRIPTS_DIR=%PYTHON_INSTALL_DIR%/Scripts
     set ADD_TO_SYSTEM_PATH=0
 
@@ -170,21 +170,6 @@ if not exist "%VSWHERE_PATH%" (
         exit /b
     )
 
-    :: Install Conan
-    "%PYTHON_SCRIPTS_DIR%\conan.exe" --version
-    if %ERRORLEVEL% neq 0 (
-        echo Installing Conan...
-        "%PYTHON_INSTALL_DIR%\python.exe" -m pip install conan
-    )
-
-    echo Verifying conan...
-    "%PYTHON_SCRIPTS_DIR%\conan.exe" --version
-    if %ERRORLEVEL% neq 0 (
-        echo Conan verification failed
-        pause
-        exit /b
-    )
-
     :: Get installation details
     echo Collecting installation details...
 
@@ -195,15 +180,15 @@ if not exist "%VSWHERE_PATH%" (
     echo ========================================
     echo.
     echo [PYTHON INSTALLATION]
-    echo Version:     %PYTHON_VERSION%
-    echo Location:    %PYTHON_INSTALL_DIR%
+    echo Version:     
+    python --version
+    echo Location:    
+    where python
     echo Executable:  %PYTHON_EXE%
     python -c "import sys; print(sys.executable)"
     echo.
     echo [PIP INSTALLATION]
     "%PYTHON_INSTALL_DIR%\python.exe" -m pip show pip
     echo.
-    echo [CONAN INSTALLATION]
-    "%PYTHON_INSTALL_DIR%\python.exe" -m pip show conan
 
     python --version

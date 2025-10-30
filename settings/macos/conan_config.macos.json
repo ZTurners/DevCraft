@@ -54,7 +54,7 @@
     {
         "set": 
         {
-            "CONAN_HOME": "${workspace}/conan",
+            "CONAN_HOME": "${workspace}/conan/.conan",
             "CONAN_USE_ALWAYS_SHORT_PATHS": "1"
         }
     }

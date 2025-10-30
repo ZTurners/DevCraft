@@ -42,7 +42,7 @@
           "--generator", "VirtualBuildEnv",
           "--output-folder", "${workspace}/conan",
           "--build", "never",
-          "--profile", "${settings}/content/conan/profiles/builder/conan_builder_profile.macos.txt"
+          "--profile", "${settings}/content/conan/profiles/builder/conan_builder_profile.windows.txt"
         ]
       }
     }
@@ -54,7 +54,7 @@
     {
         "set": 
         {
-            "CONAN_HOME": "${workspace}/conan",
+            "CONAN_HOME": "${workspace}/conan/.conan",
             "CONAN_USE_ALWAYS_SHORT_PATHS": "1"
         }
     }

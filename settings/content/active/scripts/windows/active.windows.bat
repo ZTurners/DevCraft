@@ -4,7 +4,7 @@ rem Usage:
 rem   active.windows.bat            -> runs each found active.bat
 rem   active.windows.bat /list      -> lists all active.bat that would be run (safe preview)
 
-
+set WORKSPACE_ROOT=%~dp0
 rem Use DIR to find all files named active.bat and iterate over them
 for /f "delims=" %%F in ('dir /b /s /a-d "active.bat" ^| sort') do (
 	rem Skip this runner file if it happens to be named active.bat in the root
@@ -20,3 +20,5 @@ for /f "delims=" %%F in ('dir /b /s /a-d "active.bat" ^| sort') do (
 		)
 	)
 )
+call %WORKSPACE_ROOT%\conan\conanbuild.bat
+call %WORKSPACE_ROOT%\conan\conanvcvars.bat

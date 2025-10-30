@@ -14,9 +14,6 @@ compiler.runtime_type=Release
 ninja/1.12.1
 cmake/3.31.6
 
-llvm/20.1.1@arieo/dev
-directx_tex/0.4.1@arieo/dev
-
 [conf]
 tools.build:jobs=8
 tools.cmake.cmaketoolchain:generator=Ninja
@@ -24,7 +21,7 @@ tools.cmake.cmakedeps:new=will_break_next
 
 # Those parameters will be passed from intall.py
 #tools.microsoft.msbuild:installation_path=D:/Program Files/Microsoft Visual Studio/18/Insiders
-#tools.microsoft.msbuild:vs_version=17
+tools.microsoft.msbuild:vs_version=18
 
 tools.microsoft:winsdk_version=10.0.26100.0
 

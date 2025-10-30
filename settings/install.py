@@ -679,7 +679,7 @@ class WorkspaceInstaller:
                 
                 # Write set commands (overwrite existing values)
                 for var_name, value in set_env_list:
-                    value = _formalize_path(value)
+                    value = self._formalize_path(value)
                     f.write(f'export {var_name}="{value}"\n')
                 
                 if set_env_list and prepend_env_list:
@@ -687,7 +687,7 @@ class WorkspaceInstaller:
                 
                 # Write append commands
                 for var_name, value in prepend_env_list:
-                    value = _formalize_path(value)
+                    value = self._formalize_path(value)
                     f.write(f'export {var_name}="{value}:${var_name}"\n')
                 
                 f.write('\necho "Environment variables set successfully"\n')

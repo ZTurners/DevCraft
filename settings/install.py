@@ -243,7 +243,7 @@ class WorkspaceInstaller:
             raise Exception("Downloaded file is empty")
 
         if not expected_hash:
-            raise Exception("No SHA-256 checksum provided, skipping verification.")
+            print("No SHA-256 checksum provided, skipping verification.")
 
         # If a SHA-256 checksum is provided in the config, verify it now.
         if expected_hash:

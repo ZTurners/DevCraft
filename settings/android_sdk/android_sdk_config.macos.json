@@ -7,7 +7,8 @@
       {
         "src": 
         {
-          "url": "https://dl.google.com/android/repository/commandlinetools-mac-13114758_latest.zip"
+          "url": "https://dl.google.com/android/repository/commandlinetools-mac-13114758_latest.zip",
+          "SHA-256" : "5673201e6f3869f418eeed3b5cb6c4be7401502bd0aae1b12a29d164d647a54e"
         },
         "dest": "${download}/commandlinetools-mac-13114758_latest.zip"
       },

@@ -7,7 +7,8 @@
       {
         "src": 
         {
-          "url": "https://download.oracle.com/java/25/latest/jdk-25_macos-aarch64_bin.tar.gz"
+          "url": "https://download.oracle.com/java/25/latest/jdk-25_macos-aarch64_bin.tar.gz",
+          "SHA-256": "c8866e94cb34f1b7179257ceb8db8b53f26685e7d70644b17304f09fd8f93cc2"
         },
         "dest": "${download}/jdk-25_macos-aarch64_bin.tar.gz"
       },

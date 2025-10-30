@@ -5,6 +5,7 @@ from pathlib import Path
 import subprocess
 import platform
 import json
+import hashlib
 import configparser
 import urllib.request
 import datetime
@@ -185,9 +186,7 @@ class WorkspaceInstaller:
         if "src" in download_config and isinstance(download_config["src"], dict):
             src_url = download_config["src"]["url"]
             need_auth = download_config["src"].get("auth_required", False)
-        else:
-            src_url = download_config.get("src_url", download_config.get("url", ""))
-            need_auth = download_config.get("auth_required", False)
+            expected_hash = download_config["src"].get("SHA-256", None)
         
         downloading_file = self._formalize_path(download_config["dest"]) + ".downloading"
         downloaded_file = self._formalize_path(download_config["dest"])
@@ -242,6 +241,28 @@ class WorkspaceInstaller:
         file_size = os.path.getsize(downloading_file)
         if file_size == 0:
             raise Exception("Downloaded file is empty")
+
+        if not expected_hash:
+            raise Exception("No SHA-256 checksum provided, skipping verification.")
+
+        # If a SHA-256 checksum is provided in the config, verify it now.
+        if expected_hash:
+            expected_hash = expected_hash.strip().lower()
+            print(f"Verifying SHA-256 checksum for {downloading_file}...")
+            sha256 = hashlib.sha256()
+            with open(downloading_file, 'rb') as fh:
+                for chunk in iter(lambda: fh.read(8192), b''):
+                    sha256.update(chunk)
+            actual_hash = sha256.hexdigest().lower()
+            if actual_hash != expected_hash:
+                # remove the corrupt download
+                try:
+                    os.remove(downloading_file)
+                except Exception:
+                    pass
+                raise Exception(f"SHA-256 mismatch: expected {expected_hash}, got {actual_hash}")
+            else:
+                print("SHA-256 verification passed")
         
         # Rename the downloading file to final name
         os.rename(downloading_file, downloaded_file)

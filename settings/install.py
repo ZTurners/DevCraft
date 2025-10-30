@@ -18,6 +18,7 @@ class WorkspaceInstaller:
         self.m_dev_env_root_path = Path(__file__).parent.parent.absolute()
         self.m_settings_root_path = os.path.join(self.m_dev_env_root_path, "settings")
         self.m_workspace_root_path = os.path.join(self.m_dev_env_root_path, "workspace")
+        self.m_download_root_path = os.path.join(self.m_dev_env_root_path, ".downloads")
         self.m_system_name = platform.system()
         self.m_env_vs_path = None
         self.m_summary_data = []
@@ -171,6 +172,7 @@ class WorkspaceInstaller:
             return path
         path = path.replace("${workspace}", self.m_workspace_root_path)
         path = path.replace("${settings}", self.m_settings_root_path)
+        path = path.replace("${download}", self.m_download_root_path)
         path = os.path.normpath(path)
         
         return path
@@ -676,132 +678,57 @@ class WorkspaceInstaller:
 
 
     def install_all(self):
+        # On Windows, detect VS first so environment can be used by installs
         if self.m_system_name == "Windows":
             vs_info = self.detect_visual_studio()
             if vs_info:
                 self.m_env_vs_path, self.m_env_vs_version = vs_info
 
-        # Map system names to settings subdirectory paths
-        system_name_map = {
-            "Windows": os.path.join(self.m_settings_root_path, "windows"),
-            "Linux": os.path.join(self.m_settings_root_path, "linux"),
-            "Darwin": os.path.join(self.m_settings_root_path, "macos")
+        # Determine the filename suffix for this platform's config files.
+        suffix_map = {
+            "Windows": ".windows.json",
+            "Linux": ".linux.json",
+            "Darwin": ".macos.json",
         }
-        
-        # Get the path for current system
-        system_settings_path = system_name_map.get(self.m_system_name)
-        if not system_settings_path:
+
+        suffix = suffix_map.get(self.m_system_name)
+        if not suffix:
             print(f"Error: Unsupported system: {self.m_system_name}")
             return
-        
-        # Check if the system settings path exists
-        if not os.path.exists(system_settings_path):
-            print(f"Warning: Settings path not found: {system_settings_path}")
+
+        # Search only second-level folders under settings/ (e.g. settings/jdk/, settings/rustup/)
+        config_files = []
+        try:
+            for entry in sorted(os.listdir(self.m_settings_root_path)):
+                entry_path = os.path.join(self.m_settings_root_path, entry)
+                if not os.path.isdir(entry_path):
+                    # Only consider directories directly under settings/
+                    continue
+
+                # List files in this subdirectory (do NOT recurse deeper)
+                for fname in sorted(os.listdir(entry_path)):
+                    if fname.endswith(suffix):
+                        config_files.append(os.path.join(entry_path, fname))
+        except FileNotFoundError:
+            print(f"Warning: Settings directory not found: {self.m_settings_root_path}")
             return
-        
-        # Get all JSON files in the system-specific settings folder
-        config_files = [f for f in os.listdir(system_settings_path) 
-                       if f.endswith('.json') and os.path.isfile(os.path.join(system_settings_path, f))]
-        
-        # Process each config file
-        for config_file in sorted(config_files):
-            config_path = os.path.join(system_settings_path, config_file)
+
+        if not config_files:
+            print(f"Warning: No configuration files found for system '{self.m_system_name}' in {self.m_settings_root_path}")
+            return
+
+        # Process each config file found (sorted for deterministic order)
+        for config_path in sorted(config_files):
+            # Friendly display: show path relative to settings folder
+            try:
+                display_name = os.path.relpath(config_path, self.m_settings_root_path)
+            except Exception:
+                display_name = os.path.basename(config_path)
+
             print(f"\n{'='*70}")
-            print(f"Processing config: {config_file}")
+            print(f"Processing config: {display_name}")
             print(f"{'='*70}")
             self.install_from_config(config_path)
-
-
-    def install_rust(self):
-        """Install Rust using rustup"""
-        self.rust_workspace_path = os.path.join(self.m_workspace_root_path, "rust")
-        os.makedirs(self.rust_workspace_path, exist_ok=True)
-
-        # Read rustup settings
-        rustup_settings_path = os.path.join(self.m_settings_root_path, "rust", "rustup.download.json")
-        with open(rustup_settings_path, 'r') as f:
-            rustup_settings = json.load(f)
-        
-        # Create rustup home and cargo home in work space
-        os.makedirs(os.path.join(self.rust_workspace_path, ".rustup"), exist_ok=True)
-        os.makedirs(os.path.join(self.rust_workspace_path, ".cargo"), exist_ok=True)
-
-        # Copy settings.toml into it
-        settings_toml_path = os.path.join(self.m_settings_root_path, "rust", "settings.toml")
-        shutil.copyfile(settings_toml_path, os.path.join(self.rust_workspace_path, ".rustup", "settings.toml"))
-
-        # Find platform settings for current system
-        platform_settings = next((p for p in rustup_settings['platforms'] if p['name'].lower() == self.m_system_name.lower()), None)
-        if not platform_settings:
-            supported_platforms = [p['name'] for p in rustup_settings['platforms']]
-            raise Exception(f"Platform settings for {self.m_system_name} not found in rustup.download.json. Supported platforms are: {', '.join(supported_platforms)}")
-            
-        # Setup common paths and environment
-        rust_home = os.path.join(self.rust_workspace_path, ".rustup")
-        cargo_home = os.path.join(self.rust_workspace_path, ".cargo")
-        
-        # Save original environment variables
-        orig_rustup_home = os.environ.get("RUSTUP_HOME")
-        orig_cargo_home = os.environ.get("CARGO_HOME")
-        
-        try:
-            # Set environment for rustup installation
-            os.environ["RUSTUP_HOME"] = rust_home
-            os.environ["CARGO_HOME"] = cargo_home
-            
-            if self.m_system_name == "Windows":
-                rustup_url = platform_settings['url']
-                rustup_path = os.path.join(self.rust_workspace_path, "rustup-init.exe")
-                
-                def show_progress(count, block_size, total_size):
-                    if total_size > 0:
-                        percent = (count * block_size * 100) // total_size
-                        print(f"\rDownloading rustup-init... {percent}% [{count * block_size}/{total_size} bytes]", end="", flush=True)
-                    else:
-                        print(f"\rDownloading rustup-init... {count * block_size} bytes", end="", flush=True)
-
-                # Download rustup-init if needed
-                if not os.path.exists(rustup_path):
-                    print("Starting download of rustup-init...")
-                    urllib.request.urlretrieve(rustup_url, rustup_path, show_progress)
-                    print("\nDownload completed.")
-                else:
-                    print("rustup-init.exe already exists, skipping download.")
-                
-                # Make the file executable and run it
-                self.make_executable(rustup_path)
-                subprocess.run([rustup_path, "-y"], check=True)
-            else:
-                # Get and run the curl command for Unix systems
-                curl_cmd = platform_settings.get('curl_cmd')
-                if not curl_cmd:
-                    raise Exception(f"curl_cmd not found in settings for {self.m_system_name}")
-                subprocess.run(f'{curl_cmd} -y', shell=True, check=True)
-        finally:
-            # Restore original environment variables
-            if orig_rustup_home:
-                os.environ["RUSTUP_HOME"] = orig_rustup_home
-            else:
-                os.environ.pop("RUSTUP_HOME", None)
-            
-            if orig_cargo_home:
-                os.environ["CARGO_HOME"] = orig_cargo_home
-            else:
-                os.environ.pop("CARGO_HOME", None)
-        
-        # Generate environment activation script
-        self.generate_enviroment_set_batch_file(
-            os.path.join(self.rust_workspace_path, "active"),
-            set_env_list=[
-                ("RUSTUP_HOME", rust_home),
-                ("CARGO_HOME", cargo_home)
-            ],
-            prepend_env_list=[
-                ("PATH", os.path.join(cargo_home, "bin"))
-            ]
-        )
-        
-        print("Rust installation completed successfully")
 
 def main():
     dev_env_installer = WorkspaceInstaller()

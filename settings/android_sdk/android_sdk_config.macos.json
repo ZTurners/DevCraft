@@ -1,0 +1,72 @@
+{
+  "install": 
+  {
+    "android_sdk_bootstrap":
+    {
+      "download":
+      {
+        "src": 
+        {
+          "url": "https://dl.google.com/android/repository/commandlinetools-mac-13114758_latest.zip"
+        },
+        "dest": "${download}/commandlinetools-mac-13114758_latest.zip"
+      },
+      "unzip":
+      {
+        "src": "${download}/commandlinetools-mac-13114758_latest.zip",
+        "src_sub_folder": "cmdline-tools",
+        "dest": "${workspace}/android/android_sdk/cmdline-tools/bootstrap"
+      },
+      "make_execute_permission": [
+        "${workspace}/android/android_sdk/cmdline-tools/bootstrap/bin"
+      ]
+    },
+    "android_sdk_license":
+    {
+      "execute":
+      {
+        "command": [
+          "yes | ",
+          "${workspace}/android/android_sdk/cmdline-tools/bootstrap/bin/sdkmanager",
+          "--sdk_root=${workspace}/android/android_sdk",
+          "--licenses",
+          ""
+        ]
+      }
+    }, 
+    "android_sdk":
+    {
+      "execute":
+      {
+        "command": [
+          "${workspace}/android/android_sdk/cmdline-tools/bootstrap/bin/sdkmanager",
+          "--sdk_root=${workspace}/android/android_sdk",
+          "--install",
+          "\"ndk;29.0.13599879\"",
+          "\"build-tools;36.0.0-rc5\"",
+          "\"ndk-bundle\"",
+          "\"platform-tools\"",
+          "\"cmdline-tools;19.0\""
+        ]
+      }
+    }
+  },
+  "generator_active_batch":
+  {
+    "file_path": "${workspace}/android/active",
+    "environments":
+    {
+      "set": 
+      {
+        "ANDROID_SDK_ROOT": "${workspace}/android/android_sdk",
+        "ANDROID_HOME": "${workspace}/android/android_sdk",
+        "ANDROID_USER_HOME": "${workspace}/android/.android"
+      },
+      "prepend": 
+      [
+        {"PATH" : "${workspace}/android/android_sdk/cmdline-tools/bin"},
+        {"PATH" : "${workspace}/android/android_sdk/platform-tools"}
+      ]
+    }
+  }
+}

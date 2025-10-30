@@ -46,7 +46,7 @@ if not exist "%VSWHERE_PATH%" (
     :: Configuration - Change these values if needed
     :: PYTHON_VERSION=3.13.5
     set PYTHON_URL=https://www.python.org/ftp/python/%PYTHON_VERSION%/python-%PYTHON_VERSION%-embed-amd64.zip
-    set PYTHON_DOWNLOAD_DIR=%DEV_ENV_WORKSPACE_PATH%/.downloads
+    set PYTHON_DOWNLOAD_DIR=%DEV_ENV_ROOT_PATH%/.downloads
     set PYTHON_INSTALL_DIR=%DEV_ENV_WORKSPACE_PATH%/python/python-%PYTHON_VERSION%
     set PYTHON_SCRIPTS_DIR=%PYTHON_INSTALL_DIR%/Scripts
     set ADD_TO_SYSTEM_PATH=0

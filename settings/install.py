@@ -567,6 +567,114 @@ class WorkspaceInstaller:
         # Generate the batch file
         self.generate_enviroment_set_batch_file(file_path, set_env_list, prepend_env_list)
 
+    def _process_change_file_content(self, change_config, context):
+        """Handle change_file_content node.
+
+        Supported formats:
+        - insert: insert a new line at 1-based line number
+        - change: replace an existing line at 1-based line number (extend file if needed)
+
+        Example:
+        {
+          "file_path": "${workspace}/path/to/file",
+          "change": [ { "line": 55, "content": "..." } ],
+          "insert": [ { "line": 60, "content": "..." } ]
+        }
+
+        Behavior:
+        - Creates parent directory if missing.
+        - If file doesn't exist, creates an empty file.
+        - Applies 'change' operations first (replace), then 'insert' operations.
+        - Line numbers are 1-based.
+        """
+        if not isinstance(change_config, dict):
+            return
+
+        file_path = change_config.get("file_path")
+        inserts = change_config.get("insert", [])
+        changes = change_config.get("change", [])
+
+        if not file_path:
+            print("Warning: change_file_content missing 'file_path'")
+            return
+
+        file_path = self._formalize_path(file_path)
+
+        # Ensure parent directories exist
+        parent = os.path.dirname(file_path)
+        if parent:
+            os.makedirs(parent, exist_ok=True)
+
+        # Read existing lines (or start empty)
+        if os.path.exists(file_path):
+            with open(file_path, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+        else:
+            lines = []
+
+        def _ensure_nl(s: str) -> str:
+            return s if s.endswith('\n') else s + '\n'
+
+        # Normalize and apply changes (replace specific lines)
+        normalized_changes = []
+        for item in changes:
+            if not isinstance(item, dict):
+                continue
+            line_no = item.get('line')
+            content = item.get('content', '')
+            try:
+                line_no = int(line_no)
+            except Exception:
+                continue
+            # Expand variables in content
+            content = self._formalize_path(content).replace('\\', '/')
+            normalized_changes.append((line_no, content))
+
+        normalized_changes.sort(key=lambda x: x[0])
+
+        for line_no, content in normalized_changes:
+            idx = max(0, line_no - 1)
+            # If index beyond current length, extend with blank lines up to idx
+            if idx >= len(lines):
+                lines.extend(['\n'] * (idx - len(lines) + 1))
+
+            # Replace the line at idx
+            lines[idx] = _ensure_nl(self._formalize_path(content).replace('\\', '/'))
+
+        # Normalize inserts: ensure list of dicts with line(int) and content(str)
+        normalized_inserts = []
+        for item in inserts:
+            if not isinstance(item, dict):
+                continue
+            line_no = item.get('line')
+            content = item.get('content', '')
+            try:
+                line_no = int(line_no)
+            except Exception:
+                continue
+            # store as 1-based line numbers
+            normalized_inserts.append((line_no, content))
+
+        # Sort by line number ascending so earlier inserts don't offset later ones unexpectedly
+        normalized_inserts.sort(key=lambda x: x[0])
+
+        # Apply inserts with offset tracking
+        offset = 0
+        for line_no, content in normalized_inserts:
+            idx = max(0, line_no - 1) + offset
+            # If index beyond current length, extend with empty lines
+            if idx > len(lines):
+                lines.extend(['\n'] * (idx - len(lines)))
+
+            lines.insert(idx, _ensure_nl(self._formalize_path(content).replace('\\', '/')))
+            offset += 1
+
+        # Write back
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.writelines(lines)
+
+        print(f"Modified file: {file_path}")
+
     def _process_install(self, install_node, context):
         
         # Define node handlers mapping (with context requirements)
@@ -575,6 +683,7 @@ class WorkspaceInstaller:
             'unzip': self._process_unzip_source,
             'copy': self._process_copy,
             'make_execute_permission': self._process_make_execute_permission,
+            'change_file_content': self._process_change_file_content,
             'environments': self._process_environments,
             'execute': self._process_execute,
         }

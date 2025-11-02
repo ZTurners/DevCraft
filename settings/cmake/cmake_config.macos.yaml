@@ -7,7 +7,7 @@ install:
       dest: ${download}/cmake-3.31.9-macos-universal.tar.gz
   - unzip:
       src: ${download}/cmake-3.31.9-macos-universal.tar.gz
-      src_sub_folder: cmake-3.31.9-macos-universal
+      src_sub_folder: cmake-3.31.9-macos-universal/CMake.app/Contents
       dest: ${workspace}/cmake/cmake-3.31
 generator_active_batch:
   file_path: ${workspace}/cmake/active

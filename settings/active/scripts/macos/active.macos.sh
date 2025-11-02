@@ -21,4 +21,4 @@ if [ -f "${WORKSPACE_ROOT}/summary.py" ]; then
 	python "${WORKSPACE_ROOT}/summary.py"
 fi
 
-source "${WORKSPACE_ROOT}/conan/conanbuild.sh"
+# source "${WORKSPACE_ROOT}/conan/conanbuild.sh"

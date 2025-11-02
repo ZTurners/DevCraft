@@ -2,20 +2,20 @@
 # cd ubuntu_root && sudo tar -czhvf ../ubuntu_sysroot.tar.gz ./lib ./lib64 ./usr/include ./usr/lib ./usr/lib64 ./usr/src
 install:
   # ubuntu_amd64_24_04:
-    - download:
+  - download:
       src:
         url: https://github.com/BigElderK/DevCraftArtifactory/releases/download/init/ubuntu_amd64_24_04_sysroot.tar.gz
       dest: ${download}/ubuntu_amd64_24_04_sysroot.tar.gz
-    - unzip:
+  - unzip:
       src: ${download}/ubuntu_amd64_24_04_sysroot.tar.gz
       src_sub_folder: ''
       dest: ${workspace}/sysroot/ubuntu_amd64_24.04
-  # raspberry_arm64_bookworm:
-    - download:
+# raspberry_arm64_bookworm:
+  - download:
       src:
         url: https://github.com/BigElderK/DevCraftArtifactory/releases/download/init/raspberry_arm64_bookworm_sysroot.tar.xz
       dest: ${download}/raspberry_arm64_bookworm_sysroot.tar.xz
-    - unzip:
-        src: ${download}/raspberry_arm64_bookworm_sysroot.tar.xz
-        src_sub_folder: ''
-        dest: ${workspace}/sysroot/raspberry_arm64_bookworm
+  - unzip:
+      src: ${download}/raspberry_arm64_bookworm_sysroot.tar.xz
+      src_sub_folder: ''
+      dest: ${workspace}/sysroot/raspberry_arm64_bookworm

@@ -13,6 +13,7 @@ except Exception:
 import configparser
 import urllib.request
 import datetime
+import time
 import zipfile
 import tarfile
 import copy
@@ -327,7 +328,51 @@ class WorkspaceInstaller:
             "--retry-delay", "5",  # Wait 5 seconds between retries
             src_url
         ])
-        subprocess.run(curl_cmd, check=True)
+
+        # Check size of the file when no SHA-256 provided.
+        # Attempt to determine expected size via HTTP HEAD Content-Length header.
+        expected_size = None
+        try:
+            req = urllib.request.Request(src_url, method='HEAD')
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                cl = resp.getheader('Content-Length') or resp.getheader('content-length')
+                if cl:
+                    expected_size = int(cl)
+        except Exception as e:
+            print(f"Warning: could not determine remote Content-Length: {e}")
+
+        # Execute curl and check result. Retry up to 3 times on failure.
+        max_attempts = 10
+        attempt = 1
+        last_err = None
+        while attempt < max_attempts:
+            result = subprocess.run(curl_cmd, text=True, check=True)
+            if result.returncode == 0:
+                # success
+                print("Download command succeeded")
+
+                # get file_size from downloading file
+                file_size = os.path.getsize(downloading_file)
+                if file_size == expected_size:
+                    last_err = None
+                    break
+                else:
+                    last_err = f"Downloaded file size {file_size} does not match expected size {expected_size}"
+            else:
+                # failed attempt: do not remove partial file; allow curl -C - to resume
+                last_err = result.stderr.strip() or result.stdout.strip()
+            
+            print(f"Download attempt {attempt} failed: {last_err}")
+
+            if attempt < max_attempts:
+                print("Retrying download...")
+                time.sleep(2)
+            attempt += 1
+            print(f"Running download attempt {attempt}/{max_attempts}...")
+
+        if last_err:
+            raise Exception(f"Download command failed after {max_attempts} attempts: {last_err}")
+
         
         # Verify the downloaded file
         if not os.path.exists(downloading_file):
@@ -358,6 +403,7 @@ class WorkspaceInstaller:
                 raise Exception(f"SHA-256 mismatch: expected {expected_hash}, got {actual_hash}")
             else:
                 print("SHA-256 verification passed")
+
         
         # Rename the downloading file to final name
         os.rename(downloading_file, downloaded_file)

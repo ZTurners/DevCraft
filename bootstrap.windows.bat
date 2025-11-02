@@ -192,3 +192,14 @@ if not exist "%VSWHERE_PATH%" (
     echo.
 
     python --version
+
+    :: Install PyYAML so settings/install.py can parse YAML configs
+    echo Installing PyYAML (PyYAML is required for parsing YAML configs)...
+    "%PYTHON_INSTALL_DIR%\python.exe" -m pip install --upgrade --disable-pip-version-check pyyaml
+    if %ERRORLEVEL% neq 0 (
+        echo Warning: Failed to install PyYAML automatically.
+        echo You can install it manually by running:
+        echo    python -m pip install pyyaml
+    ) else (
+        echo PyYAML installed successfully.
+    )

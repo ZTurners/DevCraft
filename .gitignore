@@ -13,3 +13,5 @@ android/.AndroidSDK
 .downloads
 
 workspace
+
+__pycache__

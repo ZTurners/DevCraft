@@ -9,4 +9,4 @@ if %errorlevel% neq 0 (
 )
 
 :: start vscode
-code --user-data-dir=%WORKSPACE_ROOT%\vscode\.config
+code --user-data-dir=%WORKSPACE_ROOT%\vscode\.config --new-window 

@@ -20,5 +20,5 @@ for /f "delims=" %%F in ('dir /b /s /a-d "active.bat" ^| sort') do (
 		)
 	)
 )
-call %WORKSPACE_ROOT%\conan\conanbuild.bat
-call %WORKSPACE_ROOT%\conan\conanvcvars.bat
+@REM call %WORKSPACE_ROOT%\conan\conanbuild.bat
+@REM call %WORKSPACE_ROOT%\conan\conanvcvars.bat

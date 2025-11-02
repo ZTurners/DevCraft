@@ -7,7 +7,6 @@ install:
       dest: ${download}/ninja-1.13.1-windows-x86_64.zip
   - unzip:
       src: ${download}/ninja-1.13.1-windows-x86_64.zip
-      src_sub_folder: ninja-1.13.1-windows-x86_64
       dest: ${workspace}/ninja/ninja-1.13.1
 generator_active_batch:
   file_path: ${workspace}/ninja/active

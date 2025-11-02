@@ -10,7 +10,8 @@ install:
       src_sub_folder: cmdline-tools
       dest: ${workspace}/android/android_sdk/cmdline-tools/bootstrap
   - make_execute_permission:
-    - ${workspace}/android/android_sdk/cmdline-tools/bootstrap/bin
+    files:
+      - ${workspace}/android/android_sdk/cmdline-tools/bootstrap/bin
 # android_sdk_license:
   - execute:
     command:

@@ -372,8 +372,8 @@ class WorkspaceInstaller:
         dest_folder = self._formalize_path(unzip_config["dest"])
         unzip_source = unzip_config.get("src_sub_folder", "")
 
-        if not src_zip_file or not dest_folder:
-            return
+        if not src_zip_file:
+            raise Exception("No source file specified for unzip")
         
         # Check if target folder already exists
         if os.path.exists(dest_folder) and os.path.isdir(dest_folder):
@@ -525,22 +525,46 @@ class WorkspaceInstaller:
         else:
             print(f"Warning: Source path not found: {src_path}")
 
-    def _process_make_execute_permission(self, permission_paths, context):
+    def _process_make_execute_permission(self, permission_config, context):
         """Handle make_execute_permission node."""
-        # permission_paths is the child node data: array of paths
-        if not isinstance(permission_paths, list):
-            return
-        
+        # New expected form in YAML:
+        # make_execute_permission:
+        #   files:
+        #     - ${workspace}/path/to/file_or_dir
+        # The code keeps backward compatibility with the old form which was a simple
+        # list of paths. Supports a single string, a list of strings, or a dict with
+        # a 'files' key containing the list.
+
+        # Normalize input into a list of path strings
+        paths = []
+        if isinstance(permission_config, dict):
+            # look for 'files' key
+            files_val = permission_config.get('files')
+            if isinstance(files_val, list):
+                paths = files_val
+            else:
+                # Nothing sensible to do
+                raise TypeError("make_execute_permission 'files' key must be a list")
+        else:
+            raise TypeError("make_execute_permission must be a dict with 'files' key")
+
         print("\nSetting execute permissions...")
-        for path_pattern in permission_paths:
-            # Replace workspace variable
+        for path_pattern in paths:
+            # Replace workspace/settings/download variables
             path_pattern = self._formalize_path(path_pattern)
-            
+
+            if not path_pattern:
+                continue
+
             if os.path.exists(path_pattern):
-                # Check if it's a directory or file
+                # If it's a directory, walk it and set execute on files
                 if os.path.isdir(path_pattern):
-                    # Recursively set execute permissions for all files in the directory
                     for root, dirs, files in os.walk(path_pattern):
+                        # Ensure directories themselves are executable (useful for searching)
+                        try:
+                            self.make_executable(root)
+                        except Exception:
+                            pass
                         for filename in files:
                             file_path = os.path.join(root, filename)
                             try:
@@ -549,7 +573,7 @@ class WorkspaceInstaller:
                                 print(f"Warning: Could not set execute permission for {file_path}: {e}")
                     print(f"Set execute permissions for all files in: {path_pattern}")
                 else:
-                    # It's a single file
+                    # Single file: make it executable
                     try:
                         self.make_executable(path_pattern)
                         print(f"Set execute permission for: {path_pattern}")
@@ -783,59 +807,47 @@ class WorkspaceInstaller:
         }
 
         # Normalize install_node to an iterable list of (name, item) pairs.
-        items = []
-        if isinstance(install_node, dict):
-            # old format: mapping of name -> item
-            items = list(install_node.items())
-        elif isinstance(install_node, list):
+        install_steps = []
+        if isinstance(install_node, list):
             # new format: list of single-key mappings or multi-key mappings
             for entry in install_node:
                 if not isinstance(entry, dict):
-                    continue
-                # If entry is a single-key mapping, unpack it
-                if len(entry) == 1:
-                    name = next(iter(entry))
-                    items.append((name, entry[name]))
-                else:
-                    # multiple keys: treat each as its own install item
-                    for k, v in entry.items():
-                        items.append((k, v))
+                    raise TypeError("each install entry must be an object")
+                # multiple keys: treat each as its own install item
+                for k, v in entry.items():
+                    install_steps.append((k, v))
         else:
-            print("Warning: install node has unsupported type; expected dict or list")
-            return
+            raise TypeError("install node must be an object or an array")
 
         # Iterate over each install item
-        for install_item_name, install_item in items:
-            print(f"\n{'='*60}")
-            print(f"Processing install item: '{install_item_name}'")
-            print(f"{'='*60}")
+        for install_step_name, install_step in install_steps:
+            # print(f"\n{'='*60}")
+            print(f"Processing install item: '{install_step_name}'")
+            # print(f"{'='*60}")
 
             # Ensure install_item is a mapping
-            if not isinstance(install_item, dict):
-                print(f"Warning: install item '{install_item_name}' is not an object; skipping")
-                continue
+            if not isinstance(install_step, dict):
+                raise TypeError(f"install item '{install_step_name}' must be an object")
 
             # Process nodes in order for this install item
-            for install_step_name, handler in node_handlers.items():
-                if install_step_name in install_item:
-                    try:
-                        # Check if operation node has a dest field and if it exists, skip the specific install step
-                        node_value = install_item[install_step_name]
-                        if isinstance(node_value, dict):
-                            dest_path = node_value.get("dest", None)
-                            force_update = node_value.get("force_update", False)
-                            if dest_path:
-                                dest_path = self._formalize_path(dest_path)
-                                if os.path.exists(dest_path) and not force_update:
-                                    print(f"Destination already exists: {dest_path}")
-                                    print(f"Skipping install step: '{install_step_name}' for '{install_item_name}'")
-                                    continue
-
-                        print(f"\nProcessing '{install_step_name}' for '{install_item_name}'...")
-                        handler(install_item[install_step_name], context)
-                    except Exception as e:
-                        # Re-raise with context
-                        raise Exception(f"Error processing '{install_step_name}' for '{install_item_name}': {e}") from e
+            if node_handlers[install_step_name]:
+                # Special case: if the install_item_name matches a handler, process it directly
+                try:
+                    print(f"\nProcessing '{install_step_name}'...")
+                    force_update = install_step.get("force_update", False)
+                    dest_path = install_step.get("dest", None)
+                    if dest_path:
+                        dest_path = self._formalize_path(dest_path)
+                        if os.path.exists(dest_path) and not force_update:
+                            print(f"Destination already exists: {dest_path}")
+                            print(f"Skipping install step: '{install_step_name}'")
+                            continue
+                    node_handlers[install_step_name](install_step, context)
+                except Exception as e:
+                    raise Exception(f"Error processing '{install_step_name}': {e}") from e
+                continue
+            else:
+                raise Exception(f"Unknown install item name: '{install_step_name}'")
 
     def install_from_config(self, config_file_path):
         """Generic installation function that handles downloading and extracting from configured URLs.

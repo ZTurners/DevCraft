@@ -9,15 +9,16 @@ install:
       src: ${download}/vulkansdk-macos-1.4.328.1.zip
       dest: ${workspace}/.tmp/vulkan
   - make_execute_permission:
-    - ${workspace}/.tmp/vulkan/vulkansdk-macos-1.4.328.1.app/Contents/MacOS/vulkansdk-macos-1.4.328.1
+      files:
+        - ${workspace}/.tmp/vulkan/vulkansdk-macos-1.4.328.1.app/Contents/MacOS/vulkansdk-macos-1.4.328.1
   - execute:
       command:
-      - ${workspace}/.tmp/vulkan/vulkansdk-macos-1.4.328.1.app/Contents/MacOS/vulkansdk-macos-1.4.328.1
-      - install
-      - --accept-licenses
-      - --confirm-command
-      - copy_only=1
-      - --root=${workspace}/.tmp/vulkan/vulkansdk_macos_x86_64_1.4.328.1
+        - ${workspace}/.tmp/vulkan/vulkansdk-macos-1.4.328.1.app/Contents/MacOS/vulkansdk-macos-1.4.328.1
+        - install
+        - --accept-licenses
+        - --confirm-command
+        - copy_only=1
+        - --root=${workspace}/.tmp/vulkan/vulkansdk_macos_x86_64_1.4.328.1
       dest: ${workspace}/vulkan/vulkansdk_macos_x86_64_1.4.328.1
     copy:
       src: ${workspace}/.tmp/vulkan/vulkansdk_macos_x86_64_1.4.328.1/macOS

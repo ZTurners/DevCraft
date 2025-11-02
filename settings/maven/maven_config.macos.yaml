@@ -11,8 +11,8 @@ install:
   - change_file_content:
       file_path: ${workspace}/maven/maven-3.9.11/conf/settings.xml
       change:
-      - line: 55
-        content: '  <localRepository>${workspace}/maven/.m2/repository</localRepository>'
+        - line: 55
+          content: '  <localRepository>${workspace}/maven/.m2/repository</localRepository>'
 generator_active_batch:
   file_path: ${workspace}/maven/active
   environments:

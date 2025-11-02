@@ -1,16 +1,17 @@
 install:
   # android_sdk_bootstrap:
   - download:
-    src:
-      url: https://dl.google.com/android/repository/commandlinetools-mac-13114758_latest.zip
-      SHA-256: 5673201e6f3869f418eeed3b5cb6c4be7401502bd0aae1b12a29d164d647a54e
-    dest: ${download}/commandlinetools-mac-13114758_latest.zip
+      src:
+        url: https://dl.google.com/android/repository/commandlinetools-mac-13114758_latest.zip
+        SHA-256: 5673201e6f3869f418eeed3b5cb6c4be7401502bd0aae1b12a29d164d647a54e
+      dest: ${download}/commandlinetools-mac-13114758_latest.zip
   - unzip:
-    src: ${download}/commandlinetools-mac-13114758_latest.zip
-    src_sub_folder: cmdline-tools
-    dest: ${workspace}/android/android_sdk/cmdline-tools/bootstrap
+      src: ${download}/commandlinetools-mac-13114758_latest.zip
+      src_sub_folder: cmdline-tools
+      dest: ${workspace}/android/android_sdk/cmdline-tools/bootstrap
   - make_execute_permission:
-    - ${workspace}/android/android_sdk/cmdline-tools/bootstrap/bin
+      files:
+        - ${workspace}/android/android_sdk/cmdline-tools/bootstrap/bin
   # android_sdk_license:
   - execute:
       command:

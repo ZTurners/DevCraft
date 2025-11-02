@@ -7,7 +7,6 @@ install:
       dest: ${download}/ninja-1.13.1-macos-universal.zip
   - unzip:
       src: ${download}/ninja-1.13.1-macos-universal.zip
-      src_sub_folder: ninja-1.13.1-macos-universal
       dest: ${workspace}/ninja/ninja-1.13.1
 generator_active_batch:
   file_path: ${workspace}/ninja/active

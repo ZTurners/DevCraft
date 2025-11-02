@@ -2,11 +2,11 @@ install:
   # check_xcodes:
   - execute:
       command:
-      - if path=$(xcode-select -p 2>/dev/null);
-      - ' then mkdir -pv ${workspace}/xcode && ln -sfv "$path" ${workspace}/xcode/; '
-      - ' else echo "Error: xcode-select failed - install Xcode or Command Line Tools
-        manually"; '
-      - fi
+        - if path=$(xcode-select -p 2>/dev/null);
+        - ' then mkdir -pv ${workspace}/xcode && ln -sfv "$path" ${workspace}/xcode/; '
+        - ' else echo "Error: xcode-select failed - install Xcode or Command Line Tools
+          manually"; '
+        - fi
 generator_active_batch:
   file_path: ${workspace}/xcode/active
   environments:

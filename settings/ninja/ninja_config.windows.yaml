@@ -1,11 +1,11 @@
 install:
   # ninja-1.13.1:
-    - download:
+  - download:
       src:
         url: https://github.com/ninja-build/ninja/releases/download/v1.13.1/ninja-win.zip
         SHA-256: 26a40fa8595694dec2fad4911e62d29e10525d2133c9a4230b66397774ae25bf
       dest: ${download}/ninja-1.13.1-windows-x86_64.zip
-    - unzip:
+  - unzip:
       src: ${download}/ninja-1.13.1-windows-x86_64.zip
       src_sub_folder: ninja-1.13.1-windows-x86_64
       dest: ${workspace}/ninja/ninja-1.13.1

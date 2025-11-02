@@ -22,4 +22,3 @@ if [ -f "${WORKSPACE_ROOT}/summary.py" ]; then
 fi
 
 source "${WORKSPACE_ROOT}/conan/conanbuild.sh"
-source "${WORKSPACE_ROOT}/conan/conanvcvars.sh"

@@ -13,4 +13,4 @@ if [ $? -ne 0 ]; then
 fi
 
 # Launch VS Code with the custom user data directory
-code --user-data-dir="${WORKSPACE_ROOT}/vscode/.config"
+code --user-data-dir="${WORKSPACE_ROOT}/vscode/.config" --new-window

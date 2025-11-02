@@ -1,0 +1,37 @@
+{
+  "install": 
+  {
+    "ninja-1.13.1":
+    {
+      "download":
+      {
+        "src": 
+        {
+          "url": "https://github.com/ninja-build/ninja/releases/download/v1.13.1/ninja-mac.zip",
+          "SHA-256": "da7797794153629aca5570ef7c813342d0be214ba84632af886856e8f0063dd9"
+        },
+        "dest": "${download}/ninja-1.13.1-macos-universal.tar.gz"
+      },
+      "unzip":
+      {
+        "src": "${download}/ninja-1.13.1-macos-universal.tar.gz",
+        "src_sub_folder": "ninja-1.13.1-macos-universal",
+        "dest": "${workspace}/ninja/ninja-1.13.1"
+      }
+    }
+  },    
+  "generator_active_batch":
+  {
+    "file_path": "${workspace}/ninja/active",
+    "environments":
+    {
+      "set": 
+      {
+      },
+      "prepend": 
+      [
+        {"PATH" : "${workspace}/ninja/ninja-1.13.1"}
+      ]
+    }
+  }
+}

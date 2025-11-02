@@ -15,7 +15,6 @@ generator_active_batch:
   file_path: ${workspace}/llvm/active
   environments:
     set:
-      LDFLAGS: ${workspace}/llvm/llvm-21/lib
       CPPFLAGS: ${workspace}/llvm/llvm-21/include
     prepend:
     - PATH: ${workspace}/llvm/llvm-21/bin

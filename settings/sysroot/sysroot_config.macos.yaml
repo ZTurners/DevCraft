@@ -1,0 +1,21 @@
+# sudo debootstrap --arch=amd64 --variant=minbase --include=libc6-dev,libc++-dev,libc++abi-dev,libx11-dev,build-essential,libxrandr-dev,libxi-dev,libsdl2-dev,libxinerama-dev --components=main,universe noble ubuntu_root http://archive.ubuntu.com/ubuntu/
+# cd ubuntu_root && sudo tar -czhvf ../ubuntu_sysroot.tar.gz ./lib ./lib64 ./usr/include ./usr/lib ./usr/lib64 ./usr/src
+install:
+  # ubuntu_amd64_24_04:
+  - download:
+      src:
+        url: https://github.com/BigElderK/DevCraftArtifactory/releases/download/init/ubuntu_amd64_24_04_sysroot.tar.gz
+      dest: ${download}/ubuntu_amd64_24_04_sysroot.tar.gz
+  - unzip:
+      src: ${download}/ubuntu_amd64_24_04_sysroot.tar.gz
+      src_sub_folder: ''
+      dest: ${workspace}/sysroot/ubuntu_amd64_24.04
+  # raspberry_arm64_bookworm:
+  - download:
+      src:
+        url: https://github.com/BigElderK/DevCraftArtifactory/releases/download/init/raspberry_arm64_bookworm_sysroot.tar.xz
+      dest: ${download}/raspberry_arm64_bookworm_sysroot.tar.xz
+  - unzip:
+      src: ${download}/raspberry_arm64_bookworm_sysroot.tar.xz
+      src_sub_folder: ''
+      dest: ${workspace}/sysroot/raspberry_arm64_bookworm

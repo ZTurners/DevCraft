@@ -1,0 +1,33 @@
+install: 
+  vulkansdk-win-x64-1.4.328.1: 
+    download: 
+      src: 
+        url: https://sdk.lunarg.com/sdk/download/1.4.328.1/windows/vulkansdk-windows-X64-1.4.328.1.exe
+        SHA-256: a8675df6d538079c2a719a9373994948091db785b48f142e024254e76348d16c
+      dest: ${download}/vulkansdk-windows-X64-1.4.328.1.exe
+    execute: 
+      command: 
+        - ${download}/vulkansdk-windows-X64-1.4.328.1.exe
+        - install
+        - "--accept-licenses"
+        - "--confirm-command"
+        - copy_only=1
+        - "--root=${workspace}/vulkan/vulkansdk_win_x86_64_1.4.328.1"
+      dest: ${workspace}/vulkan/vulkansdk_win_x86_64_1.4.328.1
+  vulkansdk-linux-x86_64-1.4.328.1: 
+    download: 
+      src: 
+        url: https://sdk.lunarg.com/sdk/download/1.4.328.1/linux/vulkansdk-linux-x86_64-1.4.328.1.tar.xz
+        SHA-256: 241e75b56c91c0d210ed07a7c638ec05a3e5b0e4c66ba9f0ba0f102d823ad6bf
+      dest: ${download}/vulkansdk-linux-x86_64-1.4.328.1.tar.xz
+    unzip: 
+      src: ${download}/vulkansdk-linux-x86_64-1.4.328.1.tar.xz
+      src_sub_folder: 1.4.328.1/x86_64
+      dest: ${workspace}/vulkan/vulkansdk_linux_x86_64_1.4.328.1
+generator_active_batch: 
+  file_path: ${workspace}/vulkan/active
+  environments: 
+    set: 
+      VK_LAYER_PATH: ${workspace}/vulkan/vulkansdk_windows_x64_1.4.328.1/Bin
+    prepend: 
+      - PATH: ${workspace}/vulkan/vulkansdk_windows_x64_1.4.328.1/Bin

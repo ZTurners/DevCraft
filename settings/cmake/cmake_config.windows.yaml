@@ -1,0 +1,17 @@
+install:
+  #cmake-3.31:
+  - download:
+      src:
+        url: https://github.com/Kitware/CMake/releases/download/v3.31.9/cmake-3.31.9-windows-x86_64.zip
+        SHA-256: dc16867d0c0ffb35026976aff119335d5b47def44e76ae82ffafdc1f98b3d59d
+      dest: ${download}/cmake-3.31.9-windows-x86_64.zip
+  - unzip:
+      src: ${download}/cmake-3.31.9-windows-x86_64.zip
+      src_sub_folder: cmake-3.31.9-windows-x86_64
+      dest: ${workspace}/cmake/cmake-3.31
+generator_active_batch:
+  file_path: ${workspace}/cmake/active
+  environments:
+    set: {}
+    prepend:
+      - PATH: ${workspace}/cmake/cmake-3.31/bin

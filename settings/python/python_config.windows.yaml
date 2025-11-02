@@ -1,0 +1,11 @@
+install:
+  # python-3.13.5: {}
+generator_active_batch:
+  file_path: ${workspace}/python/active
+  environments:
+    set:
+      PYTHON_HOME: ${workspace}/python/python-3.13.5
+    prepend:
+      - PATH: ${workspace}/python/python-3.13.5
+      - PATH: ${workspace}/python/python-3.13.5/bin
+      - PATH: ${workspace}/python/python-3.13.5/scripts

@@ -1,0 +1,31 @@
+install:
+  # conan_install:
+  - execute:
+      command:
+        - python
+        - -m
+        - pip
+        - install
+        - conan
+  # conan_boostrap:
+  - copy:
+      src: ${settings}/conan/home
+      dest: ${workspace}/conan/.conan
+  # conan_profile_detect:
+  - environments:
+      set:
+        CONAN_HOME: ${workspace}/conan/.conan
+        CONAN_USE_ALWAYS_SHORT_PATHS: '1'
+      prepend: []
+  - execute:
+      command:
+        - conan
+        - profile
+        - detect
+        - --force
+generator_active_batch:
+  file_path: ${workspace}/conan/active
+  environments:
+    set:
+      CONAN_HOME: ${workspace}/conan/.conan
+      CONAN_USE_ALWAYS_SHORT_PATHS: '1'

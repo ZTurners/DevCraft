@@ -1,0 +1,19 @@
+install: 
+  llvm-21: 
+    download: 
+      src: 
+        url: https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.4/clang+llvm-21.1.4-x86_64-pc-windows-msvc.tar.xz
+        SHA-256: 511e4e7e0a43156cb1410578285f1db246ebb400db0018cd304c84a369562b6d
+      dest: ${download}/clang+llvm-21.1.4-x86_64-pc-windows-msvc.tar.xz
+    unzip: 
+      src: ${download}/clang+llvm-21.1.4-x86_64-pc-windows-msvc.tar.xz
+      src_sub_folder: clang+llvm-21.1.4-x86_64-pc-windows-msvc
+      dest: ${workspace}/llvm/llvm-21
+generator_active_batch: 
+  file_path: ${workspace}/llvm/active
+  environments: 
+    set: 
+      LDFLAGS: ${workspace}/llvm/llvm-21/lib
+      CPPFLAGS: ${workspace}/llvm/llvm-21/include
+    prepend: 
+      - PATH: ${workspace}/llvm/llvm-21/bin

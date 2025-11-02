@@ -1,0 +1,18 @@
+install: 
+  jdk-25: 
+    download: 
+      src: 
+        url: https://download.oracle.com/java/25/latest/jdk-25_windows-x64_bin.zip
+        SHA-256: 814530b8ae9aca4843b6f70cf14dac1d43a88e220847d3b91323e854d79cee88
+      dest: ${download}/jdk-25_windows-x64_bin.zip
+    unzip: 
+      src: ${download}/jdk-25_windows-x64_bin.zip
+      src_sub_folder: jdk-25.0.1
+      dest: ${workspace}/jdk/jdk-25
+generator_active_batch: 
+  file_path: ${workspace}/jdk/active
+  environments: 
+    set: 
+      JAVA_HOME: ${workspace}/jdk/jdk-25
+    prepend: 
+      - PATH: ${workspace}/jdk/jdk-25/bin

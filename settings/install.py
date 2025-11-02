@@ -6,6 +6,10 @@ import subprocess
 import platform
 import json
 import hashlib
+try:
+    import yaml
+except Exception:
+    yaml = None
 import configparser
 import urllib.request
 import datetime
@@ -23,6 +27,12 @@ class WorkspaceInstaller:
         self.m_system_name = platform.system()
         self.m_env_vs_path = None
         self.m_summary_data = []
+        # Ensure YAML config equivalents exist for JSON configs under settings/
+        try:
+            self._ensure_yaml_configs()
+        except Exception as e:
+            # Do not fail initialization if conversion fails; warn instead
+            print(f"Warning: failed to ensure YAML configs: {e}")
 
     def detect_visual_studio(self):
         """Detect Visual Studio installation using vswhere."""
@@ -177,6 +187,91 @@ class WorkspaceInstaller:
         path = os.path.normpath(path)
         
         return path
+
+    def _dump_to_yaml_str(self, data, indent=0):
+        """Lightweight YAML dumper for basic Python structures (dict, list, primitives).
+        Used as a fallback when PyYAML is not available.
+        This produces human-readable YAML (no anchors, tags).
+        """
+        sp = '  ' * indent
+        if data is None:
+            return 'null\n'
+        if isinstance(data, bool):
+            return ("true\n" if data else "false\n")
+        if isinstance(data, (int, float)):
+            return f"{data}\n"
+        if isinstance(data, str):
+            # Quote strings that start with special characters or contain newlines
+            if '\n' in data or data.strip() == '' or data[0] in ('@', '&', '*', '>', '|', '%', ':', '-', '?', '{', '}', '[', ']', ','):
+                return '"' + data.replace('"', '\\"') + '"\n'
+            return f"{data}\n"
+        if isinstance(data, list):
+            if not data:
+                return '[]\n'
+            out = ''
+            for item in data:
+                if isinstance(item, (dict, list)):
+                    out += f"{sp}- {self._dump_to_yaml_str(item, indent+1).lstrip()}"
+                else:
+                    out += f"{sp}- {self._dump_to_yaml_str(item, 0)}"
+            return out
+        if isinstance(data, dict):
+            if not data:
+                return '{}\n'
+            out = ''
+            for k, v in data.items():
+                # ensure key is plain string
+                out += f"{sp}{k}: "
+                if isinstance(v, (dict, list)):
+                    out += '\n' + self._dump_to_yaml_str(v, indent+1)
+                else:
+                    out += self._dump_to_yaml_str(v, 0)
+            return out
+        # Fallback to JSON representation
+        return json.dumps(data) + '\n'
+
+    def _ensure_yaml_configs(self):
+        """Walk the settings folder and create .yaml equivalents for any .json config files.
+        Keeps the original .json files as backups.
+        If PyYAML is available, it will be used for dumping; otherwise uses a lightweight dumper.
+        """
+        settings_root = self.m_settings_root_path
+        if not os.path.isdir(settings_root):
+            return
+
+        for root, dirs, files in os.walk(settings_root):
+            for fname in files:
+                if not fname.lower().endswith('.json'):
+                    continue
+
+                json_path = os.path.join(root, fname)
+                yaml_fname = fname[:-5] + '.yaml'
+                yaml_path = os.path.join(root, yaml_fname)
+
+                # Skip if YAML already exists
+                if os.path.exists(yaml_path):
+                    continue
+
+                try:
+                    with open(json_path, 'r', encoding='utf-8') as jf:
+                        data = json.load(jf)
+                except Exception as e:
+                    print(f"Warning: failed to parse JSON {json_path}: {e}")
+                    continue
+
+                try:
+                    if yaml is not None:
+                        # Use PyYAML if available
+                        yaml_text = yaml.safe_dump(data, sort_keys=False, allow_unicode=True)
+                    else:
+                        yaml_text = self._dump_to_yaml_str(data)
+
+                    # Create YAML file
+                    with open(yaml_path, 'w', encoding='utf-8') as yf:
+                        yf.write(yaml_text)
+                    print(f"Created YAML config: {yaml_path}")
+                except Exception as e:
+                    print(f"Warning: failed to write YAML for {json_path}: {e}")
 
     def _process_download(self, download_config, context):
         """Handle download node."""
@@ -676,7 +771,6 @@ class WorkspaceInstaller:
         print(f"Modified file: {file_path}")
 
     def _process_install(self, install_node, context):
-        
         # Define node handlers mapping (with context requirements)
         node_handlers = {
             'download': self._process_download,
@@ -687,28 +781,54 @@ class WorkspaceInstaller:
             'environments': self._process_environments,
             'execute': self._process_execute,
         }
-        
-        # install_node is now a dictionary where keys are install item names
+
+        # Normalize install_node to an iterable list of (name, item) pairs.
+        items = []
+        if isinstance(install_node, dict):
+            # old format: mapping of name -> item
+            items = list(install_node.items())
+        elif isinstance(install_node, list):
+            # new format: list of single-key mappings or multi-key mappings
+            for entry in install_node:
+                if not isinstance(entry, dict):
+                    continue
+                # If entry is a single-key mapping, unpack it
+                if len(entry) == 1:
+                    name = next(iter(entry))
+                    items.append((name, entry[name]))
+                else:
+                    # multiple keys: treat each as its own install item
+                    for k, v in entry.items():
+                        items.append((k, v))
+        else:
+            print("Warning: install node has unsupported type; expected dict or list")
+            return
+
         # Iterate over each install item
-        for install_item_name, install_item in install_node.items():
+        for install_item_name, install_item in items:
             print(f"\n{'='*60}")
             print(f"Processing install item: '{install_item_name}'")
             print(f"{'='*60}")
-                        
+
+            # Ensure install_item is a mapping
+            if not isinstance(install_item, dict):
+                print(f"Warning: install item '{install_item_name}' is not an object; skipping")
+                continue
+
             # Process nodes in order for this install item
             for install_step_name, handler in node_handlers.items():
                 if install_step_name in install_item:
                     try:
-                        # Check if operation node has a dest field and if it exists, skip the entire install item
-                        if isinstance(install_item[install_step_name], dict):
-                            dest_path = install_item[install_step_name].get("dest", None)
-                            force_update = install_item[install_step_name].get("force_update", False)
-                            # If dest exists, check if the path exists
+                        # Check if operation node has a dest field and if it exists, skip the specific install step
+                        node_value = install_item[install_step_name]
+                        if isinstance(node_value, dict):
+                            dest_path = node_value.get("dest", None)
+                            force_update = node_value.get("force_update", False)
                             if dest_path:
                                 dest_path = self._formalize_path(dest_path)
                                 if os.path.exists(dest_path) and not force_update:
                                     print(f"Destination already exists: {dest_path}")
-                                    print(f"Skipping install step: '{install_step_name}'")
+                                    print(f"Skipping install step: '{install_step_name}' for '{install_item_name}'")
                                     continue
 
                         print(f"\nProcessing '{install_step_name}' for '{install_item_name}'...")
@@ -726,9 +846,49 @@ class WorkspaceInstaller:
             print(f"Error: Configuration not found at {config_file_path}")
             exit(1)
 
+        # Attempt to load YAML if file is YAML (and PyYAML is available),
+        # otherwise fall back to JSON. If YAML file exists but PyYAML is not
+        # available, fall back to the original .json file with same basename.
+        config = None
+        lower = config_file_path.lower()
         try:
-            with open(config_file_path, 'r') as f:
-                config = json.load(f)
+            if lower.endswith('.yaml') or lower.endswith('.yml'):
+                if yaml is not None:
+                    with open(config_file_path, 'r', encoding='utf-8') as f:
+                        config = yaml.safe_load(f)
+                else:
+                    # PyYAML not available: try to read original JSON backup in same folder
+                    json_candidate = config_file_path[:-5] + '.json' if lower.endswith('.yaml') else config_file_path[:-4] + '.json'
+                    if os.path.exists(json_candidate):
+                        with open(json_candidate, 'r', encoding='utf-8') as f:
+                            config = json.load(f)
+                    else:
+                        # If not found, check the archived json_backup folder under settings/
+                        try:
+                            rel = os.path.relpath(config_file_path, self.m_settings_root_path)
+                        except Exception:
+                            rel = os.path.basename(config_file_path)
+                        # replace extension with .json
+                        if rel.lower().endswith('.yaml'):
+                            rel_json = rel[:-5] + '.json'
+                        elif rel.lower().endswith('.yml'):
+                            rel_json = rel[:-4] + '.json'
+                        else:
+                            rel_json = rel + '.json'
+
+                        backup_candidate = os.path.join(self.m_settings_root_path, 'json_backup', rel_json)
+                        if os.path.exists(backup_candidate):
+                            with open(backup_candidate, 'r', encoding='utf-8') as f:
+                                config = json.load(f)
+                        else:
+                            print(f"Error: YAML config provided but PyYAML is not installed and no JSON backup found: {config_file_path}")
+                            print(f"Searched for: {json_candidate} and archive: {backup_candidate}")
+                            print("Install PyYAML (python -m pip install pyyaml) or restore JSON backups to the original location.")
+                            exit(1)
+            else:
+                # Default: JSON
+                with open(config_file_path, 'r', encoding='utf-8') as f:
+                    config = json.load(f)
         except json.JSONDecodeError:
             print(f"Error: Invalid JSON in configuration file: {config_file_path}")
             exit(1)
@@ -816,9 +976,9 @@ class WorkspaceInstaller:
 
         # Determine the filename suffix for this platform's config files.
         suffix_map = {
-            "Windows": ".windows.json",
-            "Linux": ".linux.json",
-            "Darwin": ".macos.json",
+            "Windows": ".windows.yaml",
+            "Linux": ".linux.yaml",
+            "Darwin": ".macos.yaml",
         }
 
         suffix = suffix_map.get(self.m_system_name)

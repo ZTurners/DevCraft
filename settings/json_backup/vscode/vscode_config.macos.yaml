@@ -1,0 +1,5 @@
+install: 
+  conan_boostrap: 
+    copy: 
+      src: ${settings}/vscode/home/init_user_settings.json
+      dest: ${workspace}/vscode/.config/User/settings.json

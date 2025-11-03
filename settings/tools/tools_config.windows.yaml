@@ -1,0 +1,12 @@
+install:
+  # Texcov
+  - download:
+      src:
+        url: https://github.com/Microsoft/DirectXTex/releases/latest/download/texconv.exe
+      dest:  ${workspace}/tools/texconv/texconv.exe
+  
+generator_active_batch:
+  file_path: ${workspace}/tools/active
+  environments:
+    prepend:
+      - PATH: ${workspace}/tools/texconv

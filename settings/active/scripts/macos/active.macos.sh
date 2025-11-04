@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Determine the directory where this script resides and use it as the base
-WORKSPACE_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
+export WORKSPACE_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
 # Iterate immediate subdirectories and source any active.sh found
 for sub in "${WORKSPACE_ROOT}"/*/; do

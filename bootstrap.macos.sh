@@ -58,7 +58,7 @@ echo "Verifying Python installation..."
 
 # Verify installation
 echo "Verifying Python installation..."
-"$PYENV_ROOT_DIR/versions/$PYTHON_VERSION/bin/python" --version || {
+$PYENV_ROOT_DIR/versions/$PYTHON_VERSION/bin/python --version || {
     echo "Python installation verification failed"
     exit 1
 }
@@ -86,6 +86,14 @@ echo "Installing complete setuptools package..."
 python -m pip install setuptools    
 if [ $? -ne 0 ]; then
     echo "setuptools install failed"
+    exit 1
+fi
+
+# Install PyYAML for configuration file support
+echo "Installing PyYAML..."
+python -m pip install pyyaml
+if [ $? -ne 0 ]; then
+    echo "PyYAML install failed"
     exit 1
 fi
 

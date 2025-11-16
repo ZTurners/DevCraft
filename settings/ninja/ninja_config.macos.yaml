@@ -8,6 +8,9 @@ install:
   - unzip:
       src: ${download}/ninja-1.13.1-macos-universal.zip
       dest: ${workspace}/ninja/ninja-1.13.1
+  - make_execute_permission:
+      files:
+        - ${workspace}/ninja/ninja-1.13.1/ninja
 generator_active_batch:
   file_path: ${workspace}/ninja/active
   environments:

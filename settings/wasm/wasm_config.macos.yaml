@@ -1,0 +1,18 @@
+install:
+  # wasmtime
+  - download:
+      src:
+        url: https://github.com/bytecodealliance/wasmtime/releases/download/v38.0.4/wasmtime-v38.0.4-aarch64-macos.tar.xz
+        SHA-256: 08fb87c00f6caa9c0630d0ce3ff5e31ee3df9b37fcd7878222825881ef933a91
+      dest: ${download}/wasmtime-v38.0.4-aarch64-macos.tar.xz
+  - unzip:
+      src: ${download}/wasmtime-v38.0.4-aarch64-macos.tar.xz
+      src_sub_folder: 'wasmtime-v38.0.4-aarch64-macos'
+      dest: ${workspace}/wasm/wasmtime-v38.0.4-aarch64-macos
+
+generator_active_batch:
+  file_path: ${workspace}/wasm/active
+  environments:
+    prepend:
+      - PATH: ${workspace}/wasm/wasmtime-v38.0.4-aarch64-macos
+

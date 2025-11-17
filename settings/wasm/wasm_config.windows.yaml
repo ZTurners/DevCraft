@@ -1,0 +1,18 @@
+install:
+  # wasmtime
+  - download:
+      src:
+        url: https://github.com/bytecodealliance/wasmtime/releases/download/v38.0.4/wasmtime-v38.0.4-x86_64-windows.zip
+        SHA-256: 5a30c7a78f48a1caa2afb1dd541493fd8af5f629ea45097b04f2412e651285b6
+      dest: ${download}/wasmtime-v38.0.4-x86_64-windows.zip
+  - unzip:
+      src: ${download}/wasmtime-v38.0.4-x86_64-windows.zip
+      src_sub_folder: 'wasmtime-v38.0.4-x86_64-windows'
+      dest: ${workspace}/wasm/wasmtime-v38.0.4-x86_64-windows
+
+generator_active_batch:
+  file_path: ${workspace}/wasm/active
+  environments:
+    prepend:
+      - PATH: ${workspace}/wasm/wasmtime-v38.0.4-x86_64-windows
+

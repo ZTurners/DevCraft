@@ -14,8 +14,8 @@ install:
 generator_active_batch:
   file_path: ${workspace}/llvm/active
   environments:
-    set:
-      CPPFLAGS: ${workspace}/llvm/llvm-21/include
+    # set:
+    #   CPPFLAGS: -I${workspace}/llvm/llvm-21/include/c++/v1
     prepend:
-    - PATH: ${workspace}/llvm/llvm-21/bin
-    - PATH: ${workspace}/llvm/lld-21/bin
+      - PATH: ${workspace}/llvm/llvm-21/bin
+      - PATH: ${workspace}/llvm/lld-21/bin

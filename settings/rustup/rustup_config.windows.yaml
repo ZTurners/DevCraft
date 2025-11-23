@@ -19,6 +19,12 @@ install:
       command:
       - ${workspace}/rust/rustup-init.exe
       - -y
+  - execute:
+      command:
+      - ${workspace}/rust/.cargo/bin/rustup.exe
+      - target
+      - add
+      - wasm32-wasip2
 generator_active_batch:
   file_path: ${workspace}/rust/active
   environments:

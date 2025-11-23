@@ -1,0 +1,38 @@
+install:
+  # downloading-rustup-macos:
+  - download:
+      src:
+        url: https://static.rust-lang.org/rustup/dist/aarch64-apple-darwin/rustup-init
+      dest: ${download}/rustup-init
+  - copy:
+      src: ${settings}/rustup/home/settings.toml
+      dest: ${workspace}/rust/.rustup/settings.toml
+  - environments:
+      set:
+        RUSTUP_HOME: ${workspace}/rust/.rustup
+        CARGO_HOME: ${workspace}/rust/.cargo
+  # install-rustup-macos:
+  - copy:
+      src: ${download}/rustup-init
+      dest: ${workspace}/rust/rustup-init
+  - make_execute_permission:
+      files:
+        - ${workspace}/rust/rustup-init
+  - execute:
+      command:
+      - ${workspace}/rust/rustup-init
+      - -y
+  - execute:
+      command:
+      - ${workspace}/rust/.cargo/bin/rustup
+      - target
+      - add
+      - wasm32-wasip2
+generator_active_batch:
+  file_path: ${workspace}/rust/active
+  environments:
+    set:
+      RUSTUP_HOME: ${workspace}/rust/.rustup
+      CARGO_HOME: ${workspace}/rust/.cargo
+    prepend:
+      - PATH: ${workspace}/rust/.cargo/bin

@@ -1,7 +1,7 @@
 @echo off
-set WORKSPACE_ROOT=%~dp0
+set DEVCRAFT_WORKSPACE=%~dp0
 
-call %WORKSPACE_ROOT%active.windows.bat
+call %DEVCRAFT_WORKSPACE%active.windows.bat
 
 if %errorlevel% neq 0 (
     echo Error occurred in otherscript.bat

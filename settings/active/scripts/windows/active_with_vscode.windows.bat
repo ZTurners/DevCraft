@@ -1,7 +1,7 @@
 @echo off
-set WORKSPACE_ROOT=%~dp0
+set DEVCRAFT_WORKSPACE=%~dp0
 
-call %WORKSPACE_ROOT%active.windows.bat
+call %DEVCRAFT_WORKSPACE%active.windows.bat
 
 if %errorlevel% neq 0 (
     echo Error occurred in otherscript.bat
@@ -9,4 +9,4 @@ if %errorlevel% neq 0 (
 )
 
 :: start vscode
-code --user-data-dir=%WORKSPACE_ROOT%\vscode\.config --new-window 
+code --user-data-dir=%DEVCRAFT_WORKSPACE%\vscode\.config --new-window 

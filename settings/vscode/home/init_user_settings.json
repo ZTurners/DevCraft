@@ -1,4 +1,14 @@
 {
     "window.title": "⚠️Arieo Dev⚠️",
-    "files.eol": "\n"
+    "files.eol": "\n",
+
+    "terminal.integrated.env.linux": {
+        "VS_WORKSPACE": "${workspaceFolder}"
+    },
+    "terminal.integrated.env.osx": {
+        "VS_WORKSPACE": "${workspaceFolder}"
+    },
+    "terminal.integrated.env.windows": {
+        "VS_WORKSPACE": "${workspaceFolder}"
+    }
 }

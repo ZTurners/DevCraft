@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Set host triple for Linux
+export DEVCRAFT_HOST_TRIPLE=x86_64-linux-gnu
+
 # Set base paths
 DEVCRAFT_WORKSPACE=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 

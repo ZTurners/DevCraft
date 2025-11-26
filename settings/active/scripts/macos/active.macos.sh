@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export DEVCRAFT_HOST_TRIPLE=arm64-apple-darwin
+
 # Determine the directory where this script resides and use it as the base
 export DEVCRAFT_WORKSPACE=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 

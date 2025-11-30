@@ -1,27 +1,26 @@
 install:
-  # llvm-21:
-  # - execute:
-  #     command:
-  #       - brew install llvm@21 &&
-  #       - mkdir -p ${workspace}/llvm &&
-  #       - ln -sf $(brew --prefix llvm@21) ${workspace}/llvm/llvm-21
-  # # lld-21:
-  # - execute:
-  #     command:
-  #       - brew install lld@21 &&
-  #       - mkdir -p ${workspace}/llvm &&
-  #       - ln -sf $(brew --prefix lld@21) ${workspace}/llvm/lld-21
+  - execute:
+      command:
+        - brew install llvm@21 &&
+        - mkdir -p ${workspace}/llvm/llvm-21 &&
+        - ln -sf $(brew --prefix llvm@21) ${workspace}/llvm/llvm-21/arm64-apple-darwin
+  # lld-21:
+  - execute:
+      command:
+        - brew install lld@21 &&
+        - mkdir -p ${workspace}/llvm/lld-21 &&
+        - ln -sf $(brew --prefix lld@21) ${workspace}/llvm/lld-21/arm64-apple-darwin
   
   # llvm for macos arm64
-  - download:
-      src:
-        url: https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.6/LLVM-21.1.6-macOS-ARM64.tar.xz
-        SHA-256: bdf036e9987b8706471b565f50178a34218909b1858a82c426269da49780b6ba
-      dest: ${download}/LLVM-21.1.6-macOS-ARM64.tar.xz
-  - unzip:
-      src: ${download}/LLVM-21.1.6-macOS-ARM64.tar.xz
-      src_sub_folder: LLVM-21.1.6-macOS-ARM64
-      dest: ${workspace}/llvm/llvm-21/arm64-apple-darwin
+  # - download:
+  #     src:
+  #       url: https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.6/LLVM-21.1.6-macOS-ARM64.tar.xz
+  #       SHA-256: bdf036e9987b8706471b565f50178a34218909b1858a82c426269da49780b6ba
+  #     dest: ${download}/LLVM-21.1.6-macOS-ARM64.tar.xz
+  # - unzip:
+  #     src: ${download}/LLVM-21.1.6-macOS-ARM64.tar.xz
+  #     src_sub_folder: LLVM-21.1.6-macOS-ARM64
+  #     dest: ${workspace}/llvm/llvm-21/arm64-apple-darwin
 
   # llvm for linux arm64
   - download:

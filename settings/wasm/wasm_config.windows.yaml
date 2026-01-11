@@ -20,23 +20,14 @@ install:
       src: ${download}/wasi-sdk-29.0-x86_64-windows.tar.gz
       src_sub_folder: wasi-sdk-29.0-x86_64-windows
       dest: ${workspace}/wasm/wasi-sdk-29.0-x86_64-windows
-  
-  # wasi root system
-  - download:
-      src:
-        url: https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-29/wasi-sysroot-29.0.tar.gz
-        SHA-256: d99d5c4b277a725b7b56bf9d591609972ecac3207520a66408927280f191f6c7
-      dest: ${download}wasi-sysroot-29.0.tar.gz
-  - unzip:
-      src: ${download}wasi-sysroot-29.0.tar.gz
-      src_sub_folder: wasi-sysroot-29.0
-      dest: ${workspace}/wasm/wasi-sysroot-29.0
 
 generator_active_batch:
   file_path: ${workspace}/wasm/active
   environments:
+    prepend:
+      - PATH: ${workspace}/wasm/wasmtime-v38.0.4-x86_64-windows
     set:
       WASI_SDK_PATH: ${workspace}/wasm/wasi-sdk-29.0-x86_64-windows
-      WASI_SYSROOT: ${workspace}/wasm/wasi-sysroot-29.0
+      WASI_SYSROOT: ${workspace}/wasm/wasi-sdk-29.0-x86_64-windows/share/wasi-sysroot
 
 

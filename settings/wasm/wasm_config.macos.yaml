@@ -10,9 +10,22 @@ install:
       src_sub_folder: 'wasmtime-v38.0.4-aarch64-macos'
       dest: ${workspace}/wasm/wasmtime-v38.0.4-aarch64-macos
 
+  # wasi sdk
+  - download:
+      src:
+        url: https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-29/wasi-sdk-29.0-arm64-macos.tar.gz
+        SHA-256: e11552913e3f99e834d7fe7da1bd081abaf764759ed76b6097a34c63fc83665e
+      dest: ${download}/wasi-sdk-29.0-arm64-macos.tar.gz
+  - unzip:
+      src: ${download}/wasi-sdk-29.0-arm64-macos.tar.gz
+      src_sub_folder: wasi-sdk-29.0-arm64-macos
+      dest: ${workspace}/wasm/wasi-sdk-29.0-arm64-macos
+
 generator_active_batch:
   file_path: ${workspace}/wasm/active
   environments:
     prepend:
       - PATH: ${workspace}/wasm/wasmtime-v38.0.4-aarch64-macos
-
+    set:
+      WASI_SDK_PATH: ${workspace}/wasm/wasi-sdk-29.0-arm64-macos
+      WASI_SYSROOT: ${workspace}/wasm/wasi-sdk-29.0-arm64-macos/share/wasi-sysroot

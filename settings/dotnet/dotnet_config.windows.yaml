@@ -1,0 +1,21 @@
+install:
+  # dotnet-9.0:
+  - download:
+      src:
+        url: https://builds.dotnet.microsoft.com/dotnet/Sdk/10.0.101/dotnet-sdk-10.0.101-win-x64.zip
+        SHA-512: efcb2bfde6ae691cee94abaabd902562d4463b26c2ae58c3db4291719220843bbc89e32ff16bf95d54efd145423207255464d16616d760a3bf0e6b5ba48214a3
+      dest: ${download}/dotnet-sdk-10.0.101-win-x64.zip
+  - unzip:
+      src: ${download}/dotnet-sdk-10.0.101-win-x64.zip
+      src_sub_folder: ""
+      dest: ${workspace}/dotnet/dotnet-sdk-10.0.101-win-x64
+generator_active_batch:
+  file_path: ${workspace}/dotnet/active
+  environments:
+    set:
+      DOTNET_ROOT: ${workspace}/dotnet/dotnet-sdk-10.0.101-win-x64
+      DOTNET_CLI_TELEMETRY_OPTOUT: 1
+      DOTNET_CLI_UI_LANGUAGE: en-US
+    prepend:
+      - PATH: ${workspace}/dotnet/dotnet-sdk-10.0.101-win-x64
+

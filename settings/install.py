@@ -282,7 +282,8 @@ class WorkspaceInstaller:
         if "src" in download_config and isinstance(download_config["src"], dict):
             src_url = download_config["src"]["url"]
             need_auth = download_config["src"].get("auth_required", False)
-            expected_hash = download_config["src"].get("SHA-256", None)
+            expected_sha256_hash = download_config["src"].get("SHA-256", None)
+            expected_sha512_hash = download_config["src"].get("SHA-512", None)
         
         downloading_file = self._formalize_path(download_config["dest"]) + ".downloading"
         downloaded_file = self._formalize_path(download_config["dest"])
@@ -382,27 +383,45 @@ class WorkspaceInstaller:
         if file_size == 0:
             raise Exception("Downloaded file is empty")
 
-        if not expected_hash:
+        if not expected_sha256_hash:
             print("No SHA-256 checksum provided, skipping verification.")
 
         # If a SHA-256 checksum is provided in the config, verify it now.
-        if expected_hash:
-            expected_hash = expected_hash.strip().lower()
+        if expected_sha256_hash:
+            expected_sha256_hash = expected_sha256_hash.strip().lower()
             print(f"Verifying SHA-256 checksum for {downloading_file}...")
             sha256 = hashlib.sha256()
             with open(downloading_file, 'rb') as fh:
                 for chunk in iter(lambda: fh.read(8192), b''):
                     sha256.update(chunk)
             actual_hash = sha256.hexdigest().lower()
-            if actual_hash != expected_hash:
+            if actual_hash != expected_sha256_hash:
                 # remove the corrupt download
                 try:
                     os.remove(downloading_file)
                 except Exception:
                     pass
-                raise Exception(f"SHA-256 mismatch: expected {expected_hash}, got {actual_hash}")
+                raise Exception(f"SHA-256 mismatch: expected {expected_sha256_hash}, got {actual_hash}")
             else:
                 print("SHA-256 verification passed")
+
+        if expected_sha512_hash:
+            expected_sha512_hash = expected_sha512_hash.strip().lower()
+            print(f"Verifying SHA-512 checksum for {downloading_file}...")
+            sha512 = hashlib.sha512()
+            with open(downloading_file, 'rb') as fh:
+                for chunk in iter(lambda: fh.read(8192), b''):
+                    sha512.update(chunk)
+            actual_hash = sha512.hexdigest().lower()
+            if actual_hash != expected_sha512_hash:
+                # remove the corrupt download
+                try:
+                    os.remove(downloading_file)
+                except Exception:
+                    pass
+                raise Exception(f"SHA-512 mismatch: expected {expected_sha512_hash}, got {actual_hash}")
+            else:
+                print("SHA-512 verification passed")
 
         
         # Rename the downloading file to final name

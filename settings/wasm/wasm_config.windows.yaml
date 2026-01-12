@@ -2,13 +2,13 @@ install:
   # wasmtime
   - download:
       src:
-        url: https://github.com/bytecodealliance/wasmtime/releases/download/v38.0.4/wasmtime-v38.0.4-x86_64-windows.zip
-        SHA-256: 5a30c7a78f48a1caa2afb1dd541493fd8af5f629ea45097b04f2412e651285b6
-      dest: ${download}/wasmtime-v38.0.4-x86_64-windows.zip
+        url: https://github.com/bytecodealliance/wasmtime/releases/download/v40.0.1/wasmtime-v40.0.1-x86_64-windows.zip
+        SHA-256: 434451fc2abaeacc3dc312a92bd73da54ef8a29644f386070a86c0f43e3b4ad6
+      dest: ${download}/wasmtime-v40.0.1-x86_64-windows.zip
   - unzip:
-      src: ${download}/wasmtime-v38.0.4-x86_64-windows.zip
-      src_sub_folder: 'wasmtime-v38.0.4-x86_64-windows'
-      dest: ${workspace}/wasm/wasmtime-v38.0.4-x86_64-windows
+      src: ${download}/wasmtime-v40.0.1-x86_64-windows.zip
+      src_sub_folder: 'wasmtime-v40.0.1-x86_64-windows'
+      dest: ${workspace}/wasm/wasmtime-v40.0.1-x86_64-windows
 
   # wasi sdk
   - download:
@@ -25,7 +25,7 @@ generator_active_batch:
   file_path: ${workspace}/wasm/active
   environments:
     prepend:
-      - PATH: ${workspace}/wasm/wasmtime-v38.0.4-x86_64-windows
+      - PATH: ${workspace}/wasm/wasmtime-v40.0.1-x86_64-windows
     set:
       WASI_SDK_PATH: ${workspace}/wasm/wasi-sdk-29.0-x86_64-windows
       WASI_SYSROOT: ${workspace}/wasm/wasi-sdk-29.0-x86_64-windows/share/wasi-sysroot

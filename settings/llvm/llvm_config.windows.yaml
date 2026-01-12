@@ -9,6 +9,18 @@ install:
       src: ${download}/clang+llvm-21.1.6-x86_64-pc-windows-msvc.tar.xz
       src_sub_folder: clang+llvm-21.1.6-x86_64-pc-windows-msvc
       dest: ${workspace}/llvm/llvm-21/x86_64-windows-msvc
+  # install python 310 for llvm on windows
+  - download:
+      src:
+        url: https://www.python.org/ftp/python/3.10.10/python-3.10.10-embed-amd64.zip
+      dest: ${download}/python-3.10.10-embed-amd64.zip
+  - unzip:
+      src: ${download}/python-3.10.10-embed-amd64.zip
+      dest: ${workspace}/python/versions/3.10.10
+  - copy:
+      src: ${workspace}/python/versions/3.10.10
+      dest: ${workspace}/llvm/llvm-21/x86_64-windows-msvc/bin
+      force_update: true
 
   # llvm for linux arm64
   - download:

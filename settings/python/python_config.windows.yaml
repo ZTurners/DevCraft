@@ -1,9 +1,20 @@
+install:
+  - download:
+      src:
+        url: https://www.python.org/ftp/python/3.10.10/python-3.10.10-embed-amd64.zip
+      dest: ${download}/python-3.10.10-embed-amd64.zip
+  - unzip:
+      src: ${download}/python-3.10.10-embed-amd64.zip
+      dest: ${workspace}/python/versions/3.10.10
+
 generator_active_batch:
   file_path: ${workspace}/python/active
   environments:
     set:
-      PYTHON_HOME: ${workspace}/python/python-3.13.5
+      PYTHON_HOME: ${workspace}/python/versions/3.13.5
     prepend:
-      - PATH: ${workspace}/python/python-3.13.5
-      - PATH: ${workspace}/python/python-3.13.5/bin
-      - PATH: ${workspace}/python/python-3.13.5/scripts
+      - PATH: ${workspace}/python/versions/3.13.5
+      - PATH: ${workspace}/python/versions/3.13.5/bin
+      - PATH: ${workspace}/python/versions/3.13.5/scripts
+      
+

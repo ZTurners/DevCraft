@@ -10,6 +10,17 @@ install:
       src_sub_folder: 'wasmtime-v40.0.1-x86_64-windows'
       dest: ${workspace}/wasm/wasmtime-v40.0.1-x86_64-windows
 
+  # wabt wasm assemble binaires tools
+  - download:
+      src:
+        url: https://github.com/WebAssembly/wabt/releases/download/1.0.39/wabt-1.0.39-windows-x64.tar.gz
+        SHA-256: c2215e52d3beff6cc0b6496aaef652399327084b9709ac5ec037b910c311a6c9
+      dest: ${download}/wabt-1.0.39-windows-x64.tar.gz
+  - unzip:
+      src: ${download}/wabt-1.0.39-windows-x64.tar.gz
+      src_sub_folder: wabt-1.0.39
+      dest: ${workspace}/wasm/wabt-1.0.39-windows-x64
+
   # wasi sdk
   - download:
       src:
@@ -26,6 +37,7 @@ generator_active_batch:
   environments:
     prepend:
       - PATH: ${workspace}/wasm/wasmtime-v40.0.1-x86_64-windows
+      - PATH: ${workspace}/wasm/wabt-1.0.39-windows-x64/bin
     set:
       WASI_SDK_PATH: ${workspace}/wasm/wasi-sdk-29.0-x86_64-windows
       WASI_SYSROOT: ${workspace}/wasm/wasi-sdk-29.0-x86_64-windows/share/wasi-sysroot

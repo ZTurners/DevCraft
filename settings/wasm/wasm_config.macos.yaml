@@ -10,6 +10,17 @@ install:
       src_sub_folder: 'wasmtime-v40.0.1-aarch64-macos'
       dest: ${workspace}/wasm/wasmtime-v40.0.1-aarch64-macos
 
+  # wabt wasm assemble binaires tools
+  - download:
+      src:
+        url: https://github.com/WebAssembly/wabt/releases/download/1.0.39/wabt-1.0.39-macos-arm64.tar.gz
+        SHA-256: 168a83f22125a77d96ecb230341ed0e2b06b970aadb57eb89d2ed06f9b7f8aca
+      dest: ${download}/wabt-1.0.39-macos-arm64
+  - unzip:
+      src: ${download}/wabt-1.0.39-macos-arm64
+      src_sub_folder: wabt-1.0.39
+      dest: ${workspace}/wasm/wabt-1.0.39-macos-arm64
+
   # wasi sdk
   - download:
       src:

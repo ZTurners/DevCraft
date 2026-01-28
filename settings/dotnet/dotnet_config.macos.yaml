@@ -1,0 +1,24 @@
+install:
+  - download:
+      src:
+        url: https://builds.dotnet.microsoft.com/dotnet/Sdk/10.0.101/dotnet-sdk-10.0.101-osx-x64.tar.gz
+        SHA-512: PLACEHOLDER_SHA512
+      dest: ${download}/dotnet-sdk-10.0.101-osx-x64.tar.gz
+  - untar:
+      src: ${download}/dotnet-sdk-10.0.101-osx-x64.tar.gz
+      src_sub_folder: ""
+      dest: ${workspace}/dotnet/dotnet-sdk-10.0.101-osx-x64
+
+  - execute:
+      command:
+        - ${workspace}/dotnet/dotnet-sdk-10.0.101-osx-x64/dotnet workload install wasi-experimental
+
+generator_active_sh:
+  file_path: ${workspace}/dotnet/active.sh
+  environments:
+    set:
+      DOTNET_ROOT: ${workspace}/dotnet/dotnet-sdk-10.0.101-osx-x64
+      DOTNET_CLI_TELEMETRY_OPTOUT: 1
+      DOTNET_CLI_UI_LANGUAGE: en-US
+    prepend:
+      - PATH: ${workspace}/dotnet/dotnet-sdk-10.0.101-osx-x64

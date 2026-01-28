@@ -1,5 +1,4 @@
 install:
-  # dotnet-9.0:
   - download:
       src:
         url: https://builds.dotnet.microsoft.com/dotnet/Sdk/10.0.101/dotnet-sdk-10.0.101-win-x64.zip
@@ -9,6 +8,12 @@ install:
       src: ${download}/dotnet-sdk-10.0.101-win-x64.zip
       src_sub_folder: ""
       dest: ${workspace}/dotnet/dotnet-sdk-10.0.101-win-x64
+
+  # install extra workloads
+  - execute:
+      command:
+        - ${workspace}/dotnet/dotnet-sdk-10.0.101-win-x64/dotnet.exe workload install wasi-experimental
+
 generator_active_batch:
   file_path: ${workspace}/dotnet/active
   environments:

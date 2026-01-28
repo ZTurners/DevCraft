@@ -1,3 +1,18 @@
+install:
+  # install pytohn 310 used by llvm on windows
+  - download:
+      src:
+        url: https://www.python.org/ftp/python/3.10.10/python-3.10.10-embed-amd64.zip
+      dest: ${download}/python-3.10.10-embed-amd64.zip
+  - unzip:
+      src: ${download}/python-3.10.10-embed-amd64.zip
+      dest: ${workspace}/python/versions/3.10.10
+
+  # install lib clang for python
+  - execute:
+      command:
+        - ${workspace}/python/versions/3.13.5/python.exe -m pip install clang
+
 generator_active_batch:
   file_path: ${workspace}/python/active
   environments:

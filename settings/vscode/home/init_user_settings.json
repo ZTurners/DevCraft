@@ -10,5 +10,7 @@
     },
     "terminal.integrated.env.windows": {
         "VS_WORKSPACE": "${workspaceFolder}"
-    }
+    },
+    "git.repositoryScanMaxDepth": 4,
+    "git.autoRepositoryDetection": "subFolders"
 }

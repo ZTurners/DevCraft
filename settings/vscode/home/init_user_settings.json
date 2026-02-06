@@ -11,6 +11,8 @@
     "terminal.integrated.env.windows": {
         "VS_WORKSPACE": "${workspaceFolder}"
     },
-    "git.repositoryScanMaxDepth": 4,
-    "git.autoRepositoryDetection": "subFolders"
+    "scm.defaultViewMode": "tree",
+    "scm.alwaysShowRepositories": true,
+    "scm.repositories.sortOrder": "path",
+    "git.enableSmartCommit": true,
 }

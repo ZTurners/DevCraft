@@ -14,5 +14,6 @@
     "scm.defaultViewMode": "tree",
     "scm.alwaysShowRepositories": true,
     "scm.repositories.sortOrder": "path",
+    "git.detectSubmodulesLimit": 200,
     "git.enableSmartCommit": true
 }

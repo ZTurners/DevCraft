@@ -14,5 +14,5 @@
     "scm.defaultViewMode": "tree",
     "scm.alwaysShowRepositories": true,
     "scm.repositories.sortOrder": "path",
-    "git.enableSmartCommit": true,
+    "git.enableSmartCommit": true
 }

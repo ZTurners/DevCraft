@@ -2,16 +2,16 @@ install:
   # cmake-3.31:
   - download:
       src:
-        url: https://github.com/Kitware/CMake/releases/download/v3.31.9/cmake-3.31.9-macos-universal.tar.gz
-        SHA-256: eb9d0b2b6a5b900e2f5811326a86ea393a146e4cb2384d15512c226e9c98f8bf
-      dest: ${download}/cmake-3.31.9-macos-universal.tar.gz
+        url: https://github.com/Kitware/CMake/releases/download/v4.2.3/cmake-4.2.3-macos-universal.tar.gz
+        SHA-256: c2302d3e9c48daabee5ea7c4db4b2b93b989bcc89dae8b760880e00120641b5b
+      dest: ${download}/cmake-4.2.3-macos-universal.tar.gz
   - unzip:
-      src: ${download}/cmake-3.31.9-macos-universal.tar.gz
-      src_sub_folder: cmake-3.31.9-macos-universal/CMake.app/Contents
-      dest: ${workspace}/cmake/cmake-3.31
+      src: ${download}/cmake-4.2.3-macos-universal.tar.gz
+      src_sub_folder: cmake-4.2.3-macos-universal/CMake.app/Contents
+      dest: ${workspace}/cmake/cmake-4.2.3-macos-universal
 generator_active_batch:
   file_path: ${workspace}/cmake/active
   environments:
     set: {}
     prepend:
-      - PATH: ${workspace}/cmake/cmake-3.31/bin
+      - PATH: ${workspace}/cmake/cmake-4.2.3-macos-universal/bin

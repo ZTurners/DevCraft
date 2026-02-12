@@ -1,0 +1,16 @@
+window.title: ⚠️Arieo Dev⚠️
+files.eol: '
+
+  '
+terminal.integrated.env.linux:
+  VS_WORKSPACE: ${workspaceFolder}
+terminal.integrated.env.osx:
+  VS_WORKSPACE: ${workspaceFolder}
+terminal.integrated.env.windows:
+  VS_WORKSPACE: ${workspaceFolder}
+scm.defaultViewMode: tree
+scm.alwaysShowRepositories: true
+scm.repositories.sortOrder: path
+git.detectSubmodules: true
+git.detectSubmodulesLimit: 200
+git.enableSmartCommit: true

@@ -11,7 +11,7 @@ install:
   # install lib clang for python
   - execute:
       command:
-        - ${workspace}/python/versions/3.13.5/python.exe -m pip install clang
+        - ${workspace}/python/versions/3.13.5/bin/python -m pip install clang
 
 generator_active_batch:
   file_path: ${workspace}/python/active

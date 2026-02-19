@@ -6,17 +6,16 @@ rem   active.windows.bat /list      -> lists all active.bat that would be run (s
 
 set DEVCRAFT_HOST_TRIPLE=x86_64-windows-msvc
 set DEVCRAFT_WORKSPACE=%~dp0
-rem Use DIR to find all files named active.bat and iterate over them
-for /f "delims=" %%F in ('dir /b /s /a-d "active.bat" ^| sort') do (
-	rem Skip this runner file if it happens to be named active.bat in the root
-	if /I NOT "%%~fF"=="%~f0" (
+rem Iterate through immediate subdirectories and run active.bat if it exists
+for /d %%D in (*) do (
+	if exist "%%D\active.bat" (
 		if "%LIST_ONLY%"=="1" (
-			echo [LIST] %%~fF
+			echo [LIST] %%~fD\active.bat
 		) else (
 			echo ------------------------------------------------------------------------
-			echo Running: %%~fF
-			pushd "%%~dpF"
-			call "%%~nxF"
+			echo Running: %%~fD\active.bat
+			pushd "%%D"
+			call active.bat
 			popd
 		)
 	)

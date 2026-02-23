@@ -6,6 +6,10 @@ rem   active.windows.bat /list      -> lists all active.bat that would be run (s
 
 set DEVCRAFT_HOST_TRIPLE=x86_64-windows-msvc
 set DEVCRAFT_WORKSPACE=%~dp0
+set DEVCRAFT_WORKSPACE=%DEVCRAFT_WORKSPACE:\=/%
+
+
+
 rem Iterate through immediate subdirectories and run active.bat if it exists
 for /d %%D in (*) do (
 	if exist "%%D\active.bat" (

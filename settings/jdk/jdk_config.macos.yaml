@@ -14,5 +14,6 @@ generator_active_batch:
   environments:
     set:
       JAVA_HOME: ${workspace}/jdk/jdk-25
+      JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
     prepend:
     - PATH: ${workspace}/jdk/jdk-25/bin

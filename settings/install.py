@@ -323,7 +323,6 @@ class WorkspaceInstaller:
         # Add output file specification
         curl_cmd.extend([
             "-o", downloading_file,  # Output file
-            "-C", "-",  # Resume download
             "-S",  # Show error
             "--retry", "3",  # Retry up to 3 times
             "--retry-delay", "5",  # Wait 5 seconds between retries
@@ -354,19 +353,30 @@ class WorkspaceInstaller:
 
                 # get file_size from downloading file
                 file_size = os.path.getsize(downloading_file)
-                if file_size == expected_size:
+                # If expected_size is unknown (server gave no Content-Length) accept any
+                # non-empty file; otherwise require an exact size match.
+                if expected_size is None and file_size > 0:
+                    last_err = None
+                    break
+                elif file_size == expected_size:
                     last_err = None
                     break
                 else:
                     last_err = f"Downloaded file size {file_size} does not match expected size {expected_size}"
             else:
-                # failed attempt: do not remove partial file; allow curl -C - to resume
                 last_err = result.stderr.strip() or result.stdout.strip()
             
             print(f"Download attempt {attempt} failed: {last_err}")
 
             if attempt < max_attempts:
                 print("Retrying download...")
+                # Remove the partial file before retrying so curl starts fresh
+                # instead of attempting a byte-range resume that some servers reject.
+                if os.path.exists(downloading_file):
+                    try:
+                        os.remove(downloading_file)
+                    except Exception:
+                        pass
                 time.sleep(2)
             attempt += 1
             print(f"Running download attempt {attempt}/{max_attempts}...")

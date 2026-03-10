@@ -159,7 +159,7 @@ if not exist "%VSWHERE_PATH%" (
     "%PYTHON_INSTALL_DIR%\python.exe" -m pip show setuptools >nul 2>&1
     if %errorlevel% neq 0 (
         echo Installing complete setuptools package...
-        "%PYTHON_INSTALL_DIR%\python.exe" -m pip install --force-reinstall setuptools --no-warn-script-location
+        "%PYTHON_INSTALL_DIR%\python.exe" -m pip install --force-reinstall setuptools --no-warn-script-location --no-cache-dir
     )
 
     echo Verifying build backend...
@@ -195,7 +195,7 @@ if not exist "%VSWHERE_PATH%" (
 
     :: Install PyYAML so settings/install.py can parse YAML configs
     echo Installing PyYAML (PyYAML is required for parsing YAML configs)...
-    "%PYTHON_INSTALL_DIR%\python.exe" -m pip install --upgrade --disable-pip-version-check pyyaml
+    "%PYTHON_INSTALL_DIR%\python.exe" -m pip install --upgrade --disable-pip-version-check --no-cache-dir pyyaml
     if %ERRORLEVEL% neq 0 (
         echo Warning: Failed to install PyYAML automatically.
         echo You can install it manually by running:

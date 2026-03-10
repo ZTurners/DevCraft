@@ -12,12 +12,14 @@ install:
   - execute:
       command:
         - ${workspace}/dotnet/dotnet-sdk-10.0.101-osx-arm64/dotnet workload install wasi-experimental
-generator_active_sh:
-  file_path: ${workspace}/dotnet/active.sh
+
+generator_active_batch:
+  file_path: ${workspace}/dotnet/active
   environments:
     set:
-      DOTNET_ROOT: ${workspace}/dotnet/dotnet-sdk-10.0.101-osx-x64
+      DOTNET_ROOT: ${workspace}/dotnet/dotnet-sdk-10.0.101-osx-arm64
       DOTNET_CLI_TELEMETRY_OPTOUT: 1
       DOTNET_CLI_UI_LANGUAGE: en-US
     prepend:
-      - PATH: ${workspace}/dotnet/dotnet-sdk-10.0.101-osx-x64
+      - PATH: ${workspace}/dotnet/dotnet-sdk-10.0.101-osx-arm64/bin
+      - PATH: ${workspace}/dotnet/dotnet-sdk-10.0.101-osx-arm64

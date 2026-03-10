@@ -7,14 +7,14 @@ install:
   - copy:
       src: ${settings}/rustup/home/settings.toml
       dest: ${workspace}/rust/.rustup/settings.toml
-  - environments:
-      set:
-        RUSTUP_HOME: ${workspace}/rust/.rustup
-        CARGO_HOME: ${workspace}/rust/.cargo
   # install-rustup-macos:
   - copy:
       src: ${download}/rustup-init
       dest: ${workspace}/rust/rustup-init
+  - environments:
+      set:
+        RUSTUP_HOME: ${workspace}/rust/.rustup
+        CARGO_HOME: ${workspace}/rust/.cargo
   - make_execute_permission:
       files:
         - ${workspace}/rust/rustup-init
@@ -28,6 +28,13 @@ install:
       - target
       - add
       - wasm32-wasip2
+  - execute:
+      command:
+      - ${workspace}/rust/.cargo/bin/cargo
+      - install
+      - wasm-tools
+      - wit-bindgen-cli
+      - cargo-component
 generator_active_batch:
   file_path: ${workspace}/rust/active
   environments:

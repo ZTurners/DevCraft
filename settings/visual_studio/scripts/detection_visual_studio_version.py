@@ -2,7 +2,7 @@
 """
 Visual Studio version detection script.
 Detects Visual Studio using vswhere, saves detailed info to JSON,
-and writes a .bat file that sets VISUAL_STUDIO_MAJOR_VERSION.
+and writes a .bat file that sets DEVCRAFT_VISUAL_STUDIO_MAJOR_VERSION.
 
 Usage:
     python detection_visual_studio_version.py --output <path/to/output.bat>
@@ -158,7 +158,7 @@ def main():
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(
-        f"@echo off\nset VISUAL_STUDIO_MAJOR_VERSION={vs_version}\n",
+        f"@echo off\nset DEVCRAFT_VISUAL_STUDIO_MAJOR_VERSION={vs_version}\n",
         encoding="utf-8"
     )
     print(f"Written: {output_path}")

@@ -12,13 +12,6 @@ install:
         - --output
         - ${workspace}/visual_studio/vs_version.bat
 
-  - execute:
-      command:
-        - python
-        - ${settings}/visual_studio/scripts/detection_win_sdk_version.py
-        - --output
-        - ${workspace}/visual_studio/win_sdk_version.bat
-
   - copy:
       src: ${settings}/visual_studio/scripts/active.bat
       dest: ${workspace}/visual_studio/active.bat

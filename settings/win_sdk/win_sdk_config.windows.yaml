@@ -1,0 +1,12 @@
+install:
+  # Detect SDK version from an already-installed Windows SDK
+  - execute:
+      command:
+        - python
+        - ${settings}/win_sdk/scripts/detection_win_sdk_version.py
+        - --output
+        - ${workspace}/win_sdk/win_sdk_version.bat
+
+  - copy:
+      src: ${settings}/win_sdk/scripts/active.bat
+      dest: ${workspace}/win_sdk/active.bat

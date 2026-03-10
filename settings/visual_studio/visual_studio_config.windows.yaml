@@ -1,0 +1,24 @@
+install:
+  # Download vswhere.exe
+  - download:
+      src:
+        url: https://github.com/microsoft/vswhere/releases/latest/download/vswhere.exe
+      dest: ${workspace}/visual_studio/vswhere.exe
+
+  - execute:
+      command:
+        - python
+        - ${settings}/visual_studio/scripts/detection_visual_studio_version.py
+        - --output
+        - ${workspace}/visual_studio/vs_version.bat
+
+  - execute:
+      command:
+        - python
+        - ${settings}/visual_studio/scripts/detection_win_sdk_version.py
+        - --output
+        - ${workspace}/visual_studio/win_sdk_version.bat
+
+  - copy:
+      src: ${settings}/visual_studio/scripts/active.bat
+      dest: ${workspace}/visual_studio/active.bat

@@ -3,18 +3,6 @@
 set DEV_ENV_ROOT_PATH=%~dp0
 set DEV_ENV_WORKSPACE_PATH=%DEV_ENV_ROOT_PATH%/workspace
 
-:: Download vswhere
-set VSWHERE_URL=https://github.com/microsoft/vswhere/releases/latest/download/vswhere.exe
-set VSWHERE_DIR=%DEV_ENV_WORKSPACE_PATH%/visual_studio
-set VSWHERE_PATH=%VSWHERE_DIR%/vswhere.exe
-
-if not exist "%VSWHERE_DIR%" mkdir "%VSWHERE_DIR%"
-if not exist "%VSWHERE_PATH%" (
-    echo Downloading vswhere.exe...
-    powershell -Command "Invoke-WebRequest -Uri '%VSWHERE_URL%' -OutFile '%VSWHERE_PATH%'"
-    echo Downloaded vswhere.exe to %VSWHERE_PATH%
-)
-
 :: Install Python
 :: SETLOCAL ENABLEDELAYEDEXPANSION
     

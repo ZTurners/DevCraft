@@ -1,7 +1,5 @@
 @echo off
 
-call "%~dp0vs_version.bat"
-
 if not defined DEVCRAFT_VISUAL_STUDIO_MAJOR_VERSION if defined VISUAL_STUDIO_MAJOR_VERSION set DEVCRAFT_VISUAL_STUDIO_MAJOR_VERSION=%VISUAL_STUDIO_MAJOR_VERSION%
 
 echo Environment variables set successfully

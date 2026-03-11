@@ -3,10 +3,12 @@ install:
   - execute:
       command:
         - python
-        - ${settings}/win_sdk/scripts/detection_win_sdk_version.py
-        - --output
-        - ${workspace}/win_sdk/win_sdk_version.bat
+        - ${settings}/win_sdk/scripts/win_sdk_version_detect.py
+        - --version-check 10.0.26100.0
+        - --info-output-file ${workspace}/win_sdk/info.json
 
-  - copy:
-      src: ${settings}/win_sdk/scripts/active.bat
-      dest: ${workspace}/win_sdk/active.bat
+generator_active_batch:
+  file_path: ${workspace}/win_sdk/active
+  environments:
+    set:
+      DEVCRAFT_WINDOWS_SDK_VERSION: 10.0.26100.0

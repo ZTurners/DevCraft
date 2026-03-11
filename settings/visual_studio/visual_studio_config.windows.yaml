@@ -3,15 +3,18 @@ install:
   - download:
       src:
         url: https://github.com/microsoft/vswhere/releases/latest/download/vswhere.exe
-      dest: ${workspace}/visual_studio/vswhere.exe
+      dest: ${download}/vswhere.exe
 
   - execute:
       command:
         - python
-        - ${settings}/visual_studio/scripts/detection_visual_studio_version.py
-        - --output
-        - ${workspace}/visual_studio/vs_version.bat
+        - ${settings}/visual_studio/scripts/visual_studio_version_detect.py
+        - --vswhere ${download}/vswhere.exe
+        - --version-check 18.3.x.x
+        - --info-output-file ${workspace}/visual_studio/info.json
 
-  - copy:
-      src: ${settings}/visual_studio/scripts/active.bat
-      dest: ${workspace}/visual_studio/active.bat
+generator_active_batch:
+  file_path: ${workspace}/visual_studio/active
+  environments:
+    set:
+      DEVCRAFT_VISUAL_STUDIO_MAJOR_VERSION: 18

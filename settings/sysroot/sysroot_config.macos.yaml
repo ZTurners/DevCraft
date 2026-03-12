@@ -4,7 +4,7 @@ install:
   # ubuntu_amd64_24_04:
   - download:
       src:
-        url: https://github.com/BigElderK/DevCraftArtifactory/releases/download/init/ubuntu_amd64_24_04_sysroot.tar.gz
+        url: https://github.com/ZTurners/DevCraftArtifactory/releases/download/init/ubuntu_amd64_24_04_sysroot.tar.gz
         SHA-256: f71e6af01aea013e1c79ee8ca504173356bd13c1a9e973b08b5b58fbf32fe696
       dest: ${download}/ubuntu_amd64_24_04_sysroot.tar.gz
   - unzip:
@@ -14,7 +14,7 @@ install:
   # raspberry_arm64_bookworm:
   - download:
       src:
-        url: https://github.com/BigElderK/DevCraftArtifactory/releases/download/init/raspberry_arm64_bookworm_sysroot.tar.xz
+        url: https://github.com/ZTurners/DevCraftArtifactory/releases/download/init/raspberry_arm64_bookworm_sysroot.tar.xz
         SHA-256: 639cb632dfd47c63f5153f4d054636169fcca817fc710ed7865ccf6121bfc081
       dest: ${download}/raspberry_arm64_bookworm_sysroot.tar.xz
   - unzip:

@@ -9,6 +9,7 @@ install:
       src: ${download}/clang+llvm-21.1.6-x86_64-pc-windows-msvc.tar.xz
       src_sub_folder: clang+llvm-21.1.6-x86_64-pc-windows-msvc
       dest: ${workspace}/llvm/llvm-21/x86_64-windows-msvc
+  
   # install python 310 for llvm on windows
   - download:
       src:
@@ -32,6 +33,11 @@ install:
       src: ${download}/LLVM-21.1.6-Linux-ARM64.tar.xz
       src_sub_folder: LLVM-21.1.6-Linux-ARM64
       dest: ${workspace}/llvm/llvm-21/aarch64-linux-gnu
+  # Unknown why the libc++.so is a broken symlink to libc++.so.1 which is missing, so we need to copy it manually from libc++.so.1.0
+  - copy:
+      src: ${workspace}/llvm/llvm-21/aarch64-linux-gnu/lib/aarch64-unknown-linux-gnu/libc++.so.1.0
+      dest: ${workspace}/llvm/llvm-21/aarch64-linux-gnu/lib/aarch64-unknown-linux-gnu/libc++.so.1
+      force_update: true
 
   # llvm for linux x86_64
   - download:

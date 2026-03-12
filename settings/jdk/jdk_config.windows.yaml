@@ -9,6 +9,13 @@ install:
       src: ${download}/jdk-25.0.1_windows-x64_bin.zip
       src_sub_folder: jdk-25.0.1
       dest: ${workspace}/jdk/jdk-25
+  # set environment variable for android_sdk install during installation, and also for user to use after installation
+  - environments:
+      set:
+        JAVA_HOME: ${workspace}/jdk/jdk-25
+        JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
+      prepend:
+        - PATH: ${workspace}/jdk/jdk-25/bin
 generator_active_batch:
   file_path: ${workspace}/jdk/active
   environments:
@@ -16,4 +23,4 @@ generator_active_batch:
       JAVA_HOME: ${workspace}/jdk/jdk-25
       JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
     prepend:
-    - PATH: ${workspace}/jdk/jdk-25/bin
+      - PATH: ${workspace}/jdk/jdk-25/bin

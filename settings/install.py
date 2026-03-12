@@ -18,6 +18,7 @@ import time
 import zipfile
 import tarfile
 import copy
+import heapq
 
 class WorkspaceInstaller:
     def __init__(self):
@@ -802,58 +803,114 @@ class WorkspaceInstaller:
             else:
                 raise Exception(f"Unknown install item name: '{install_step_name}'")
 
+    def _load_config_data(self, config_file_path):
+        """Load one config file as YAML/JSON and return parsed object."""
+        if not os.path.exists(config_file_path):
+            raise FileNotFoundError(f"Configuration not found at {config_file_path}")
+
+        config = None
+        lower = config_file_path.lower()
+
+        if lower.endswith('.yaml') or lower.endswith('.yml'):
+            if yaml is not None:
+                with open(config_file_path, 'r', encoding='utf-8') as f:
+                    config = yaml.safe_load(f)
+            else:
+                # PyYAML not available: try to read original JSON backup in same folder
+                json_candidate = config_file_path[:-5] + '.json' if lower.endswith('.yaml') else config_file_path[:-4] + '.json'
+                if os.path.exists(json_candidate):
+                    with open(json_candidate, 'r', encoding='utf-8') as f:
+                        config = json.load(f)
+                else:
+                    # If not found, check the archived json_backup folder under settings/
+                    try:
+                        rel = os.path.relpath(config_file_path, self.m_settings_root_path)
+                    except Exception:
+                        rel = os.path.basename(config_file_path)
+
+                    if rel.lower().endswith('.yaml'):
+                        rel_json = rel[:-5] + '.json'
+                    elif rel.lower().endswith('.yml'):
+                        rel_json = rel[:-4] + '.json'
+                    else:
+                        rel_json = rel + '.json'
+
+                    backup_candidate = os.path.join(self.m_settings_root_path, 'json_backup', rel_json)
+                    if os.path.exists(backup_candidate):
+                        with open(backup_candidate, 'r', encoding='utf-8') as f:
+                            config = json.load(f)
+                    else:
+                        raise RuntimeError(
+                            "YAML config provided but PyYAML is not installed and no JSON backup found: "
+                            f"{config_file_path} (searched {json_candidate} and {backup_candidate})"
+                        )
+        else:
+            with open(config_file_path, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+
+        if not isinstance(config, dict):
+            raise TypeError(f"Config root must be an object in {config_file_path}")
+
+        return config
+
+    def _extract_dependencies(self, config_file_path, config):
+        """Read and validate top-level dependencies list from config."""
+        deps = config.get('dependencies', [])
+        if deps is None:
+            return []
+        if not isinstance(deps, list):
+            raise TypeError(f"'dependencies' must be a list in {config_file_path}")
+
+        normalized = []
+        for dep in deps:
+            if not isinstance(dep, str):
+                raise TypeError(f"All dependency entries must be strings in {config_file_path}")
+            dep_text = dep.strip().replace('\\', '/')
+            if dep_text:
+                normalized.append(dep_text)
+
+        return normalized
+
+    def _resolve_dependency(self, dep_text, records_by_rel, records_by_basename, records_by_folder):
+        """Resolve a dependency reference to a record key."""
+        dep_norm = dep_text.strip().replace('\\', '/')
+
+        settings_prefix = "${settings}/"
+        if dep_norm.startswith(settings_prefix):
+            dep_norm = dep_norm[len(settings_prefix):]
+
+        # 1) Full relative path under settings, e.g. jdk/jdk_config.windows.yaml
+        if dep_norm in records_by_rel:
+            return dep_norm
+
+        # 2) Basename match, e.g. jdk_config.windows.yaml
+        by_base = records_by_basename.get(dep_norm, [])
+        if len(by_base) == 1:
+            return by_base[0]
+        if len(by_base) > 1:
+            raise RuntimeError(
+                f"Ambiguous dependency '{dep_text}': matches multiple configs {by_base}. "
+                "Use a settings-relative path like 'folder/file.windows.yaml'."
+            )
+
+        # 3) Folder key match, e.g. jdk
+        by_folder = records_by_folder.get(dep_norm, [])
+        if len(by_folder) == 1:
+            return by_folder[0]
+        if len(by_folder) > 1:
+            raise RuntimeError(
+                f"Ambiguous dependency '{dep_text}': folder maps to multiple configs {by_folder}."
+            )
+
+        raise RuntimeError(f"Unknown dependency '{dep_text}'")
+
     def install_from_config(self, config_file_path):
         """Generic installation function that handles downloading and extracting from configured URLs.
         Args:
             config_file_path (str): Path to the configuration JSON file
         """
-        if not os.path.exists(config_file_path):
-            print(f"Error: Configuration not found at {config_file_path}")
-            exit(1)
-
-        # Attempt to load YAML if file is YAML (and PyYAML is available),
-        # otherwise fall back to JSON. If YAML file exists but PyYAML is not
-        # available, fall back to the original .json file with same basename.
-        config = None
-        lower = config_file_path.lower()
         try:
-            if lower.endswith('.yaml') or lower.endswith('.yml'):
-                if yaml is not None:
-                    with open(config_file_path, 'r', encoding='utf-8') as f:
-                        config = yaml.safe_load(f)
-                else:
-                    # PyYAML not available: try to read original JSON backup in same folder
-                    json_candidate = config_file_path[:-5] + '.json' if lower.endswith('.yaml') else config_file_path[:-4] + '.json'
-                    if os.path.exists(json_candidate):
-                        with open(json_candidate, 'r', encoding='utf-8') as f:
-                            config = json.load(f)
-                    else:
-                        # If not found, check the archived json_backup folder under settings/
-                        try:
-                            rel = os.path.relpath(config_file_path, self.m_settings_root_path)
-                        except Exception:
-                            rel = os.path.basename(config_file_path)
-                        # replace extension with .json
-                        if rel.lower().endswith('.yaml'):
-                            rel_json = rel[:-5] + '.json'
-                        elif rel.lower().endswith('.yml'):
-                            rel_json = rel[:-4] + '.json'
-                        else:
-                            rel_json = rel + '.json'
-
-                        backup_candidate = os.path.join(self.m_settings_root_path, 'json_backup', rel_json)
-                        if os.path.exists(backup_candidate):
-                            with open(backup_candidate, 'r', encoding='utf-8') as f:
-                                config = json.load(f)
-                        else:
-                            print(f"Error: YAML config provided but PyYAML is not installed and no JSON backup found: {config_file_path}")
-                            print(f"Searched for: {json_candidate} and archive: {backup_candidate}")
-                            print("Install PyYAML (python -m pip install pyyaml) or restore JSON backups to the original location.")
-                            exit(1)
-            else:
-                # Default: JSON
-                with open(config_file_path, 'r', encoding='utf-8') as f:
-                    config = json.load(f)
+            config = self._load_config_data(config_file_path)
         except json.JSONDecodeError:
             print(f"Error: Invalid JSON in configuration file: {config_file_path}")
             exit(1)
@@ -966,8 +1023,88 @@ class WorkspaceInstaller:
             print(f"Warning: No configuration files found for system '{self.m_system_name}' in {self.m_settings_root_path}")
             return
 
-        # Process each config file found (sorted for deterministic order)
+        # Build dependency metadata for each config.
+        records = {}
+        records_by_basename = {}
+        records_by_folder = {}
+
         for config_path in sorted(config_files):
+            rel = os.path.relpath(config_path, self.m_settings_root_path).replace('\\', '/')
+            folder_key = rel.split('/')[0] if '/' in rel else rel
+            base_name = os.path.basename(config_path)
+
+            try:
+                config_data = self._load_config_data(config_path)
+                dependencies = self._extract_dependencies(config_path, config_data)
+            except Exception as e:
+                print(f"Error parsing dependencies in {config_path}: {e}")
+                return
+
+            records[rel] = {
+                'path': config_path,
+                'rel': rel,
+                'folder': folder_key,
+                'base': base_name,
+                'deps': dependencies,
+            }
+
+            records_by_basename.setdefault(base_name, []).append(rel)
+            records_by_folder.setdefault(folder_key, []).append(rel)
+
+        # Build graph edges dependency -> dependent.
+        indegree = {k: 0 for k in records}
+        adjacency = {k: set() for k in records}
+
+        for rel, record in records.items():
+            for dep_text in record['deps']:
+                try:
+                    dep_rel = self._resolve_dependency(
+                        dep_text,
+                        records,
+                        records_by_basename,
+                        records_by_folder,
+                    )
+                except Exception as e:
+                    print(f"Error resolving dependency for {rel}: {e}")
+                    return
+
+                if dep_rel == rel:
+                    print(f"Error: Self dependency detected for {rel}")
+                    return
+
+                if rel not in adjacency[dep_rel]:
+                    adjacency[dep_rel].add(rel)
+                    indegree[rel] += 1
+
+        # Topological sort with deterministic ordering.
+        heap = []
+        for rel, deg in indegree.items():
+            if deg == 0:
+                heapq.heappush(heap, rel)
+
+        ordered = []
+        while heap:
+            node = heapq.heappop(heap)
+            ordered.append(node)
+            for nxt in sorted(adjacency[node]):
+                indegree[nxt] -= 1
+                if indegree[nxt] == 0:
+                    heapq.heappush(heap, nxt)
+
+        if len(ordered) != len(records):
+            cycle_nodes = sorted([k for k, deg in indegree.items() if deg > 0])
+            print("Error: Cyclic dependency detected among config files:")
+            for node in cycle_nodes:
+                print(f"  - {node}")
+            return
+
+        print("\nResolved config execution order:")
+        for index, rel in enumerate(ordered, 1):
+            print(f"  {index}. {rel}")
+
+        # Process each config file in dependency order.
+        for rel in ordered:
+            config_path = records[rel]['path']
             # Friendly display: show path relative to settings folder
             try:
                 display_name = os.path.relpath(config_path, self.m_settings_root_path)

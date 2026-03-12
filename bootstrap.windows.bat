@@ -2,6 +2,12 @@
 
 set DEV_ENV_ROOT_PATH=%~dp0
 set DEV_ENV_WORKSPACE_PATH=%DEV_ENV_ROOT_PATH%/workspace
+set DEV_ENV_DOWNLOAD_PATH=%DEV_ENV_ROOT_PATH%/.downloads
+set DEV_ENV_TOOLS_PATH=%DEV_ENV_WORKSPACE_PATH%/tools
+
+if not exist "%DEV_ENV_DOWNLOAD_PATH%" mkdir "%DEV_ENV_DOWNLOAD_PATH%"
+if not exist "%DEV_ENV_TOOLS_PATH%" mkdir "%DEV_ENV_TOOLS_PATH%"
+echo Using Python tar extraction on Windows (no external tar bootstrap)
 
 :: Install Python
 :: SETLOCAL ENABLEDELAYEDEXPANSION
@@ -34,7 +40,7 @@ set DEV_ENV_WORKSPACE_PATH=%DEV_ENV_ROOT_PATH%/workspace
     :: Configuration - Change these values if needed
     :: PYTHON_VERSION=3.13.5
     set PYTHON_URL=https://www.python.org/ftp/python/%PYTHON_VERSION%/python-%PYTHON_VERSION%-embed-amd64.zip
-    set PYTHON_DOWNLOAD_DIR=%DEV_ENV_ROOT_PATH%/.downloads
+    set PYTHON_DOWNLOAD_DIR=%DEV_ENV_DOWNLOAD_PATH%
     set PYTHON_INSTALL_DIR=%DEV_ENV_WORKSPACE_PATH%/python/versions/%PYTHON_VERSION%
     set PYTHON_SCRIPTS_DIR=%PYTHON_INSTALL_DIR%/Scripts
     set ADD_TO_SYSTEM_PATH=0

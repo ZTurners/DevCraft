@@ -325,6 +325,7 @@ class WorkspaceInstaller:
         src_zip_file = self._formalize_path(unzip_config["src"])
         dest_folder = self._formalize_path(unzip_config["dest"])
         unzip_source = unzip_config.get("src_sub_folder", "")
+        output_symbol_list = self._formalize_path(unzip_config.get("output_symbol_list", ""))
 
         if not src_zip_file:
             raise Exception("No source file specified for unzip")
@@ -360,6 +361,69 @@ class WorkspaceInstaller:
             raise Exception(f"Invalid archive file: {str(e)}")
 
         print(f"\nExtracting files to {dest_folder}...")
+
+        def _extract_tar_with_symlinks_unresolved(tar_file_path, output_dir, source_sub_folder, symbol_list_output_path):
+            with tarfile.open(tar_file_path, 'r:*') as tar_ref:
+                all_members = tar_ref.getmembers()
+                symlink_entries = []
+
+                if source_sub_folder:
+                    source_prefix = source_sub_folder.replace('\\', '/').rstrip('/')
+                    members = [
+                        m for m in all_members
+                        if m.name.replace('\\', '/') == source_prefix
+                        or m.name.replace('\\', '/').startswith(source_prefix + '/')
+                    ]
+                    base_dir_len = len(source_prefix) + 1
+                else:
+                    members = all_members
+                    base_dir_len = 0
+
+                total = len(members)
+
+                for index, member in enumerate(members, 1):
+                    member_to_extract = member
+                    relative_name = member.name.replace('\\', '/')
+                    if base_dir_len > 0:
+                        new_member = copy.copy(member)
+                        normalized_name = member.name.replace('\\', '/')
+                        new_member.name = normalized_name[base_dir_len:]
+                        if not new_member.name:
+                            percent = (index * 100) // total
+                            print(f"\rProgress: {percent}% [{index}/{total} files]", end="", flush=True)
+                            continue
+                        member_to_extract = new_member
+                        relative_name = new_member.name.replace('\\', '/')
+
+                    if member.issym() or member.islnk():
+                        symlink_entries.append({
+                            "path": relative_name,
+                            "linkname": member.linkname.replace('\\', '/'),
+                            "kind": "symlink" if member.issym() else "hardlink",
+                        })
+
+                    try:
+                        tar_ref.extract(member_to_extract, output_dir)
+                    except Exception as e:
+                        # Keep going for environments where symlink creation is restricted.
+                        print(f"\nWarning: could not extract {member.name}: {e}")
+
+                    percent = (index * 100) // total
+                    print(f"\rProgress: {percent}% [{index}/{total} files]", end="", flush=True)
+
+                if symbol_list_output_path:
+                    parent_dir = os.path.dirname(symbol_list_output_path)
+                    if parent_dir:
+                        os.makedirs(parent_dir, exist_ok=True)
+
+                    symbol_payload = {
+                        "source_archive": tar_file_path,
+                        "generated_at": datetime.datetime.now(datetime.UTC).isoformat(),
+                        "links": symlink_entries,
+                    }
+                    with open(symbol_list_output_path, 'w', encoding='utf-8') as sf:
+                        json.dump(symbol_payload, sf, indent=2)
+                    print(f"\nWrote symbol list: {symbol_list_output_path} ({len(symlink_entries)} entries)")
         
         if is_zip:
             with zipfile.ZipFile(src_zip_file, 'r') as zip_ref:
@@ -406,6 +470,11 @@ class WorkspaceInstaller:
                     percent = (index * 100) // total
                     print(f"\rProgress: {percent}% [{index}/{total} files]", end="", flush=True)
         else:  # tar.gz or tar.xz
+            if self.m_system_name == "Windows":
+                _extract_tar_with_symlinks_unresolved(src_zip_file, dest_folder, unzip_source, output_symbol_list)
+                print("\nExtraction completed.")
+                return
+
             mode = "r:gz" if is_tar_gz else "r:xz"
             with tarfile.open(src_zip_file, mode) as tar:
                 # Get all members and filter by unzip_source if specified
@@ -432,9 +501,7 @@ class WorkspaceInstaller:
                         # Remove the prefix from the path
                         new_member.name = member.name[base_dir_len:]
                         if new_member.name:  # Skip if empty
-                            # Check if this is a directory
-                            if not new_member.name.endswith('/'):
-                                tar.extract(new_member, dest_folder)
+                            tar.extract(new_member, dest_folder)
                     else:
                         tar.extract(member, dest_folder)
                     percent = (index * 100) // total
@@ -478,6 +545,179 @@ class WorkspaceInstaller:
                     raise
         else:
             print(f"Warning: Source path not found: {src_path}")
+
+    def _process_resolve_symlinks(self, symlink_config, context):
+        """Handle resolve_symlinks node.
+
+        Expected format:
+        resolve_symlinks:
+          src: ${workspace}/path
+
+        Recursively replaces symlinks under src with copies of their final targets.
+        """
+        if not isinstance(symlink_config, dict) or "src" not in symlink_config:
+            return
+
+        src_path = self._formalize_path(symlink_config["src"])
+        symbol_list_path = self._formalize_path(symlink_config.get("symbol_list", ""))
+        if not src_path or not os.path.exists(src_path):
+            print(f"Warning: Source path not found for resolve_symlinks: {src_path}")
+            return
+
+        print(f"\nResolving symlinks under {src_path}...")
+
+        max_depth = 10
+
+        def _is_within_root(path, root):
+            try:
+                return os.path.commonpath([os.path.abspath(path), os.path.abspath(root)]) == os.path.abspath(root)
+            except Exception:
+                return False
+
+        def _materialize_symbol_list(root_path, list_path):
+            if not list_path:
+                return
+
+            if not os.path.exists(list_path):
+                print(f"Warning: symbol_list file not found: {list_path}")
+                return
+
+            try:
+                with open(list_path, 'r', encoding='utf-8') as sf:
+                    symbol_data = json.load(sf)
+            except Exception as e:
+                print(f"Warning: failed to read symbol_list {list_path}: {e}")
+                return
+
+            if isinstance(symbol_data, dict):
+                entries = symbol_data.get('links', [])
+            elif isinstance(symbol_data, list):
+                entries = symbol_data
+            else:
+                print(f"Warning: invalid symbol_list content in {list_path}")
+                return
+
+            created_count = 0
+            skipped_count = 0
+
+            for entry in entries:
+                if not isinstance(entry, dict):
+                    skipped_count += 1
+                    continue
+
+                rel_path = str(entry.get('path', '')).replace('\\', '/').strip()
+                link_name = str(entry.get('linkname', '')).replace('\\', '/').strip()
+                if not rel_path or not link_name:
+                    skipped_count += 1
+                    continue
+
+                link_path = os.path.normpath(os.path.join(root_path, rel_path))
+                if not _is_within_root(link_path, root_path):
+                    print(f"Warning: skipped out-of-root link path: {rel_path}")
+                    skipped_count += 1
+                    continue
+
+                # Keep the original file if it already exists.
+                if os.path.lexists(link_path):
+                    skipped_count += 1
+                    continue
+
+                if os.path.isabs(link_name):
+                    target_path = os.path.normpath(os.path.join(root_path, link_name.lstrip('/\\')))
+                else:
+                    target_path = os.path.normpath(os.path.join(os.path.dirname(link_path), link_name))
+
+                if not _is_within_root(target_path, root_path):
+                    print(f"Warning: skipped out-of-root link target: {link_name}")
+                    skipped_count += 1
+                    continue
+
+                if not os.path.exists(target_path):
+                    skipped_count += 1
+                    continue
+
+                os.makedirs(os.path.dirname(link_path), exist_ok=True)
+                if os.path.isdir(target_path):
+                    shutil.copytree(target_path, link_path, dirs_exist_ok=True)
+                else:
+                    shutil.copy2(target_path, link_path)
+                created_count += 1
+
+            print(f"  Symbol list materialization: created {created_count}, skipped {skipped_count}")
+
+        _materialize_symbol_list(src_path, symbol_list_path)
+
+        def collect_symlinks(root_path):
+            symlink_paths = []
+            if os.path.islink(root_path):
+                symlink_paths.append(root_path)
+                return symlink_paths
+            if not os.path.isdir(root_path):
+                return symlink_paths
+
+            for entry in os.scandir(root_path):
+                entry_path = entry.path
+                if entry.is_symlink():
+                    symlink_paths.append(entry_path)
+                elif entry.is_dir(follow_symlinks=False):
+                    symlink_paths.extend(collect_symlinks(entry_path))
+            return symlink_paths
+
+        dirty_paths = [src_path]
+
+        for pass_index in range(1, max_depth + 1):
+            symlink_paths = []
+            seen_paths = set()
+            for dirty_path in dirty_paths:
+                if dirty_path in seen_paths:
+                    continue
+                seen_paths.add(dirty_path)
+                symlink_paths.extend(collect_symlinks(dirty_path))
+
+            if not symlink_paths:
+                print(f"  No symlinks found on pass {pass_index}; done.")
+                break
+
+            print(f"  Pass {pass_index}: found {len(symlink_paths)} symlink(s)")
+            resolved_count = 0
+            next_dirty_paths = []
+
+            for link_path in sorted(symlink_paths, key=lambda path: path.count(os.sep), reverse=True):
+                if not os.path.lexists(link_path):
+                    continue
+
+                target_path = os.path.realpath(link_path)
+                if not os.path.exists(target_path):
+                    print(f"Warning: Broken symlink skipped: {link_path} -> {target_path}")
+                    continue
+
+                if os.path.isdir(link_path):
+                    os.rmdir(link_path)
+                    shutil.copytree(target_path, link_path)
+                else:
+                    os.unlink(link_path)
+                    os.makedirs(os.path.dirname(link_path), exist_ok=True)
+                    shutil.copy2(target_path, link_path)
+
+                resolved_count += 1
+                next_dirty_paths.append(link_path)
+                print(f"  Resolved: {link_path}")
+
+            if resolved_count == 0:
+                print(f"  No symlinks resolved on pass {pass_index}; stopping.")
+                break
+
+            dirty_paths = next_dirty_paths
+        else:
+            remaining_symlinks = []
+            seen_paths = set()
+            for dirty_path in dirty_paths:
+                if dirty_path in seen_paths:
+                    continue
+                seen_paths.add(dirty_path)
+                remaining_symlinks.extend(collect_symlinks(dirty_path))
+            if remaining_symlinks:
+                print(f"Warning: resolve_symlinks reached max depth {max_depth} with {len(remaining_symlinks)} symlink(s) remaining")
 
     def _process_make_execute_permission(self, permission_config, context):
         """Handle make_execute_permission node."""
@@ -754,6 +994,7 @@ class WorkspaceInstaller:
             'download': self._process_download,
             'unzip': self._process_unzip_source,
             'copy': self._process_copy,
+            'resolve_symlinks': self._process_resolve_symlinks,
             'make_execute_permission': self._process_make_execute_permission,
             'change_file_content': self._process_change_file_content,
             'environments': self._process_environments,

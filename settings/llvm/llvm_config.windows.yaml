@@ -33,11 +33,10 @@ install:
       src: ${download}/LLVM-21.1.6-Linux-ARM64.tar.xz
       src_sub_folder: LLVM-21.1.6-Linux-ARM64
       dest: ${workspace}/llvm/llvm-21/aarch64-linux-gnu
-  # Unknown why the libc++.so is a broken symlink to libc++.so.1 which is missing, so we need to copy it manually from libc++.so.1.0
-  - copy:
-      src: ${workspace}/llvm/llvm-21/aarch64-linux-gnu/lib/aarch64-unknown-linux-gnu/libc++.so.1.0
-      dest: ${workspace}/llvm/llvm-21/aarch64-linux-gnu/lib/aarch64-unknown-linux-gnu/libc++.so.1
-      force_update: true
+      output_symbol_list: ${workspace}/llvm/llvm-21/aarch64-linux-gnu/.symbol_links.json
+  - resolve_symlinks:
+      src: ${workspace}/llvm/llvm-21/aarch64-linux-gnu
+      symbol_list: ${workspace}/llvm/llvm-21/aarch64-linux-gnu/.symbol_links.json
 
   # llvm for linux x86_64
   - download:
@@ -49,6 +48,10 @@ install:
       src: ${download}/LLVM-21.1.6-Linux-X64.tar.xz
       src_sub_folder: LLVM-21.1.6-Linux-X64
       dest: ${workspace}/llvm/llvm-21/x86_64-linux-gnu
+      output_symbol_list: ${workspace}/llvm/llvm-21/x86_64-linux-gnu/.symbol_links.json
+  - resolve_symlinks:
+      src: ${workspace}/llvm/llvm-21/x86_64-linux-gnu
+      symbol_list: ${workspace}/llvm/llvm-21/x86_64-linux-gnu/.symbol_links.json
 
 generator_active_batch:
   file_path: ${workspace}/llvm/active

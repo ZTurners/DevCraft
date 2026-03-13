@@ -555,11 +555,16 @@ class WorkspaceInstaller:
 
         Recursively replaces symlinks under src with copies of their final targets.
         """
-        if not isinstance(symlink_config, dict) or "src" not in symlink_config:
+        if not isinstance(symlink_config, dict):
             return
 
-        src_path = self._formalize_path(symlink_config["src"])
         symbol_list_path = self._formalize_path(symlink_config.get("symbol_list", ""))
+        src_path = self._formalize_path(symlink_config.get("src", ""))
+
+        # If src is absent, derive root from the directory containing symbol_list.
+        if not src_path and symbol_list_path:
+            src_path = os.path.dirname(symbol_list_path)
+
         if not src_path or not os.path.exists(src_path):
             print(f"Warning: Source path not found for resolve_symlinks: {src_path}")
             return
@@ -600,48 +605,60 @@ class WorkspaceInstaller:
             created_count = 0
             skipped_count = 0
 
+            # Filter to valid, parseable entries upfront
+            pending = []
             for entry in entries:
                 if not isinstance(entry, dict):
                     skipped_count += 1
                     continue
-
                 rel_path = str(entry.get('path', '')).replace('\\', '/').strip()
                 link_name = str(entry.get('linkname', '')).replace('\\', '/').strip()
                 if not rel_path or not link_name:
                     skipped_count += 1
                     continue
-
                 link_path = os.path.normpath(os.path.join(root_path, rel_path))
                 if not _is_within_root(link_path, root_path):
                     print(f"Warning: skipped out-of-root link path: {rel_path}")
                     skipped_count += 1
                     continue
-
-                # Keep the original file if it already exists.
-                if os.path.lexists(link_path):
-                    skipped_count += 1
-                    continue
-
                 if os.path.isabs(link_name):
                     target_path = os.path.normpath(os.path.join(root_path, link_name.lstrip('/\\')))
                 else:
                     target_path = os.path.normpath(os.path.join(os.path.dirname(link_path), link_name))
-
                 if not _is_within_root(target_path, root_path):
                     print(f"Warning: skipped out-of-root link target: {link_name}")
                     skipped_count += 1
                     continue
+                pending.append((link_path, target_path))
 
-                if not os.path.exists(target_path):
-                    skipped_count += 1
-                    continue
+            # Multi-pass: chained symlinks (A→B→C) need B materialized before A can be.
+            max_passes = len(pending) + 1
+            for _ in range(max_passes):
+                if not pending:
+                    break
+                still_pending = []
+                progress = False
+                for link_path, target_path in pending:
+                    # Already exists — nothing to do.
+                    if os.path.lexists(link_path):
+                        skipped_count += 1
+                        progress = True
+                        continue
+                    if not os.path.exists(target_path):
+                        still_pending.append((link_path, target_path))
+                        continue
+                    os.makedirs(os.path.dirname(link_path), exist_ok=True)
+                    if os.path.isdir(target_path):
+                        shutil.copytree(target_path, link_path, dirs_exist_ok=True)
+                    else:
+                        shutil.copy2(target_path, link_path)
+                    created_count += 1
+                    progress = True
+                pending = still_pending
+                if not progress:
+                    break
 
-                os.makedirs(os.path.dirname(link_path), exist_ok=True)
-                if os.path.isdir(target_path):
-                    shutil.copytree(target_path, link_path, dirs_exist_ok=True)
-                else:
-                    shutil.copy2(target_path, link_path)
-                created_count += 1
+            skipped_count += len(pending)
 
             print(f"  Symbol list materialization: created {created_count}, skipped {skipped_count}")
 

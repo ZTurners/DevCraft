@@ -8,7 +8,7 @@ install:
   - execute:
       command:
         - python
-        - ${settings}/visual_studio/scripts/visual_studio_version_detect.py
+        - ${configs}/visual_studio/scripts/visual_studio_version_detect.py
         - --vswhere ${download}/vswhere.exe
         - --version-check 18.3.x.x
         - --info-output-file ${workspace}/visual_studio/info.json

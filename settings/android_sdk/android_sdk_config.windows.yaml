@@ -1,5 +1,5 @@
 dependencies:
-  - ${settings}/jdk/jdk_config.windows.yaml
+  - ${configs}/jdk/jdk_config.windows.yaml
 install:
   # android_sdk_bootstrap:
   - download:

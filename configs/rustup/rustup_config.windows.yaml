@@ -1,0 +1,42 @@
+install:
+  # downloading-rustup-windows:
+  - download:
+      src:
+        url: https://static.rust-lang.org/rustup/dist/x86_64-pc-windows-msvc/rustup-init.exe
+      dest: ${download}/rustup-init.exe
+  - copy:
+      src: ${configs}/rustup/home/settings.toml
+      dest: ${workspace}/rust/.rustup/settings.toml
+  # install-rustup-windows:
+  - copy:
+      src: ${download}/rustup-init.exe
+      dest: ${workspace}/rust/rustup-init.exe
+  - environments:
+      set:
+        RUSTUP_HOME: ${workspace}/rust/.rustup
+        CARGO_HOME: ${workspace}/rust/.cargo
+  - execute:
+      command:
+      - ${workspace}/rust/rustup-init.exe
+      - -y
+  - execute:
+      command:
+      - ${workspace}/rust/.cargo/bin/rustup.exe
+      - target
+      - add
+      - wasm32-wasip2
+  - execute:
+      command:
+      - ${workspace}/rust/.cargo/bin/cargo.exe
+      - install
+      - wasm-tools
+      - wit-bindgen-cli
+      - cargo-component
+generator_active_batch:
+  file_path: ${workspace}/rust/active
+  environments:
+    set:
+      RUSTUP_HOME: ${workspace}/rust/.rustup
+      CARGO_HOME: ${workspace}/rust/.cargo
+    prepend:
+      - PATH: ${workspace}/rust/.cargo/bin

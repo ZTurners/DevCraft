@@ -5,7 +5,7 @@ install:
         - python -m pip install conan
   # conan_boostrap:
   - copy:
-      src: ${settings}/conan/home
+      src: ${configs}/conan/home
       dest: ${workspace}/conan/.conan
   # conan_profile_detect:
   - environments:
@@ -21,7 +21,7 @@ install:
   #     command:
   #       - conan
   #       - install
-  #       - ${settings}/conan/profiles/conanfile.txt
+  #       - ${configs}/conan/profiles/conanfile.txt
   #       - --update
   #       - --generator
   #       - CMakeToolchain
@@ -32,7 +32,7 @@ install:
   #       - --build
   #       - never
   #       - --profile
-  #       - ${settings}/conan/profiles/builder/conan_builder_profile.macos.txt
+  #       - ${configs}/conan/profiles/builder/conan_builder_profile.macos.txt
 generator_active_batch:
   file_path: ${workspace}/conan/active
   environments:

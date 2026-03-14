@@ -5,7 +5,7 @@ install:
         url: https://static.rust-lang.org/rustup/dist/aarch64-apple-darwin/rustup-init
       dest: ${download}/rustup-init
   - copy:
-      src: ${settings}/rustup/home/settings.toml
+      src: ${configs}/rustup/home/settings.toml
       dest: ${workspace}/rust/.rustup/settings.toml
   # install-rustup-macos:
   - copy:

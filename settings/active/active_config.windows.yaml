@@ -1,7 +1,7 @@
 install:
   # boostrap:
   - copy:
-      src: ${settings}/active/scripts/windows
+      src: ${configs}/active/scripts/windows
       dest: ${workspace}
       force_update: true
   - make_execute_permission:

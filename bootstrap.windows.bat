@@ -15,7 +15,7 @@ echo Using Python tar extraction on Windows (no external tar bootstrap)
     :: Python Installer Batch Script
     :: Usage: Just double-click this .bat file to run it (Admin rights required)
     :: Check if jq is available (optional, for more complex JSON parsing)
-    set "PYTHON_SETTING_FILE=%DEV_ENV_ROOT_PATH%/settings/boostrap_python_version.txt"
+    set "PYTHON_SETTING_FILE=%DEV_ENV_ROOT_PATH%/configs/boostrap_python_version.txt"
     
     :: Read the file into a variable (strip whitespace)
     for /f "delims=" %%i in (%PYTHON_SETTING_FILE%) do (
@@ -187,7 +187,7 @@ echo Using Python tar extraction on Windows (no external tar bootstrap)
 
     python --version
 
-    :: Install PyYAML so settings/install.py can parse YAML configs
+    :: Install PyYAML so configs/install.py can parse YAML configs
     echo Installing PyYAML (PyYAML is required for parsing YAML configs)...
     "%PYTHON_INSTALL_DIR%\python.exe" -m pip install --upgrade --disable-pip-version-check --no-cache-dir pyyaml
     if %ERRORLEVEL% neq 0 (

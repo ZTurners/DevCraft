@@ -1,0 +1,11 @@
+install:
+  # boostrap:
+  - copy:
+      src: ${configs}/active/scripts/macos
+      dest: ${workspace}
+      force_update: true
+  - make_execute_permission:
+      files:
+        - ${workspace}/active_with_bash.macos.sh
+        - ${workspace}/active_with_vscode.macos.sh
+        - ${workspace}/active.macos.sh

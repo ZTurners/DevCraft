@@ -3,7 +3,7 @@
 DEV_ENV_ROOT_PATH=$(dirname "$(realpath "$0")")
 DEV_ENV_WORKSPACE_PATH="$DEV_ENV_ROOT_PATH/workspace"
 
-PYTHON_SETTING_FILE="$DEV_ENV_ROOT_PATH/settings/boostrap_python_version.txt"
+PYTHON_SETTING_FILE="$DEV_ENV_ROOT_PATH/configs/boostrap_python_version.txt"
 # Read the file, trim whitespace, and remove quotes
 PYTHON_VERSION=$(cat "$PYTHON_SETTING_FILE" | xargs | tr -d '"')
 # Check if version was obtained

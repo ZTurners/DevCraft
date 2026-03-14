@@ -24,12 +24,12 @@ class WorkspaceInstaller:
     def __init__(self):
         # Get the directory where this script is located
         self.m_dev_env_root_path = Path(__file__).parent.parent.absolute()
-        self.m_settings_root_path = os.path.join(self.m_dev_env_root_path, "settings")
+        self.m_configs_root_path = os.path.join(self.m_dev_env_root_path, "configs")
         self.m_workspace_root_path = os.path.join(self.m_dev_env_root_path, "workspace")
         self.m_download_root_path = os.path.join(self.m_dev_env_root_path, ".downloads")
         self.m_system_name = platform.system()
         self.m_summary_data = []
-        # Ensure YAML config equivalents exist for JSON configs under settings/
+        # Ensure YAML config equivalents exist for JSON configs under configs/
         try:
             self._ensure_yaml_configs()
         except Exception as e:
@@ -58,11 +58,12 @@ class WorkspaceInstaller:
         os.chmod(path, mode)
 
     def _formalize_path(self, path):
-        """Formalize a path by replacing workspace and settings variables."""
+        """Formalize a path by replacing workspace/configs/download variables."""
         if not isinstance(path, str) or path == "":
             return path
         path = path.replace("${workspace}", self.m_workspace_root_path)
-        path = path.replace("${settings}", self.m_settings_root_path)
+        path = path.replace("${configs}", self.m_configs_root_path)
+        path = path.replace("${settings}", self.m_configs_root_path)
         path = path.replace("${download}", self.m_download_root_path)
         path = os.path.normpath(path)
         
@@ -111,15 +112,15 @@ class WorkspaceInstaller:
         return json.dumps(data) + '\n'
 
     def _ensure_yaml_configs(self):
-        """Walk the settings folder and create .yaml equivalents for any .json config files.
+        """Walk the configs folder and create .yaml equivalents for any .json config files.
         Keeps the original .json files as backups.
         If PyYAML is available, it will be used for dumping; otherwise uses a lightweight dumper.
         """
-        settings_root = self.m_settings_root_path
-        if not os.path.isdir(settings_root):
+        configs_root = self.m_configs_root_path
+        if not os.path.isdir(configs_root):
             return
 
-        for root, dirs, files in os.walk(settings_root):
+        for root, dirs, files in os.walk(configs_root):
             for fname in files:
                 if not fname.lower().endswith('.json'):
                     continue
@@ -761,7 +762,7 @@ class WorkspaceInstaller:
 
         print("\nSetting execute permissions...")
         for path_pattern in paths:
-            # Replace workspace/settings/download variables
+            # Replace workspace/configs/download variables
             path_pattern = self._formalize_path(path_pattern)
 
             if not path_pattern:
@@ -1080,9 +1081,9 @@ class WorkspaceInstaller:
                     with open(json_candidate, 'r', encoding='utf-8') as f:
                         config = json.load(f)
                 else:
-                    # If not found, check the archived json_backup folder under settings/
+                    # If not found, check the archived json_backup folder under configs/
                     try:
-                        rel = os.path.relpath(config_file_path, self.m_settings_root_path)
+                        rel = os.path.relpath(config_file_path, self.m_configs_root_path)
                     except Exception:
                         rel = os.path.basename(config_file_path)
 
@@ -1093,7 +1094,7 @@ class WorkspaceInstaller:
                     else:
                         rel_json = rel + '.json'
 
-                    backup_candidate = os.path.join(self.m_settings_root_path, 'json_backup', rel_json)
+                    backup_candidate = os.path.join(self.m_configs_root_path, 'json_backup', rel_json)
                     if os.path.exists(backup_candidate):
                         with open(backup_candidate, 'r', encoding='utf-8') as f:
                             config = json.load(f)
@@ -1133,11 +1134,13 @@ class WorkspaceInstaller:
         """Resolve a dependency reference to a record key."""
         dep_norm = dep_text.strip().replace('\\', '/')
 
-        settings_prefix = "${settings}/"
-        if dep_norm.startswith(settings_prefix):
-            dep_norm = dep_norm[len(settings_prefix):]
+        configs_prefixes = ("${configs}/", "${settings}/")
+        for configs_prefix in configs_prefixes:
+            if dep_norm.startswith(configs_prefix):
+                dep_norm = dep_norm[len(configs_prefix):]
+                break
 
-        # 1) Full relative path under settings, e.g. jdk/jdk_config.windows.yaml
+        # 1) Full relative path under configs, e.g. jdk/jdk_config.windows.yaml
         if dep_norm in records_by_rel:
             return dep_norm
 
@@ -1148,7 +1151,7 @@ class WorkspaceInstaller:
         if len(by_base) > 1:
             raise RuntimeError(
                 f"Ambiguous dependency '{dep_text}': matches multiple configs {by_base}. "
-                "Use a settings-relative path like 'folder/file.windows.yaml'."
+                "Use a configs-relative path like 'folder/file.windows.yaml'."
             )
 
         # 3) Folder key match, e.g. jdk
@@ -1260,13 +1263,13 @@ class WorkspaceInstaller:
             print(f"Error: Unsupported system: {self.m_system_name}")
             return
 
-        # Search only second-level folders under settings/ (e.g. settings/jdk/, settings/rustup/)
+        # Search only second-level folders under configs/ (e.g. configs/jdk/, configs/rustup/)
         config_files = []
         try:
-            for entry in sorted(os.listdir(self.m_settings_root_path)):
-                entry_path = os.path.join(self.m_settings_root_path, entry)
+            for entry in sorted(os.listdir(self.m_configs_root_path)):
+                entry_path = os.path.join(self.m_configs_root_path, entry)
                 if not os.path.isdir(entry_path):
-                    # Only consider directories directly under settings/
+                    # Only consider directories directly under configs/
                     continue
 
                 # List files in this subdirectory (do NOT recurse deeper)
@@ -1274,11 +1277,11 @@ class WorkspaceInstaller:
                     if fname.endswith(suffix):
                         config_files.append(os.path.join(entry_path, fname))
         except FileNotFoundError:
-            print(f"Warning: Settings directory not found: {self.m_settings_root_path}")
+            print(f"Warning: Configs directory not found: {self.m_configs_root_path}")
             return
 
         if not config_files:
-            print(f"Warning: No configuration files found for system '{self.m_system_name}' in {self.m_settings_root_path}")
+            print(f"Warning: No configuration files found for system '{self.m_system_name}' in {self.m_configs_root_path}")
             return
 
         # Build dependency metadata for each config.
@@ -1287,7 +1290,7 @@ class WorkspaceInstaller:
         records_by_folder = {}
 
         for config_path in sorted(config_files):
-            rel = os.path.relpath(config_path, self.m_settings_root_path).replace('\\', '/')
+            rel = os.path.relpath(config_path, self.m_configs_root_path).replace('\\', '/')
             folder_key = rel.split('/')[0] if '/' in rel else rel
             base_name = os.path.basename(config_path)
 
@@ -1363,9 +1366,9 @@ class WorkspaceInstaller:
         # Process each config file in dependency order.
         for rel in ordered:
             config_path = records[rel]['path']
-            # Friendly display: show path relative to settings folder
+            # Friendly display: show path relative to configs folder
             try:
-                display_name = os.path.relpath(config_path, self.m_settings_root_path)
+                display_name = os.path.relpath(config_path, self.m_configs_root_path)
             except Exception:
                 display_name = os.path.basename(config_path)
 

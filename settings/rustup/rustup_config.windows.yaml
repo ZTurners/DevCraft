@@ -5,7 +5,7 @@ install:
         url: https://static.rust-lang.org/rustup/dist/x86_64-pc-windows-msvc/rustup-init.exe
       dest: ${download}/rustup-init.exe
   - copy:
-      src: ${settings}/rustup/home/settings.toml
+      src: ${configs}/rustup/home/settings.toml
       dest: ${workspace}/rust/.rustup/settings.toml
   # install-rustup-windows:
   - copy:

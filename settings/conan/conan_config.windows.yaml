@@ -9,7 +9,7 @@ install:
         - conan
   # conan_boostrap:
   - copy:
-      src: ${settings}/conan/home
+      src: ${configs}/conan/home
       dest: ${workspace}/conan/.conan
   # conan_profile_detect:
   - environments:

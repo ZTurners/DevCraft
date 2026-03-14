@@ -1,5 +1,5 @@
 dependencies:
-  - ${settings}/jdk/jdk_config.macos.yaml
+  - ${configs}/jdk/jdk_config.macos.yaml
 install:
   # android_sdk_bootstrap:
   - download:

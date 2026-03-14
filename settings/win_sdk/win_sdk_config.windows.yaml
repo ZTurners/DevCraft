@@ -3,7 +3,7 @@ install:
   - execute:
       command:
         - python
-        - ${settings}/win_sdk/scripts/win_sdk_version_detect.py
+        - ${configs}/win_sdk/scripts/win_sdk_version_detect.py
         - --version-check 10.0.26100.0
         - --info-output-file ${workspace}/win_sdk/info.json
 

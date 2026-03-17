@@ -1,20 +1,30 @@
 install:
-  # Download vswhere.exe
-  - download:
-      src:
-        url: https://github.com/microsoft/vswhere/releases/latest/download/vswhere.exe
-      dest: ${download}/vswhere.exe
-
+  # Install a repo-local portable MSVC + Windows SDK toolchain.
+  # --msvc-version accepts a full toolset version (14.51.36014) or a major.minor prefix (14.51).
+  # To list available toolset and SDK versions run:
+  #   python configs/visual_studio/scripts/portable_msvc_install.py --show-versions
   - execute:
       command:
         - python
-        - ${configs}/visual_studio/scripts/visual_studio_version_detect.py
-        - --vswhere ${download}/vswhere.exe
-        - --version-check 18.x.x.x
-        - --info-output-file ${workspace}/visual_studio/info.json
+        - ${configs}/visual_studio/scripts/portable_msvc_install.py
+        - --accept-license
+        - --downloads ${download}/portable_msvc
+        - --host x64
+        - --target x64
+        - --target arm64
+
+        - --msvc-version 14.51.36014
+        - --msvc-output ${workspace}/visual_studio
+
+        - --windows-sdk-version 10.0.26100.7705
+        - --windows-sdk-output ${workspace}/visual_studio
+
+      dest: ${workspace}/visual_studio/msvc
 
 generator_active_batch:
   file_path: ${workspace}/visual_studio/active
   environments:
     set:
       DEVCRAFT_VISUAL_STUDIO_MAJOR_VERSION: 18
+      DEVCRAFT_PORTABLE_MSVC_ROOT: ${workspace}/visual_studio/msvc
+      DEVCRAFT_PORTABLE_MSVC_SETUP_X64: ${workspace}/visual_studio/msvc/setup_x64.bat

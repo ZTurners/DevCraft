@@ -1,3 +1,6 @@
+dependencies:
+  - visual_studio/visual_studio_config.windows.yaml
+
 install:
   # downloading-rustup-windows:
   - download:
@@ -27,11 +30,9 @@ install:
       - wasm32-wasip2
   - execute:
       command:
-      - ${workspace}/rust/.cargo/bin/cargo.exe
-      - install
-      - wasm-tools
-      - wit-bindgen-cli
-      - cargo-component
+      - cmd
+      - /c
+      - call ${workspace}/visual_studio/msvc/setup_x64.bat && ${workspace}/rust/.cargo/bin/cargo.exe install wasm-tools wit-bindgen-cli cargo-component
 generator_active_batch:
   file_path: ${workspace}/rust/active
   environments:

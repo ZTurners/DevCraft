@@ -1,13 +1,13 @@
 install:
   - execute:
       command:
-        - brew install llvm@21 &&
+        - if brew list --versions llvm@21 >/dev/null 2>&1; then echo "llvm@21 already installed"; else brew install llvm@21; fi &&
         - mkdir -p ${workspace}/llvm/llvm-21 &&
         - ln -sf $(brew --prefix llvm@21) ${workspace}/llvm/llvm-21/arm64-apple-darwin
   # lld-21:
   - execute:
       command:
-        - brew install lld@21 &&
+        - if brew list --versions lld@21 >/dev/null 2>&1; then echo "lld@21 already installed"; else brew install lld@21; fi &&
         - mkdir -p ${workspace}/llvm/lld-21 &&
         - ln -sf $(brew --prefix lld@21) ${workspace}/llvm/lld-21/arm64-apple-darwin
   

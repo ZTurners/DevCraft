@@ -7,11 +7,15 @@ install:
       dest: ${download}/cmake-4.2.3-macos-universal.tar.gz
   - unzip:
       src: ${download}/cmake-4.2.3-macos-universal.tar.gz
+      src_sub_folder: cmake-4.2.3-macos-universal
       dest: ${workspace}/cmake/cmake-4.2.3-macos-universal
+  - make_execute_permission:
+      files:
+        - ${workspace}/cmake/cmake-4.2.3-macos-universal/CMake.app/Contents/bin/cmake
 
 generator_active_batch:
   file_path: ${workspace}/cmake/active
   environments:
     set: {}
     prepend:
-      - PATH: ${workspace}/cmake/cmake-4.2.3-macos-universal/bin
+      - PATH: ${workspace}/cmake/cmake-4.2.3-macos-universal/CMake.app/Contents/bin

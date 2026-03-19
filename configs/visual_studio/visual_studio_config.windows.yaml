@@ -8,16 +8,18 @@ install:
         - python
         - ${configs}/visual_studio/scripts/portable_msvc_install.py
         - --accept-license
-        - --downloads ${download}/portable_msvc
-        - --host x64
-        - --target x64
-        - --target arm64
+        - --downloads=${download}/portable_msvc
+        - --host=x64
+        - --target=x64
+        - --target=arm64
 
-        - --msvc-version 14.51.36014
-        - --msvc-output ${workspace}/visual_studio
+        - --msvc-version=14.51.36014
+        - --msvc-output=${workspace}/visual_studio
 
-        - --windows-sdk-version 10.0.26100.7705
-        - --windows-sdk-output ${workspace}/visual_studio
+        - --windows-sdk-version=10.0.26100.7705
+        - --windows-sdk-output=${workspace}/visual_studio
+
+        - --skip-if-output-folder-exists=true
 
       dest: ${workspace}/visual_studio/msvc
 

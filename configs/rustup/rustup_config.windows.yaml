@@ -1,5 +1,5 @@
 dependencies:
-  - visual_studio/visual_studio_config.windows.yaml
+  - ${configs}/visual_studio/visual_studio_config.windows.yaml
 
 install:
   # downloading-rustup-windows:

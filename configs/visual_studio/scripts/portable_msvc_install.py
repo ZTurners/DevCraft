@@ -241,10 +241,14 @@ class PortableMsvcInstaller:
                 if extracted_msi.exists():
                     extracted_msi.unlink()
 
-            windows_kits = self.sdk_output / "Windows Kits"
             windowskits = self.sdk_output / "WindowsKits"
-            if windows_kits.exists() and not windowskits.exists():
-                windows_kits.rename(windowskits)
+            if not windowskits.exists():
+                legacy = first(
+                    self.sdk_output.iterdir(),
+                    lambda p: p.is_dir() and p.name.replace(" ", "").lower() == "windowskits" and p.name != "WindowsKits",
+                )
+                if legacy is not None:
+                    legacy.rename(windowskits)
 
     def finalize_layout(self, host, targets):
         msvcv = first((self.msvc_output / "VC/Tools/MSVC").glob("*")).name
@@ -371,6 +375,53 @@ def _parse_sdk_build_number(value):
     return build
 
 
+def _parse_bool_arg(value, *, arg_name):
+    if isinstance(value, bool):
+        return value
+    val = str(value).strip().lower()
+    if val in {"1", "true", "yes", "y", "on"}:
+        return True
+    if val in {"0", "false", "no", "n", "off"}:
+        return False
+    sys.exit(f"Invalid {arg_name}: {value!r}. Expected true/false.")
+
+
+def _find_sdk_version_dirs(sdk_output, sdk_build):
+    root = sdk_output / "WindowsKits/10/bin"
+    if not root.exists():
+        return []
+    return [p for p in root.glob(f"10.0.{sdk_build}.*") if p.is_dir()]
+
+
+def _toolchain_already_installed(msvc_output, sdk_output, msvc_version, sdk_build):
+    msvc_dir = msvc_output / "VC/Tools/MSVC" / msvc_version
+    sdk_dirs = _find_sdk_version_dirs(sdk_output, sdk_build)
+    return msvc_dir.exists() and len(sdk_dirs) > 0, msvc_dir, sdk_dirs
+
+
+def _find_msvc_version_dirs_from_arg(msvc_output, msvc_version_arg):
+    root = msvc_output / "VC/Tools/MSVC"
+    if not root.exists() or not msvc_version_arg:
+        return []
+
+    parts = msvc_version_arg.strip().split(".")
+    if len(parts) >= 3:
+        exact = root / msvc_version_arg.strip()
+        return [exact] if exact.exists() else []
+
+    if len(parts) >= 2:
+        return [p for p in root.glob(f"{parts[0]}.{parts[1]}*") if p.is_dir()]
+
+    return []
+
+
+def _toolchain_already_installed_from_args(msvc_output, sdk_output, msvc_version_arg, windows_sdk_version_arg):
+    msvc_dirs = _find_msvc_version_dirs_from_arg(msvc_output, msvc_version_arg)
+    sdk_build = _parse_sdk_build_number(windows_sdk_version_arg)
+    sdk_dirs = _find_sdk_version_dirs(sdk_output, sdk_build)
+    return len(msvc_dirs) > 0 and len(sdk_dirs) > 0, msvc_dirs, sdk_dirs
+
+
 def parse_args():
     ap = argparse.ArgumentParser(description="Install portable MSVC + Windows SDK")
     ap.add_argument("--show-versions", action="store_true", help="Show available MSVC and Windows SDK versions")
@@ -385,6 +436,11 @@ def parse_args():
     ap.add_argument("--msvc-output", default="msvc", help="Output directory for MSVC toolset")
     ap.add_argument("--windows-sdk-output", default="win_sdk", help="Output directory for Windows SDK")
     ap.add_argument("--downloads", default="downloads", help="Persistent downloads directory")
+    ap.add_argument(
+        "--skip-if-output-folder-exists",
+        default="false",
+        help="Skip install when both versioned MSVC and Windows SDK output folders already exist (true/false)",
+    )
     return ap.parse_args()
 
 
@@ -397,6 +453,24 @@ def main():
     msvc_output = Path(args.msvc_output)
     sdk_output = Path(args.windows_sdk_output)
     downloads = Path(args.downloads)
+
+    skip_if_output_folder_exists = _parse_bool_arg(
+        args.skip_if_output_folder_exists,
+        arg_name="--skip-if-output-folder-exists",
+    )
+
+    if skip_if_output_folder_exists and args.msvc_version and args.windows_sdk_version:
+        installed, msvc_dirs, sdk_dirs = _toolchain_already_installed_from_args(
+            msvc_output,
+            sdk_output,
+            args.msvc_version,
+            args.windows_sdk_version,
+        )
+        if installed:
+            print("Skipping install before manifest download because versioned output folders already exist:")
+            print(f"  MSVC: {', '.join(str(p) for p in msvc_dirs)}")
+            print(f"  SDK:  {', '.join(str(p) for p in sdk_dirs)}")
+            return 0
 
     installer = PortableMsvcInstaller(msvc_output_dir=msvc_output, sdk_output_dir=sdk_output, downloads_dir=downloads)
 
@@ -443,6 +517,15 @@ def main():
     msvc_pid = msvc_versions[msvc_ver]
     msvc_ver = msvc_pid.removeprefix("microsoft.vc.").removesuffix(".tools.hostx64.targetx64.base")
     sdk_pid = sdk_versions[sdk_ver]
+
+    if skip_if_output_folder_exists:
+        installed, msvc_dir, sdk_dirs = _toolchain_already_installed(msvc_output, sdk_output, msvc_ver, sdk_ver)
+        if installed:
+            sdk_dirs_text = ", ".join(str(p) for p in sdk_dirs)
+            print("Skipping install because versioned output folders already exist:")
+            print(f"  MSVC: {msvc_dir}")
+            print(f"  SDK:  {sdk_dirs_text}")
+            return 0
 
     print(f"Preparing portable toolchain: MSVC v{msvc_ver}, Windows SDK v{sdk_ver}")
 

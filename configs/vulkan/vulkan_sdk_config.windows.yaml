@@ -34,5 +34,6 @@ generator_active_batch:
   environments:
     set:
       VK_LAYER_PATH: ${workspace}/vulkan/vulkansdk_win_x86_64_1.4.328.1/Bin
+      VK_BIN_PATH: ${workspace}/vulkan/vulkansdk_win_x86_64_1.4.328.1/Bin
     prepend:
       - PATH: ${workspace}/vulkan/vulkansdk_win_x86_64_1.4.328.1/Bin

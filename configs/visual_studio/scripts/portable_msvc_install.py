@@ -241,9 +241,14 @@ class PortableMsvcInstaller:
                 if extracted_msi.exists():
                     extracted_msi.unlink()
 
+            windows_kits = self.sdk_output / "Windows Kits"
+            windowskits = self.sdk_output / "WindowsKits"
+            if windows_kits.exists() and not windowskits.exists():
+                windows_kits.rename(windowskits)
+
     def finalize_layout(self, host, targets):
         msvcv = first((self.msvc_output / "VC/Tools/MSVC").glob("*")).name
-        sdkv = first((self.sdk_output / "Windows Kits/10/bin").glob("*")).name
+        sdkv = first((self.sdk_output / "WindowsKits/10/bin").glob("*")).name
 
         redist = self.msvc_output / "VC/Redist"
         if redist.exists():
@@ -279,15 +284,15 @@ class PortableMsvcInstaller:
             shutil.rmtree(self.msvc_output / "VC/Tools/MSVC" / msvcv / f"bin/Host{host}" / target / "onecore", ignore_errors=True)
 
         for folder in ["Catalogs", "DesignTime", f"bin/{sdkv}/chpe", f"Lib/{sdkv}/ucrt_enclave"]:
-            shutil.rmtree(self.sdk_output / "Windows Kits/10" / folder, ignore_errors=True)
+            shutil.rmtree(self.sdk_output / "WindowsKits/10" / folder, ignore_errors=True)
 
         for arch in ALL_TARGETS:
             if arch not in targets:
-                shutil.rmtree(self.sdk_output / "Windows Kits/10/Lib" / sdkv / "ucrt" / arch, ignore_errors=True)
-                shutil.rmtree(self.sdk_output / "Windows Kits/10/Lib" / sdkv / "um" / arch, ignore_errors=True)
+                shutil.rmtree(self.sdk_output / "WindowsKits/10/Lib" / sdkv / "ucrt" / arch, ignore_errors=True)
+                shutil.rmtree(self.sdk_output / "WindowsKits/10/Lib" / sdkv / "um" / arch, ignore_errors=True)
             if arch != host:
                 shutil.rmtree(self.msvc_output / "VC/Tools/MSVC" / msvcv / f"bin/Host{arch}", ignore_errors=True)
-                shutil.rmtree(self.sdk_output / "Windows Kits/10/bin" / sdkv / arch, ignore_errors=True)
+                shutil.rmtree(self.sdk_output / "WindowsKits/10/bin" / sdkv / arch, ignore_errors=True)
 
         for target in targets:
             (self.msvc_output / "VC/Tools/MSVC" / msvcv / f"bin/Host{host}/{target}/vctip.exe").unlink(missing_ok=True)
@@ -312,11 +317,11 @@ set VCToolsVersion={msvcv}
 set WindowsSDKVersion={sdkv}\
 
 set VCToolsInstallDir=%~dp0VC\Tools\MSVC\{msvcv}\
-set WindowsSdkBinPath={sdk_dir}\Windows Kits\10\bin\
+set WindowsSdkBinPath={sdk_dir}\WindowsKits\10\bin\
 
-set PATH=%~dp0VC\Tools\MSVC\{msvcv}\bin\Host{host}\{target};{sdk_dir}\Windows Kits\10\bin\{sdkv}\{host};{sdk_dir}\Windows Kits\10\bin\{sdkv}\{host}\ucrt;%PATH%
-set INCLUDE=%~dp0VC\Tools\MSVC\{msvcv}\include;{sdk_dir}\Windows Kits\10\Include\{sdkv}\ucrt;{sdk_dir}\Windows Kits\10\Include\{sdkv}\shared;{sdk_dir}\Windows Kits\10\Include\{sdkv}\um;{sdk_dir}\Windows Kits\10\Include\{sdkv}\winrt;{sdk_dir}\Windows Kits\10\Include\{sdkv}\cppwinrt
-set LIB=%~dp0VC\Tools\MSVC\{msvcv}\lib\{target};{sdk_dir}\Windows Kits\10\Lib\{sdkv}\ucrt\{target};{sdk_dir}\Windows Kits\10\Lib\{sdkv}\um\{target}
+set PATH=%~dp0VC\Tools\MSVC\{msvcv}\bin\Host{host}\{target};{sdk_dir}\WindowsKits\10\bin\{sdkv}\{host};{sdk_dir}\WindowsKits\10\bin\{sdkv}\{host}\ucrt;%PATH%
+set INCLUDE=%~dp0VC\Tools\MSVC\{msvcv}\include;{sdk_dir}\WindowsKits\10\Include\{sdkv}\ucrt;{sdk_dir}\WindowsKits\10\Include\{sdkv}\shared;{sdk_dir}\WindowsKits\10\Include\{sdkv}\um;{sdk_dir}\WindowsKits\10\Include\{sdkv}\winrt;{sdk_dir}\WindowsKits\10\Include\{sdkv}\cppwinrt
+set LIB=%~dp0VC\Tools\MSVC\{msvcv}\lib\{target};{sdk_dir}\WindowsKits\10\Lib\{sdkv}\ucrt\{target};{sdk_dir}\WindowsKits\10\Lib\{sdkv}\um\{target}
 """
             (self.msvc_output / f"setup_{target}.bat").write_text(setup, encoding="utf-8")
 

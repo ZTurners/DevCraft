@@ -28,5 +28,5 @@ generator_active_batch:
   environments:
     set:
       DEVCRAFT_VISUAL_STUDIO_MAJOR_VERSION: 18
-      DEVCRAFT_PORTABLE_MSVC_ROOT: ${workspace}/visual_studio/msvc
-      DEVCRAFT_PORTABLE_MSVC_SETUP_X64: ${workspace}/visual_studio/msvc/setup_x64.bat
+      DEVCRAFT_PORTABLE_MSVC_ROOT: ${workspace}/visual_studio
+      DEVCRAFT_PORTABLE_MSVC_SETUP_X64: ${workspace}/visual_studio/setup_x64.bat

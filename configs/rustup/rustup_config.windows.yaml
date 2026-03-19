@@ -1,6 +1,10 @@
 dependencies:
   - ${configs}/visual_studio/visual_studio_config.windows.yaml
 
+# NOTE: rustup will warn "installing msvc toolchain without its prerequisites"
+# This is expected—the portable MSVC layout is not registered in Windows registry
+# as a global Visual Studio installation. The toolchain works correctly despite this.
+
 install:
   # downloading-rustup-windows:
   - download:
@@ -32,7 +36,7 @@ install:
       command:
       - cmd
       - /c
-      - call ${workspace}/visual_studio/msvc/setup_x64.bat && ${workspace}/rust/.cargo/bin/cargo.exe install wasm-tools wit-bindgen-cli cargo-component
+      - call ${workspace}/visual_studio/setup_x64.bat && ${workspace}/rust/.cargo/bin/cargo.exe install wasm-tools wit-bindgen-cli cargo-component
 generator_active_batch:
   file_path: ${workspace}/rust/active
   environments:

@@ -22,6 +22,16 @@ install:
         - --skip-if-output-folder-exists=true
 
       dest: ${workspace}/visual_studio/msvc
+  - environments:
+      set:
+        VCToolsInstallDir: ${workspace}/visual_studio/VC/Tools/MSVC/14.51.36014
+        WindowsSDKVersion: 10.0.26100.0\
+        INCLUDE: ${workspace}/visual_studio/VC/Tools/MSVC/14.51.36014/include;${workspace}/visual_studio/WindowsKits/10/Include/10.0.26100.0/ucrt;${workspace}/visual_studio/WindowsKits/10/Include/10.0.26100.0/shared;${workspace}/visual_studio/WindowsKits/10/Include/10.0.26100.0/um;${workspace}/visual_studio/WindowsKits/10/Include/10.0.26100.0/winrt;${workspace}/visual_studio/WindowsKits/10/Include/10.0.26100.0/cppwinrt
+        LIB: ${workspace}/visual_studio/VC/Tools/MSVC/14.51.36014/lib/x64;${workspace}/visual_studio/WindowsKits/10/Lib/10.0.26100.0/ucrt/x64;${workspace}/visual_studio/WindowsKits/10/Lib/10.0.26100.0/um/x64
+      prepend:
+        - PATH: ${workspace}/visual_studio/VC/Tools/MSVC/14.51.36014/bin/Hostx64/x64
+        - PATH: ${workspace}/visual_studio/WindowsKits/10/bin/10.0.26100.0/x64
+        - PATH: ${workspace}/visual_studio/WindowsKits/10/bin/10.0.26100.0/x64/ucrt
 
 generator_active_batch:
   file_path: ${workspace}/visual_studio/active

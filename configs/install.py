@@ -827,9 +827,17 @@ class WorkspaceInstaller:
     def _process_execute(self, command_config, context):
         """Handle execute node."""
         print("\nExecuting installation command...")
-        
-        # Handle new object format: { command: [...], dest: "..." }
+
+        # Handle new object format: { command: [...], dest: "...", skip_if_exists: "..." }
         if isinstance(command_config, dict):
+            # skip_if_exists: skip the command if the given path already exists
+            skip_path = command_config.get("skip_if_exists", "")
+            if skip_path:
+                skip_path = self._formalize_path(skip_path)
+                if os.path.exists(skip_path):
+                    print(f"Skipping execute: '{skip_path}' already exists.")
+                    return
+
             cmd_list = command_config.get("command", [])
             
             # Build command string from list, replacing variables

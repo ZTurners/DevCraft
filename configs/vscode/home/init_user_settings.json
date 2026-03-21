@@ -16,5 +16,18 @@
     "scm.repositories.sortOrder": "path",
     "git.detectSubmodules": true,
     "git.detectSubmodulesLimit": 200,
-    "git.enableSmartCommit": true
+    "git.enableSmartCommit": true,
+
+
+    "C_Cpp.default.compilerPath": "${env:DEVCRAFT_WORKSPACE}/llvm/llvm-21/x86_64-linux-gnu/bin/clang++",
+    "C_Cpp.default.intelliSenseMode": "linux-clang-x64",
+    "C_Cpp.default.cStandard": "c17",
+    "C_Cpp.default.cppStandard": "c++20",
+    "C_Cpp.default.includePath": [
+        "${workspaceFolder}/**",
+        "${env:DEVCRAFT_WORKSPACE}/llvm/llvm-21/x86_64-linux-gnu/include/c++/v1",
+        "${env:DEVCRAFT_WORKSPACE}/llvm/llvm-21/x86_64-linux-gnu/include/x86_64-unknown-linux-gnu/c++/v1",
+        "${env:DEVCRAFT_WORKSPACE}/llvm/llvm-21/x86_64-linux-gnu/lib/clang/21/include",
+        "${env:DEVCRAFT_WORKSPACE}/visual_studio/WindowsKits/10/Include/10.0.26100.0/ucrt"
+    ]
 }

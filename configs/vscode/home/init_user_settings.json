@@ -16,5 +16,9 @@
     "scm.repositories.sortOrder": "path",
     "git.detectSubmodules": true,
     "git.detectSubmodulesLimit": 200,
-    "git.enableSmartCommit": true
+    "git.enableSmartCommit": true,
+
+    "cmake.useCMakePresets": "always",
+    "cmake.configureOnOpen": true,
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
 }

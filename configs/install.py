@@ -29,12 +29,6 @@ class WorkspaceInstaller:
         self.m_download_root_path = os.path.join(self.m_dev_env_root_path, ".downloads")
         self.m_system_name = platform.system()
         self.m_summary_data = []
-        # Ensure YAML config equivalents exist for JSON configs under configs/
-        try:
-            self._ensure_yaml_configs()
-        except Exception as e:
-            # Do not fail initialization if conversion fails; warn instead
-            print(f"Warning: failed to ensure YAML configs: {e}")
 
     def run_command(self, command: str) -> str:
         """Run a Conan command and return its output."""
@@ -68,91 +62,6 @@ class WorkspaceInstaller:
         path = os.path.normpath(path)
         
         return path
-
-    def _dump_to_yaml_str(self, data, indent=0):
-        """Lightweight YAML dumper for basic Python structures (dict, list, primitives).
-        Used as a fallback when PyYAML is not available.
-        This produces human-readable YAML (no anchors, tags).
-        """
-        sp = '  ' * indent
-        if data is None:
-            return 'null\n'
-        if isinstance(data, bool):
-            return ("true\n" if data else "false\n")
-        if isinstance(data, (int, float)):
-            return f"{data}\n"
-        if isinstance(data, str):
-            # Quote strings that start with special characters or contain newlines
-            if '\n' in data or data.strip() == '' or data[0] in ('@', '&', '*', '>', '|', '%', ':', '-', '?', '{', '}', '[', ']', ','):
-                return '"' + data.replace('"', '\\"') + '"\n'
-            return f"{data}\n"
-        if isinstance(data, list):
-            if not data:
-                return '[]\n'
-            out = ''
-            for item in data:
-                if isinstance(item, (dict, list)):
-                    out += f"{sp}- {self._dump_to_yaml_str(item, indent+1).lstrip()}"
-                else:
-                    out += f"{sp}- {self._dump_to_yaml_str(item, 0)}"
-            return out
-        if isinstance(data, dict):
-            if not data:
-                return '{}\n'
-            out = ''
-            for k, v in data.items():
-                # ensure key is plain string
-                out += f"{sp}{k}: "
-                if isinstance(v, (dict, list)):
-                    out += '\n' + self._dump_to_yaml_str(v, indent+1)
-                else:
-                    out += self._dump_to_yaml_str(v, 0)
-            return out
-        # Fallback to JSON representation
-        return json.dumps(data) + '\n'
-
-    def _ensure_yaml_configs(self):
-        """Walk the configs folder and create .yaml equivalents for any .json config files.
-        Keeps the original .json files as backups.
-        If PyYAML is available, it will be used for dumping; otherwise uses a lightweight dumper.
-        """
-        configs_root = self.m_configs_root_path
-        if not os.path.isdir(configs_root):
-            return
-
-        for root, dirs, files in os.walk(configs_root):
-            for fname in files:
-                if not fname.lower().endswith('.json'):
-                    continue
-
-                json_path = os.path.join(root, fname)
-                yaml_fname = fname[:-5] + '.yaml'
-                yaml_path = os.path.join(root, yaml_fname)
-
-                # Skip if YAML already exists
-                if os.path.exists(yaml_path):
-                    continue
-
-                try:
-                    with open(json_path, 'r', encoding='utf-8') as jf:
-                        data = json.load(jf)
-                except Exception as e:
-                    print(f"Warning: failed to parse JSON {json_path}: {e}")
-                    continue
-
-                try:
-                    if yaml is not None:
-                        # Use PyYAML if available
-                        yaml_text = yaml.safe_dump(data, sort_keys=False, allow_unicode=True)
-                    else:
-                        yaml_text = self._dump_to_yaml_str(data)
-
-                    # Create YAML file
-                    with open(yaml_path, 'w', encoding='utf-8') as yf:
-                        yf.write(yaml_text)
-                    print(f"Created YAML config: {yaml_path}")
-                except Exception as e:
-                    print(f"Warning: failed to write YAML for {json_path}: {e}")
 
     def _process_download(self, download_config, context):
         """Handle download node."""

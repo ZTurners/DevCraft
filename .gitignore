@@ -11,6 +11,7 @@ android/AndroidSDK
 android/.AndroidSDK
 
 .downloads
+.agents
 
 workspace
 
@@ -21,3 +22,6 @@ __pycache__
 .vscode
 .github
 .brain
+
+# Local experience files
+copilot/experience/.local

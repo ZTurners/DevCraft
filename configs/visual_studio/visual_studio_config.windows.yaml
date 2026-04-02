@@ -40,3 +40,7 @@ generator_active_batch:
       DEVCRAFT_VISUAL_STUDIO_MAJOR_VERSION: 18
       DEVCRAFT_PORTABLE_MSVC_ROOT: ${workspace}/visual_studio
       DEVCRAFT_PORTABLE_MSVC_SETUP_X64: ${workspace}/visual_studio/setup_x64.bat
+    prepend:
+      - PATH: ${workspace}/visual_studio/VC/Tools/MSVC/14.51.36014/bin/Hostx64/x64
+      - PATH: ${workspace}/visual_studio/WindowsKits/10/bin/10.0.26100.0/x64
+      - PATH: ${workspace}/visual_studio/WindowsKits/10/bin/10.0.26100.0/x64/ucrt

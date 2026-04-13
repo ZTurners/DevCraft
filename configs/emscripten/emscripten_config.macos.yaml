@@ -2,28 +2,28 @@ install:
   # emscripten sdk
   - download:
       src:
-        url: https://github.com/emscripten-core/emsdk/archive/refs/tags/3.1.73.tar.gz
-      dest: ${download}/emsdk-3.1.73.tar.gz
+        url: https://github.com/emscripten-core/emsdk/archive/refs/tags/5.0.5.tar.gz
+      dest: ${download}/emsdk-5.0.5.tar.gz
   - unzip:
-      src: ${download}/emsdk-3.1.73.tar.gz
-      src_sub_folder: emsdk-3.1.73
-      dest: ${workspace}/emscripten/emsdk-3.1.73
+      src: ${download}/emsdk-5.0.5.tar.gz
+      src_sub_folder: emsdk-5.0.5
+      dest: ${workspace}/emscripten/emsdk-5.0.5
 
   # make emsdk executable
   - make_execute_permission:
       files:
-        - ${workspace}/emscripten/emsdk-3.1.73/emsdk
-        - ${workspace}/emscripten/emsdk-3.1.73/emsdk_env.sh
+        - ${workspace}/emscripten/emsdk-5.0.5/emsdk
+        - ${workspace}/emscripten/emsdk-5.0.5/emsdk_env.sh
 
   # install and activate latest emscripten toolchain
   - execute:
       command:
-        - ${workspace}/emscripten/emsdk-3.1.73/emsdk
+        - ${workspace}/emscripten/emsdk-5.0.5/emsdk
         - install
         - latest
   - execute:
       command:
-        - ${workspace}/emscripten/emsdk-3.1.73/emsdk
+        - ${workspace}/emscripten/emsdk-5.0.5/emsdk
         - activate
         - latest
 
@@ -31,12 +31,12 @@ generator_active_batch:
   file_path: ${workspace}/emscripten/active
   environments:
     set:
-      EMSDK: ${workspace}/emscripten/emsdk-3.1.73
-      EM_CONFIG: ${workspace}/emscripten/emsdk-3.1.73/.emscripten
-      EMSDK_PYTHON: ${workspace}/emscripten/emsdk-3.1.73/python/3.9.2_64bit/bin/python3
-      EMSDK_NODE: ${workspace}/emscripten/emsdk-3.1.73/node/20.18.0_arm64/bin/node
+      EMSDK: ${workspace}/emscripten/emsdk-5.0.5
+      EM_CONFIG: ${workspace}/emscripten/emsdk-5.0.5/.emscripten
+      EMSDK_PYTHON: ${workspace}/emscripten/emsdk-5.0.5/python/3.13.3_64bit/bin/python3
+      EMSDK_NODE: ${workspace}/emscripten/emsdk-5.0.5/node/22.16.0_64bit/bin/node
     prepend:
-      - PATH: ${workspace}/emscripten/emsdk-3.1.73
-      - PATH: ${workspace}/emscripten/emsdk-3.1.73/upstream/emscripten
-      - PATH: ${workspace}/emscripten/emsdk-3.1.73/python/3.9.2_64bit/bin
-      - PATH: ${workspace}/emscripten/emsdk-3.1.73/node/20.18.0_arm64/bin
+      - PATH: ${workspace}/emscripten/emsdk-5.0.5
+      - PATH: ${workspace}/emscripten/emsdk-5.0.5/upstream/emscripten
+      - PATH: ${workspace}/emscripten/emsdk-5.0.5/python/3.13.3_64bit/bin
+      - PATH: ${workspace}/emscripten/emsdk-5.0.5/node/22.16.0_64bit/bin

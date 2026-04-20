@@ -34,7 +34,7 @@ install:
         - '"platform-tools"'
         - '"cmdline-tools;19.0"'
 generator_active_batch:
-  file_path: ${workspace}/android/active
+  file_path: ${workspace}/android/active.bat
   environments:
     set:
       ANDROID_SDK_ROOT: ${workspace}/android/android_sdk

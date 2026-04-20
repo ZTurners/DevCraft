@@ -15,7 +15,7 @@ install:
         - ${workspace}/dotnet/dotnet-sdk-10.0.101-win-x64/dotnet.exe workload install wasi-experimental
 
 generator_active_batch:
-  file_path: ${workspace}/dotnet/active
+  file_path: ${workspace}/dotnet/active.bat
   environments:
     set:
       DOTNET_ROOT: ${workspace}/dotnet/dotnet-sdk-10.0.101-win-x64

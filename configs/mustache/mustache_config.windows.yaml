@@ -8,7 +8,7 @@ install:
       src_sub_folder: ""
       dest: ${workspace}/mustache/mustache_1.4.0_windows_amd64
 generator_active_batch:
-  file_path: ${workspace}/mustache/active
+  file_path: ${workspace}/mustache/active.bat
   environments:
     prepend:
       - PATH: ${workspace}/mustache/mustache_1.4.0_windows_amd64

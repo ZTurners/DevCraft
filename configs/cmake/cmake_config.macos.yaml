@@ -14,7 +14,7 @@ install:
         - ${workspace}/cmake/cmake-4.2.3-macos-universal/CMake.app/Contents/bin/cmake
 
 generator_active_batch:
-  file_path: ${workspace}/cmake/active
+  file_path: ${workspace}/cmake/active.sh
   environments:
     set: {}
     prepend:

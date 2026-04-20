@@ -24,7 +24,7 @@ install:
         - detect
         - --force
 generator_active_batch:
-  file_path: ${workspace}/conan/active
+  file_path: ${workspace}/conan/active.bat
   environments:
     set:
       CONAN_HOME: ${workspace}/conan/.conan

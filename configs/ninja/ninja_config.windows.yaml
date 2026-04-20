@@ -9,7 +9,7 @@ install:
       src: ${download}/ninja-1.13.1-windows-x86_64.zip
       dest: ${workspace}/ninja/ninja-1.13.1
 generator_active_batch:
-  file_path: ${workspace}/ninja/active
+  file_path: ${workspace}/ninja/active.bat
   environments:
     set: {}
     prepend:

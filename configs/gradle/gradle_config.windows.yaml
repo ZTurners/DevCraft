@@ -10,7 +10,7 @@ install:
       src_sub_folder: gradle-9.1.0
       dest: ${workspace}/gradle/gradle-9.1.0
 generator_active_batch:
-  file_path: ${workspace}/gradle/active
+  file_path: ${workspace}/gradle/active.bat
   environments:
     set:
       GRADLE_USER_HOME: ${workspace}/gradle/gradle-9.1.0/.gradle

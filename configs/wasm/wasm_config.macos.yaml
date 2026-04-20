@@ -33,7 +33,7 @@ install:
       dest: ${workspace}/wasm/wasi-sdk-29.0-arm64-macos
 
 generator_active_batch:
-  file_path: ${workspace}/wasm/active
+  file_path: ${workspace}/wasm/active.sh
   environments:
     prepend:
       - PATH: ${workspace}/wasm/wasmtime-v40.0.2-aarch64-macos

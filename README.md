@@ -50,3 +50,4 @@ Detailed documentation is maintained in the Obsidian Git repository.
 Update the link below to your current Obsidian docs repository if needed:
 
 - `Index.md`: `<OBSIDIAN_GIT_REPO_URL>/DevCraft/Index.md`
+

@@ -54,7 +54,7 @@ install:
       symbol_list: ${workspace}/llvm/llvm-21/x86_64-linux-gnu/.symbol_links.json
 
 generator_active_batch:
-  file_path: ${workspace}/llvm/active
+  file_path: ${workspace}/llvm/active.bat
   environments:
     # set:
     #   HOST_LLVM_BIN: ${workspace}/llvm/llvm-21/x86_64-windows-msvc/bin

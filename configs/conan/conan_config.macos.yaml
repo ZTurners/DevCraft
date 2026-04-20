@@ -34,7 +34,7 @@ install:
   #       - --profile
   #       - ${configs}/conan/profiles/builder/conan_builder_profile.macos.txt
 generator_active_batch:
-  file_path: ${workspace}/conan/active
+  file_path: ${workspace}/conan/active.sh
   environments:
     set:
       CONAN_HOME: ${workspace}/conan/.conan

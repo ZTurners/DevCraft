@@ -34,7 +34,7 @@ install:
         - PATH: ${workspace}/visual_studio/WindowsKits/10/bin/10.0.26100.0/x64/ucrt
 
 generator_active_batch:
-  file_path: ${workspace}/visual_studio/active
+  file_path: ${workspace}/visual_studio/active.bat
   environments:
     set:
       DEVCRAFT_VISUAL_STUDIO_MAJOR_VERSION: 18

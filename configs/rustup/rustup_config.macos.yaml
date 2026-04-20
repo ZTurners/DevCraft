@@ -36,7 +36,7 @@ install:
       - wit-bindgen-cli
       - cargo-component
 generator_active_batch:
-  file_path: ${workspace}/rust/active
+  file_path: ${workspace}/rust/active.sh
   environments:
     set:
       RUSTUP_HOME: ${workspace}/rust/.rustup

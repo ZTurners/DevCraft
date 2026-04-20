@@ -14,7 +14,7 @@ install:
         - ${workspace}/python/versions/3.13.5/python.exe -m pip install clang
 
 generator_active_batch:
-  file_path: ${workspace}/python/active
+  file_path: ${workspace}/python/active.bat
   environments:
     set:
       PYTHON_HOME: ${workspace}/python/versions/3.13.5

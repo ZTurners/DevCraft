@@ -1117,9 +1117,15 @@ class WorkspaceInstaller:
                     exit(1)
 
     def generate_enviroment_set_batch_file(self, output_file, set_env_list, prepend_env_list):
-        # Basic check
+        # Assert the file_path has the correct extension for the current platform
         if self.m_system_name == "Windows":
-            output_file = output_file + ".bat"
+            assert output_file.endswith(".bat"), \
+                f"file_path must end with '.bat' on Windows, got: '{output_file}'"
+        else:
+            assert output_file.endswith(".sh"), \
+                f"file_path must end with '.sh' on macOS/Linux, got: '{output_file}'"
+
+        if self.m_system_name == "Windows":
             with open(output_file, 'w') as f:
                 f.write("@echo off\n\n")
                 f.write(":: Auto-generated environment setup script (Windows)\n")
@@ -1140,7 +1146,6 @@ class WorkspaceInstaller:
                 
                 f.write('\necho Environment variables set successfully\n')
         else:
-            output_file = output_file + ".sh"
             with open(output_file, 'w') as f:
                 f.write("#!/bin/bash\n\n")
                 f.write("# Auto-generated environment setup script\n")

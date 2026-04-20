@@ -14,7 +14,7 @@ install:
         - ${workspace}/dotnet/dotnet-sdk-10.0.101-osx-arm64/dotnet workload install wasi-experimental
 
 generator_active_batch:
-  file_path: ${workspace}/dotnet/active
+  file_path: ${workspace}/dotnet/active.sh
   environments:
     set:
       DOTNET_ROOT: ${workspace}/dotnet/dotnet-sdk-10.0.101-osx-arm64

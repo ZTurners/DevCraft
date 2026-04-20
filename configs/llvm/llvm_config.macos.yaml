@@ -44,7 +44,7 @@ install:
       src_sub_folder: LLVM-21.1.6-Linux-X64
       dest: ${workspace}/llvm/llvm-21/x86_64-linux-gnu
 generator_active_batch:
-  file_path: ${workspace}/llvm/active
+  file_path: ${workspace}/llvm/active.sh
   environments:
     # set:
     #   HOST_LLVM_BIN: ${workspace}/llvm/llvm-21/arm64-apple-darwin/bin

@@ -33,7 +33,7 @@ install:
       dest: ${workspace}/wasm/wasi-sdk-29.0-x86_64-windows
 
 generator_active_batch:
-  file_path: ${workspace}/wasm/active
+  file_path: ${workspace}/wasm/active.bat
   environments:
     prepend:
       - PATH: ${workspace}/wasm/wasmtime-v40.0.1-x86_64-windows

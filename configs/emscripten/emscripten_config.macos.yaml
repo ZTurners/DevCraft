@@ -34,7 +34,7 @@ install:
         - latest
 
 generator_active_batch:
-  file_path: ${workspace}/emscripten/active
+  file_path: ${workspace}/emscripten/active.sh
   environments:
     set:
       EMSDK: ${workspace}/emscripten/emsdk-5.0.5

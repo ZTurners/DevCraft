@@ -6,7 +6,7 @@ install:
       dest:  ${workspace}/tools/texconv/texconv.exe
   
 generator_active_batch:
-  file_path: ${workspace}/tools/active
+  file_path: ${workspace}/tools/active.bat
   environments:
     prepend:
       - PATH: ${workspace}/tools/texconv

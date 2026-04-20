@@ -10,7 +10,7 @@ install:
       src_sub_folder: ./jdk-25.0.1.jdk/Contents/Home
       dest: ${workspace}/jdk/jdk-25
 generator_active_batch:
-  file_path: ${workspace}/jdk/active
+  file_path: ${workspace}/jdk/active.sh
   environments:
     set:
       JAVA_HOME: ${workspace}/jdk/jdk-25

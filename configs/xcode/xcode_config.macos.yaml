@@ -8,7 +8,7 @@ install:
           manually"; '
         - fi
 generator_active_batch:
-  file_path: ${workspace}/xcode/active
+  file_path: ${workspace}/xcode/active.sh
   environments:
     set:
       DEVELOPER_DIR: ${workspace}/xcode/CommandLineTools

@@ -12,7 +12,7 @@ install:
       files:
         - ${workspace}/ninja/ninja-1.13.1/ninja
 generator_active_batch:
-  file_path: ${workspace}/ninja/active
+  file_path: ${workspace}/ninja/active.sh
   environments:
     set: {}
     prepend:

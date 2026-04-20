@@ -10,7 +10,7 @@ install:
       src_sub_folder: cmake-4.2.3-windows-x86_64
       dest: ${workspace}/cmake/cmake-4.2.3
 generator_active_batch:
-  file_path: ${workspace}/cmake/active
+  file_path: ${workspace}/cmake/active.bat
   environments:
     set: {}
     prepend:

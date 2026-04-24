@@ -1,0 +1,10 @@
+dependencies:
+  - emscripten
+
+install:
+  - execute:
+      command:
+        - ${workspace}/emscripten/emsdk-5.0.5/node/22.16.0_64bit/bin/npm.cmd
+        - install
+        - -g
+        - hbs-cli

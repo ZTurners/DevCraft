@@ -8,3 +8,8 @@ install:
         - install
         - -g
         - hbs-cli
+generator_active_batch:
+  file_path: ${workspace}/hbs_cli/active.sh
+  environments:
+    prepend:
+      - PATH: ${workspace}/emscripten/emsdk-5.0.5/node/22.16.0_64bit/bin

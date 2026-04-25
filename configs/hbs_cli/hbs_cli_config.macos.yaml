@@ -8,6 +8,8 @@ install:
         - install
         - -g
         - hbs-cli
+        - handlebars
+        
 generator_active_batch:
   file_path: ${workspace}/hbs_cli/active.sh
   environments:

@@ -25,3 +25,5 @@ __pycache__
 
 # Local experience files
 copilot/experience/.local
+
+summary.txt

@@ -29,6 +29,79 @@ class WorkspaceInstaller:
         self.m_download_root_path = os.path.join(self.m_dev_env_root_path, ".downloads")
         self.m_system_name = platform.system()
         self.m_summary_data = []
+        self.m_run_started_at = datetime.datetime.now(datetime.UTC)
+        self.m_current_config = None
+        self.m_current_node = None
+        self.m_current_install_step = None
+
+    def build_failure_summary(self, error):
+        """Build a compact failure summary for console output."""
+        lines = ["Failure summary:"]
+        lines.append(f"  Config: {self.m_current_config or 'N/A'}")
+        lines.append(f"  Node: {self.m_current_node or 'N/A'}")
+        lines.append(f"  Install step: {self.m_current_install_step or 'N/A'}")
+        lines.append(f"  Error: {error}")
+        return "\n".join(lines)
+
+    def _record_config_summary(self, config_name, status, message=""):
+        """Record per-config install result for final summary output."""
+        sdk_name = config_name.split('/', 1)[0] if isinstance(config_name, str) and config_name else "N/A"
+        self.m_summary_data.append({
+            "timestamp": datetime.datetime.now(datetime.UTC).isoformat(),
+            "sdk": sdk_name,
+            "config": config_name,
+            "status": status,
+            "message": message,
+        })
+
+    def build_run_summary(self, run_error=None):
+        """Build a timestamped summary for the full install run."""
+        run_finished_at = datetime.datetime.now(datetime.UTC)
+        total_seconds = int((run_finished_at - self.m_run_started_at).total_seconds())
+        total_count = len(self.m_summary_data)
+        success_items = [item for item in self.m_summary_data if item.get("status") == "SUCCESS"]
+        failed_items = [item for item in self.m_summary_data if item.get("status") == "FAILED"]
+
+        lines = []
+        lines.append("DevCraft Install Summary")
+        lines.append(f"Started (UTC): {self.m_run_started_at.isoformat()}")
+        lines.append(f"Finished (UTC): {run_finished_at.isoformat()}")
+        lines.append(f"Duration (seconds): {total_seconds}")
+        lines.append(f"Overall result: {'FAILED' if run_error else 'SUCCESS'}")
+        lines.append(f"Configs processed: {total_count}")
+        lines.append(f"Successful SDK installs: {len(success_items)}")
+        lines.append(f"Failed SDK installs: {len(failed_items)}")
+
+        lines.append("")
+        lines.append("Successful installs:")
+        if success_items:
+            for item in success_items:
+                lines.append(f"  - {item['sdk']} | {item['config']} | {item['timestamp']}")
+        else:
+            lines.append("  - None")
+
+        lines.append("")
+        lines.append("Failed installs:")
+        if failed_items:
+            for item in failed_items:
+                fail_message = item.get("message") or "Unknown error"
+                lines.append(f"  - {item['sdk']} | {item['config']} | {item['timestamp']} | {fail_message}")
+        else:
+            lines.append("  - None")
+
+        if run_error:
+            lines.append("")
+            lines.append(self.build_failure_summary(run_error))
+
+        return "\n".join(lines)
+
+    def write_run_summary(self, summary_text):
+        """Write the run summary to summary.txt in repository root."""
+        summary_path = os.path.join(self.m_dev_env_root_path, "summary.txt")
+        with open(summary_path, 'w', encoding='utf-8') as f:
+            f.write(summary_text)
+            f.write("\n")
+        return summary_path
 
     def run_command(self, command: str) -> str:
         """Run a Conan command and return its output."""
@@ -954,13 +1027,15 @@ class WorkspaceInstaller:
             # print(f"\n{'='*60}")
             print(f"Processing install item: '{install_step_name}'")
             # print(f"{'='*60}")
+            self.m_current_install_step = install_step_name
 
             # Ensure install_item is a mapping
             if not isinstance(install_step, dict):
                 raise TypeError(f"install item '{install_step_name}' must be an object")
 
             # Process nodes in order for this install item
-            if node_handlers[install_step_name]:
+            handler = node_handlers.get(install_step_name)
+            if handler:
                 # Special case: if the install_item_name matches a handler, process it directly
                 try:
                     print(f"\nProcessing '{install_step_name}'...")
@@ -972,7 +1047,7 @@ class WorkspaceInstaller:
                             print(f"Destination already exists: {dest_path}")
                             print(f"Skipping install step: '{install_step_name}'")
                             continue
-                    node_handlers[install_step_name](install_step, context)
+                    handler(install_step, context)
                 except Exception as e:
                     raise Exception(f"Error processing '{install_step_name}': {e}") from e
                 continue
@@ -1090,11 +1165,9 @@ class WorkspaceInstaller:
         try:
             config = self._load_config_data(config_file_path)
         except json.JSONDecodeError:
-            print(f"Error: Invalid JSON in configuration file: {config_file_path}")
-            exit(1)
+            raise RuntimeError(f"Invalid JSON in configuration file: {config_file_path}")
         except Exception as e:
-            print(f"Unexpected error reading configuration: {e}")
-            exit(1)
+            raise RuntimeError(f"Unexpected error reading configuration '{config_file_path}': {e}") from e
 
         context = {
             'config': config
@@ -1109,12 +1182,12 @@ class WorkspaceInstaller:
         # Process config nodes in order
         for node_name, handler in config_handlers.items():
             if node_name in config:
+                self.m_current_node = node_name
                 try:
                     print(f"\nProcessing '{node_name}' configuration...")
                     handler(config[node_name], context)
                 except Exception as e:
-                    print(f"Error processing '{node_name}' configuration: {e}")
-                    exit(1)
+                    raise RuntimeError(f"Error processing '{node_name}' configuration: {e}") from e
 
     def generate_enviroment_set_batch_file(self, output_file, set_env_list, prepend_env_list):
         # Assert the file_path has the correct extension for the current platform
@@ -1182,8 +1255,7 @@ class WorkspaceInstaller:
 
         suffix = suffix_map.get(self.m_system_name)
         if not suffix:
-            print(f"Error: Unsupported system: {self.m_system_name}")
-            return
+            raise RuntimeError(f"Unsupported system: {self.m_system_name}")
 
         # Search only second-level folders under configs/ (e.g. configs/jdk/, configs/rustup/)
         config_files = []
@@ -1199,12 +1271,12 @@ class WorkspaceInstaller:
                     if fname.endswith(suffix):
                         config_files.append(os.path.join(entry_path, fname))
         except FileNotFoundError:
-            print(f"Warning: Configs directory not found: {self.m_configs_root_path}")
-            return
+            raise RuntimeError(f"Configs directory not found: {self.m_configs_root_path}")
 
         if not config_files:
-            print(f"Warning: No configuration files found for system '{self.m_system_name}' in {self.m_configs_root_path}")
-            return
+            raise RuntimeError(
+                f"No configuration files found for system '{self.m_system_name}' in {self.m_configs_root_path}"
+            )
 
         # Build dependency metadata for each config.
         records = {}
@@ -1220,8 +1292,7 @@ class WorkspaceInstaller:
                 config_data = self._load_config_data(config_path)
                 dependencies = self._extract_dependencies(config_path, config_data)
             except Exception as e:
-                print(f"Error parsing dependencies in {config_path}: {e}")
-                return
+                raise RuntimeError(f"Error parsing dependencies in {config_path}: {e}") from e
 
             records[rel] = {
                 'path': config_path,
@@ -1248,12 +1319,10 @@ class WorkspaceInstaller:
                         records_by_folder,
                     )
                 except Exception as e:
-                    print(f"Error resolving dependency for {rel}: {e}")
-                    return
+                    raise RuntimeError(f"Error resolving dependency for {rel}: {e}") from e
 
                 if dep_rel == rel:
-                    print(f"Error: Self dependency detected for {rel}")
-                    return
+                    raise RuntimeError(f"Self dependency detected for {rel}")
 
                 if rel not in adjacency[dep_rel]:
                     adjacency[dep_rel].add(rel)
@@ -1276,10 +1345,8 @@ class WorkspaceInstaller:
 
         if len(ordered) != len(records):
             cycle_nodes = sorted([k for k, deg in indegree.items() if deg > 0])
-            print("Error: Cyclic dependency detected among config files:")
-            for node in cycle_nodes:
-                print(f"  - {node}")
-            return
+            cycle_text = "\n".join([f"  - {node}" for node in cycle_nodes])
+            raise RuntimeError(f"Cyclic dependency detected among config files:\n{cycle_text}")
 
         print("\nResolved config execution order:")
         for index, rel in enumerate(ordered, 1):
@@ -1297,11 +1364,32 @@ class WorkspaceInstaller:
             print(f"\n{'='*70}")
             print(f"Processing config: {display_name}")
             print(f"{'='*70}")
-            self.install_from_config(config_path)
+            self.m_current_config = display_name
+            self.m_current_node = None
+            self.m_current_install_step = None
+            try:
+                self.install_from_config(config_path)
+                self._record_config_summary(display_name, "SUCCESS")
+            except Exception as e:
+                self._record_config_summary(display_name, "FAILED", str(e))
+                raise
 
 def main():
     dev_env_installer = WorkspaceInstaller()
-    dev_env_installer.install_all()
+    run_error = None
+    try:
+        dev_env_installer.install_all()
+    except Exception as e:
+        run_error = e
+
+    summary_text = dev_env_installer.build_run_summary(run_error)
+    summary_path = dev_env_installer.write_run_summary(summary_text)
+    print("\n" + summary_text)
+    print(f"Summary written to: {summary_path}")
+
+    if run_error:
+        print(f"Install failed: {run_error}", file=sys.stderr)
+        sys.exit(1)
     
 if __name__ == "__main__":
     main()

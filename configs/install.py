@@ -847,11 +847,35 @@ class WorkspaceInstaller:
             # Execute the command
             try:
                 print(f"Running command: {command}")
-                subprocess.run(command, shell=True, check=True)
+                result = subprocess.run(
+                    command,
+                    shell=True,
+                    check=True,
+                    text=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
+                if result.stdout:
+                    print(result.stdout.rstrip())
                 print("Command executed successfully.")
             except subprocess.CalledProcessError as e:
-                print(f"Error executing command: {e}")
-                raise
+                stdout = (e.stdout or "").rstrip()
+                stderr = (e.stderr or "").rstrip()
+                if stdout:
+                    print("Command stdout:")
+                    print(stdout)
+                if stderr:
+                    print("Command stderr:")
+                    print(stderr)
+
+                details = [f"Command failed with exit code {e.returncode}"]
+                if stdout:
+                    details.append(f"stdout: {stdout}")
+                if stderr:
+                    details.append(f"stderr: {stderr}")
+                error_message = " | ".join(details)
+                print(f"Error executing command: {error_message}")
+                raise RuntimeError(error_message) from e
 
     def _process_generator_active_batch(self, generator_active_batch, context):
         """Handle generator_active_batch node."""

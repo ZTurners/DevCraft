@@ -1,0 +1,25 @@
+install:
+  # vcpkg source from GitHub Releases tag archive
+  - download:
+      src:
+        url: https://github.com/microsoft/vcpkg/archive/refs/tags/2026.04.27.zip
+      dest: ${download}/vcpkg-2026.04.27.zip
+  - unzip:
+      src: ${download}/vcpkg-2026.04.27.zip
+      src_sub_folder: vcpkg-2026.04.27
+      dest: ${workspace}/vcpkg
+
+  # bootstrap vcpkg.exe
+  - execute:
+      skip_if_exists: ${workspace}/vcpkg/vcpkg.exe
+      command:
+        - ${workspace}/vcpkg/bootstrap-vcpkg.bat
+
+generator_active_batch:
+  file_path: ${workspace}/vcpkg/active.bat
+  environments:
+    set:
+      VCPKG_ROOT: ${workspace}/vcpkg
+      VCPKG_DOWNLOADS: ${workspace}/vcpkg/downloads
+    prepend:
+      - PATH: ${workspace}/vcpkg

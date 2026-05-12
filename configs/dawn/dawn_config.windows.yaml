@@ -1,0 +1,25 @@
+dependencies:
+  - ${configs}/vcpkg/vcpkg_config.windows.yaml
+
+install:
+  # Install Dawn from vcpkg for the Windows x64 triplet.
+  - environments:
+      set:
+        VCPKG_ROOT: ${workspace}/vcpkg
+        VCPKG_DOWNLOADS: ${workspace}/vcpkg/downloads
+      prepend:
+        - PATH: ${workspace}/vcpkg
+  - execute:
+      skip_if_exists: ${workspace}/vcpkg/installed/x64-windows/share/dawn
+      command:
+        - ${workspace}/vcpkg/vcpkg.exe
+        - install
+        - dawn:x64-windows
+
+generator_active_batch:
+  file_path: ${workspace}/dawn/active.bat
+  environments:
+    set:
+      DAWN_ROOT: ${workspace}/vcpkg/installed/x64-windows
+      DAWN_SHARE_DIR: ${workspace}/vcpkg/installed/x64-windows/share/dawn
+    prepend: []

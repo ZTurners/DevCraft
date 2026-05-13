@@ -11,9 +11,14 @@
     "terminal.integrated.env.windows": {
         "VS_WORKSPACE": "${workspaceFolder}"
     },
+    
+    "editor.insertSpaces": true,
+    "editor.tabSize": 4,
+
     "scm.defaultViewMode": "tree",
     "scm.alwaysShowRepositories": true,
     "scm.repositories.sortOrder": "path",
+
     "git.detectSubmodules": true,
     "git.detectSubmodulesLimit": 200,
     "git.enableSmartCommit": true,

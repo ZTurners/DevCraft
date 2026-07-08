@@ -10,6 +10,7 @@ DevCraft is a cross-platform developer environment bootstrap repository. It down
 - `install.windows.bat`
 - `workspace/active.windows.bat`
 - `workspace/active_with_cmd.windows.bat`
+- `workspace/active_with_codex.windows.bat`
 - `workspace/active_with_vscode.windows.bat`
 
 ### macOS
@@ -35,6 +36,12 @@ Or launch VS Code with the local environment:
 
 ```bat
 workspace\active_with_vscode.windows.bat
+```
+
+Or launch the Codex desktop app with the local environment:
+
+```bat
+workspace\active_with_codex.windows.bat
 ```
 
 ### macOS

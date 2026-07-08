@@ -10,7 +10,8 @@ DevCraft is a cross-platform developer environment bootstrap repository. It down
 - `install.windows.bat`
 - `workspace/active.windows.bat`
 - `workspace/active_with_cmd.windows.bat`
-- `workspace/active_with_codex.windows.bat`
+- `workspace/active_with_codex_app.windows.bat`
+- `workspace/active_with_codex_cli.windows.bat`
 - `workspace/active_with_vscode.windows.bat`
 
 ### macOS
@@ -41,7 +42,13 @@ workspace\active_with_vscode.windows.bat
 Or launch the Codex desktop app with the local environment:
 
 ```bat
-workspace\active_with_codex.windows.bat
+workspace\active_with_codex_app.windows.bat
+```
+
+Or launch Codex CLI with the local environment:
+
+```bat
+workspace\active_with_codex_cli.windows.bat
 ```
 
 ### macOS
@@ -57,4 +64,3 @@ Detailed documentation is maintained in the Obsidian Git repository.
 Update the link below to your current Obsidian docs repository if needed:
 
 - `Index.md`: `<OBSIDIAN_GIT_REPO_URL>/DevCraft/Index.md`
-

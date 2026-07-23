@@ -15,23 +15,27 @@ install:
         - ${workspace}/emscripten/emsdk-5.0.5/emsdk
         - ${workspace}/emscripten/emsdk-5.0.5/emsdk_env.sh
 
-  # install and activate latest emscripten toolchain
+  # install and activate the pinned emscripten toolchain
   - execute:
       command:
         - ${workspace}/emscripten/emsdk-5.0.5/emsdk
         - install
-        - latest
+        - 5.0.5
   - execute:
       skip_if_exists: ${workspace}/emscripten/emsdk-5.0.5/upstream/emscripten/node_modules/typescript/bin/tsc
       command:
-        - sh
-        - -c
-        - cd "${workspace}/emscripten/emsdk-5.0.5/upstream/emscripten" && "${workspace}/emscripten/emsdk-5.0.5/node/20.18.0_arm64/bin/npm" install
+        - env
+        - PATH=${workspace}/emscripten/emsdk-5.0.5/node/22.16.0_64bit/bin:/usr/bin:/bin
+        - ${workspace}/emscripten/emsdk-5.0.5/node/22.16.0_64bit/bin/node
+        - ${workspace}/emscripten/emsdk-5.0.5/node/22.16.0_64bit/lib/node_modules/npm/bin/npm-cli.js
+        - --prefix
+        - ${workspace}/emscripten/emsdk-5.0.5/upstream/emscripten
+        - install
   - execute:
       command:
         - ${workspace}/emscripten/emsdk-5.0.5/emsdk
         - activate
-        - latest 
+        - 5.0.5
 
 generator_active_batch:
   file_path: ${workspace}/emscripten/active.sh

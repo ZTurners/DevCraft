@@ -9,6 +9,9 @@ install:
       src: ${download}/gradle-9.1.0-bin.zip
       src_sub_folder: gradle-9.1.0
       dest: ${workspace}/gradle/gradle-9.1.0
+  - make_execute_permission:
+      files:
+        - ${workspace}/gradle/gradle-9.1.0/bin/gradle
 generator_active_batch:
   file_path: ${workspace}/gradle/active.sh
   environments:

@@ -1,0 +1,20 @@
+install:
+  # Download Dawn pre-compiled release for macOS (Release build).
+  - download:
+      src:
+        url: https://github.com/google/dawn/releases/download/v20260423.175430/Dawn-31e25af254ab572c77054edec4946d2244e184dd-macos-latest-Release.tar.gz
+        SHA-256: 8d1db80315ab55ad2c61857d1c7ae4c242a9cc67d0639c709a052fc6af3a7bac
+      dest: ${download}/Dawn-31e25af254ab572c77054edec4946d2244e184dd-macos-latest-Release.tar.gz
+  - unzip:
+      src: ${download}/Dawn-31e25af254ab572c77054edec4946d2244e184dd-macos-latest-Release.tar.gz
+      src_sub_folder: Dawn-31e25af254ab572c77054edec4946d2244e184dd-macos-latest-Release
+      dest: ${workspace}/dawn/v20260423.175430
+
+generator_active_batch:
+  file_path: ${workspace}/dawn/active.sh
+  environments:
+    set:
+      DAWN_ROOT: ${workspace}/dawn/v20260423.175430
+      DAWN_CMAKE_DIR: ${workspace}/dawn/v20260423.175430/lib/cmake/Dawn
+    prepend:
+      - PATH: ${workspace}/dawn/v20260423.175430/bin

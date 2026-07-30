@@ -9,6 +9,23 @@ install:
       src: ${download}/Dawn-31e25af254ab572c77054edec4946d2244e184dd-macos-latest-Release.tar.gz
       src_sub_folder: Dawn-31e25af254ab572c77054edec4946d2244e184dd-macos-latest-Release
       dest: ${workspace}/dawn/v20260423.175430
+  - download:
+      src:
+        url: https://github.com/ZTurners/DevCraftArtifactory/releases/download/init/tint.macos.tar.gz
+        SHA-256: 29dfdbf93ed0b353ad06b95aa3b4d811ce40470f7020ba8cb0ed6a59b4107693
+      dest: ${download}/tint.macos.tar.gz
+  - unzip:
+      src: ${download}/tint.macos.tar.gz
+      src_sub_folder: tint
+      dest: ${workspace}/dawn/tint.macos
+  - execute:
+      command:
+        - cp -f
+        - ${workspace}/dawn/tint.macos/tint
+        - ${workspace}/dawn/v20260423.175430/bin/tint
+  - make_execute_permission:
+      files:
+        - ${workspace}/dawn/v20260423.175430/bin/tint
 
 generator_active_batch:
   file_path: ${workspace}/dawn/active.sh

@@ -1,26 +1,30 @@
 install:
   - download:
       src:
-        url: https://builds.dotnet.microsoft.com/dotnet/Sdk/10.0.101/dotnet-sdk-10.0.101-win-x64.zip
-        SHA-512: efcb2bfde6ae691cee94abaabd902562d4463b26c2ae58c3db4291719220843bbc89e32ff16bf95d54efd145423207255464d16616d760a3bf0e6b5ba48214a3
-      dest: ${download}/dotnet-sdk-10.0.101-win-x64.zip
+        url: https://builds.dotnet.microsoft.com/dotnet/Sdk/10.0.302/dotnet-sdk-10.0.302-win-x64.zip
+        SHA-512: 7d170ed75fa9af34c00646621d92011dbd71943952e2787cd15df9be78e6452b55dadef34d7eff77b802e6af4959e071a55855ac649afeac70901c3a2a258716
+      dest: ${download}/dotnet-sdk-10.0.302-win-x64.zip
   - unzip:
-      src: ${download}/dotnet-sdk-10.0.101-win-x64.zip
+      src: ${download}/dotnet-sdk-10.0.302-win-x64.zip
       src_sub_folder: ""
-      dest: ${workspace}/dotnet/dotnet-sdk-10.0.101-win-x64
+      dest: ${workspace}/dotnet/dotnet-sdk-10.0.302-win-x64
+
+  - environments:
+      set:
+        NUGET_PACKAGES: ${workspace}/nuget
 
   # install extra workloads
   - execute:
       command:
-        - ${workspace}/dotnet/dotnet-sdk-10.0.101-win-x64/dotnet.exe workload install wasi-experimental
+        - ${workspace}/dotnet/dotnet-sdk-10.0.302-win-x64/dotnet.exe workload install wasi-experimental
 
 generator_active_batch:
   file_path: ${workspace}/dotnet/active.bat
   environments:
     set:
-      DOTNET_ROOT: ${workspace}/dotnet/dotnet-sdk-10.0.101-win-x64
+      DOTNET_ROOT: ${workspace}/dotnet/dotnet-sdk-10.0.302-win-x64
       DOTNET_CLI_TELEMETRY_OPTOUT: 1
       DOTNET_CLI_UI_LANGUAGE: en-US
+      NUGET_PACKAGES: ${workspace}/nuget
     prepend:
-      - PATH: ${workspace}/dotnet/dotnet-sdk-10.0.101-win-x64
-
+      - PATH: ${workspace}/dotnet/dotnet-sdk-10.0.302-win-x64

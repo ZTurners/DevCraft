@@ -1,12 +1,18 @@
 install:
-  # check_xcodes:
+  # command_line_tools:
   - execute:
       command:
-        - if path=$(xcode-select -p 2>/dev/null);
-        - ' then mkdir -pv ${workspace}/xcode && ln -sfv "$path" ${workspace}/xcode/; '
-        - ' else echo "Error: xcode-select failed - install Xcode or Command Line Tools
-          manually"; '
-        - fi
+        - clt_package=com.apple.pkg.CLTools_Executables;
+        - 'if ! pkgutil --pkg-info "$clt_package" >/dev/null 2>&1; then'
+        - ' xcode-select --install;'
+        - ' echo "Complete the Command Line Tools installation, then run install macos again.";'
+        - ' exit 1;'
+        - fi;
+        - clt_path=$(pkgutil --only-files --files "$clt_package" | sed -n
+          's#^\(.*CommandLineTools\)/.*#/\1#p' | head -n 1);
+        - 'test -n "$clt_path" && test -d "$clt_path";'
+        - 'mkdir -p ${workspace}/xcode;'
+        - 'ln -sfn "$clt_path" ${workspace}/xcode/CommandLineTools'
 generator_active_batch:
   file_path: ${workspace}/xcode/active.sh
   environments:

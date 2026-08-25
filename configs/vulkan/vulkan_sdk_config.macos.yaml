@@ -36,6 +36,7 @@ generator_active_batch:
   file_path: ${workspace}/vulkan/active.sh
   environments:
     set:
+      VK_ICD_FILENAMES: ${workspace}/vulkan/vulkansdk_macos_x86_64_1.4.328.1/share/vulkan/icd.d/MoltenVK_icd.json
       VK_LAYER_PATH: ${workspace}/vulkan/vulkansdk_macos_x86_64_1.4.328.1/bin
       VK_BIN_PATH: ${workspace}/vulkan/vulkansdk_macos_x86_64_1.4.328.1/bin
     prepend:

@@ -17,7 +17,8 @@ install:
   # android_sdk_license:
   - execute:
       command:
-        - 'yes | '
+        - . "${workspace}/jdk/active.sh" >/dev/null &&
+        - 'yes |'
         - ${workspace}/android/android_sdk/cmdline-tools/bootstrap/bin/sdkmanager
         - --sdk_root=${workspace}/android/android_sdk
         - --licenses
@@ -25,6 +26,7 @@ install:
   # android_sdk:
   - execute:
       command:
+        - . "${workspace}/jdk/active.sh" >/dev/null &&
         - ${workspace}/android/android_sdk/cmdline-tools/bootstrap/bin/sdkmanager
         - --sdk_root=${workspace}/android/android_sdk
         - --install

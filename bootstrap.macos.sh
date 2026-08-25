@@ -22,14 +22,37 @@ PYTHON_URL="https://www.python.org/ftp/python/$PYTHON_VERSION/python-$PYTHON_VER
 PYTHON_DOWNLOAD_DIR="$DEV_ENV_ROOT_PATH/.downloads"
 PYENV_ROOT_DIR="$DEV_ENV_WORKSPACE_PATH/python"
 ADD_TO_SYSTEM_PATH=0
+PYTHON_BIN="$PYENV_ROOT_DIR/versions/$PYTHON_VERSION/bin/python"
 
-# Check if pyenv is installed
+# Check whether Python exists and includes the optional modules required by
+# the installer. In particular, tar.xz extraction requires the _lzma module.
 echo "Verifying Python installation..."
-"$PYENV_ROOT_DIR/versions/$PYTHON_VERSION/bin/python" --version || {
+PYTHON_NEEDS_INSTALL=0
+if ! "$PYTHON_BIN" --version; then
+    PYTHON_NEEDS_INSTALL=1
+elif ! "$PYTHON_BIN" -c "import lzma" >/dev/null 2>&1; then
+    echo "Python $PYTHON_VERSION is missing lzma support and will be rebuilt."
+    PYTHON_NEEDS_INSTALL=1
+fi
+
+if [ "$PYTHON_NEEDS_INSTALL" -eq 1 ]; then
     if ! command -v pyenv &> /dev/null; then
         echo "Error: pyenv is not installed. Please install pyenv first."
         echo "You can install it using: brew install pyenv"
         exit 1
+    fi
+
+    if ! command -v brew &> /dev/null; then
+        echo "Error: Homebrew is required to provide xz when building Python."
+        exit 1
+    fi
+
+    if ! brew list --versions xz >/dev/null 2>&1; then
+        echo "Installing xz for Python lzma support..."
+        brew install xz || {
+            echo "Error: Failed to install xz"
+            exit 1
+        }
     fi
 
     # Create directories
@@ -42,7 +65,11 @@ echo "Verifying Python installation..."
 
     # Set PYENV_ROOT to python install dir
     export PYENV_ROOT="$PYENV_ROOT_DIR"
-    pyenv install "$PYTHON_VERSION" --skip-existing
+    XZ_PREFIX=$(brew --prefix xz)
+    export CPPFLAGS="-I$XZ_PREFIX/include${CPPFLAGS:+ $CPPFLAGS}"
+    export LDFLAGS="-L$XZ_PREFIX/lib${LDFLAGS:+ $LDFLAGS}"
+    export PKG_CONFIG_PATH="$XZ_PREFIX/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+    pyenv install --force "$PYTHON_VERSION"
 
     # Check if installation was successful
     if [ $? -ne 0 ]; then
@@ -54,12 +81,16 @@ echo "Verifying Python installation..."
     PYENV_PYTHON_PATH=$(pyenv prefix "$PYTHON_VERSION")
 
     echo "Done! Python $PYTHON_VERSION binaries have been copied to $PYENV_ROOT_DIR"
-}
+fi
 
 # Verify installation
 echo "Verifying Python installation..."
-$PYENV_ROOT_DIR/versions/$PYTHON_VERSION/bin/python --version || {
+"$PYTHON_BIN" --version || {
     echo "Python installation verification failed"
+    exit 1
+}
+"$PYTHON_BIN" -c "import lzma" || {
+    echo "Python lzma verification failed"
     exit 1
 }
 

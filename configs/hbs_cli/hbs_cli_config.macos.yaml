@@ -4,7 +4,10 @@ dependencies:
 install:
   - execute:
       command:
-        - ${workspace}/emscripten/emsdk-5.0.5/node/22.16.0_64bit/bin/npm
+        - env
+        - PATH=${workspace}/emscripten/emsdk-5.0.5/node/22.16.0_64bit/bin:/usr/bin:/bin
+        - ${workspace}/emscripten/emsdk-5.0.5/node/22.16.0_64bit/bin/node
+        - ${workspace}/emscripten/emsdk-5.0.5/node/22.16.0_64bit/lib/node_modules/npm/bin/npm-cli.js
         - install
         - -g
         - hbs-cli

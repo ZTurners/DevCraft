@@ -9,12 +9,12 @@ install:
       src_sub_folder: emsdk-5.0.5
       dest: ${workspace}/emscripten/emsdk-5.0.5
 
-  # install and activate latest emscripten toolchain
+  # install and activate the pinned emscripten toolchain
   - execute:
       command:
         - ${workspace}/emscripten/emsdk-5.0.5/emsdk.bat
         - install
-        - latest
+        - 5.0.5
   - execute:
       skip_if_exists: ${workspace}/emscripten/emsdk-5.0.5/upstream/emscripten/node_modules/typescript/bin/tsc
       command:
@@ -23,7 +23,7 @@ install:
       command:
         - ${workspace}/emscripten/emsdk-5.0.5/emsdk.bat
         - activate
-        - latest
+        - 5.0.5
 
 generator_active_batch:
   file_path: ${workspace}/emscripten/active.bat

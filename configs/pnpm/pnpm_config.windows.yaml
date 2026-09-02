@@ -1,0 +1,22 @@
+dependencies:
+  - emscripten
+
+install:
+  - execute:
+      skip_if_exists: ${workspace}/pnpm/pnpm.cmd
+      command:
+        - ${workspace}/emscripten/emsdk-5.0.5/node/22.16.0_64bit/bin/npm.cmd
+        - install
+        - --global
+        - --prefix
+        - ${workspace}/pnpm
+        - pnpm
+
+generator_active_batch:
+  file_path: ${workspace}/pnpm/active.bat
+  environments:
+    set:
+      PNPM_HOME: ${workspace}/pnpm/global
+    prepend:
+      - PATH: ${workspace}/pnpm
+      - PATH: ${workspace}/pnpm/global

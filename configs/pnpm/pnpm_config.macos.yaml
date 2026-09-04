@@ -17,9 +17,10 @@ install:
 
 generator_active_batch:
   file_path: ${workspace}/pnpm/active.sh
+  # commands:
+  #   - pnpm setup
   environments:
     set:
       PNPM_HOME: ${workspace}/pnpm/global
     prepend:
-      - PATH: ${workspace}/pnpm/bin
-      - PATH: ${workspace}/pnpm/global
+      - PATH: ${workspace}/pnpm/global/bin

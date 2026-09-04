@@ -910,7 +910,10 @@ class WorkspaceInstaller:
                     prepend_env_list.append((var, value))
         
         # Generate the batch file
-        self.generate_enviroment_set_batch_file(file_path, set_env_list, prepend_env_list)
+        commands = generator_active_batch.get("commands", [])
+        if isinstance(commands, str):
+            commands = [commands]
+        self.generate_enviroment_set_batch_file(file_path, set_env_list, prepend_env_list, commands)
 
     def _process_change_file_content(self, change_config, context):
         """Handle change_file_content node.
@@ -1213,7 +1216,8 @@ class WorkspaceInstaller:
                 except Exception as e:
                     raise RuntimeError(f"Error processing '{node_name}' configuration: {e}") from e
 
-    def generate_enviroment_set_batch_file(self, output_file, set_env_list, prepend_env_list):
+    def generate_enviroment_set_batch_file(self, output_file, set_env_list, prepend_env_list, commands=None):
+        commands = commands or []
         # Assert the file_path has the correct extension for the current platform
         if self.m_system_name == "Windows":
             assert output_file.endswith(".bat"), \
@@ -1228,18 +1232,18 @@ class WorkspaceInstaller:
                 f.write(":: Auto-generated environment setup script (Windows)\n")
                 f.write(":: This script sets and appends environment variables\n\n")
                 
-                # Set commands (overwrite existing values)
-                for var_name, value in set_env_list:
-                    value = self._formalize_path(value)
-                    f.write(f'set {var_name}={value}\n')
-                
-                if set_env_list and prepend_env_list:
-                    f.write('\n')
-                
                 # Append commands
                 for var_name, value in prepend_env_list:
                     value = self._formalize_path(value)
                     f.write(f'set {var_name}={value};%{var_name}%\n')
+
+                for command in commands:
+                    f.write(f'\n{self._formalize_path(command)}\n')
+
+                # Set commands (overwrite existing values) after setup commands
+                for var_name, value in set_env_list:
+                    value = self._formalize_path(value)
+                    f.write(f'set {var_name}={value}\n')
                 
                 f.write('\necho Environment variables set successfully\n')
         else:
@@ -1248,18 +1252,18 @@ class WorkspaceInstaller:
                 f.write("# Auto-generated environment setup script\n")
                 f.write("# This script sets and appends environment variables\n\n")
                 
-                # Write set commands (overwrite existing values)
-                for var_name, value in set_env_list:
-                    value = self._formalize_path(value)
-                    f.write(f'export {var_name}="{value}"\n')
-                
-                if set_env_list and prepend_env_list:
-                    f.write('\n')
-                
                 # Write append commands
                 for var_name, value in prepend_env_list:
                     value = self._formalize_path(value)
                     f.write(f'export {var_name}="{value}:${var_name}"\n')
+
+                for command in commands:
+                    f.write(f'\n{self._formalize_path(command)}\n')
+
+                # Write set commands (overwrite existing values) after setup commands
+                for var_name, value in set_env_list:
+                    value = self._formalize_path(value)
+                    f.write(f'export {var_name}="{value}"\n')
                 
                 f.write('\necho "Environment variables set successfully"\n')
         

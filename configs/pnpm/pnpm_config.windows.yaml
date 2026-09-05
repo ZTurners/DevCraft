@@ -20,4 +20,5 @@ generator_active_batch:
     set:
       PNPM_HOME: ${workspace}/pnpm/global
     prepend:
+      - PATH: ${workspace}/pnpm
       - PATH: ${workspace}/pnpm/global/bin

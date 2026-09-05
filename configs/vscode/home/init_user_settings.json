@@ -1,5 +1,5 @@
 {
-    "window.title": "⚠Dev⚠ - ${rootName}",
+    "window.title": "⚠️Dev⚠️ - ${rootName}",
     "files.eol": "\n",
 
     "terminal.integrated.env.linux": {

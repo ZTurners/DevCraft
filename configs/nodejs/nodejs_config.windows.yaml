@@ -1,0 +1,21 @@
+install:
+  # Node.js v26.8.1 (latest stable release at configuration time)
+  - download:
+      src:
+        url: https://nodejs.org/dist/v26.8.1/node-v26.8.1-win-x64.zip
+        SHA-256: 57693d8e93d1b04e7b7de46aca53ecd63e97564e73de36a68428d7ff08d83587
+      dest: ${download}/node-v26.8.1-win-x64.zip
+  - unzip:
+      src: ${download}/node-v26.8.1-win-x64.zip
+      src_sub_folder: node-v26.8.1-win-x64
+      dest: ${workspace}/nodejs/node-v26.8.1
+
+generator_active_batch:
+  file_path: ${workspace}/nodejs/active.bat
+  environments:
+    set:
+      NODE_HOME: ${workspace}/nodejs/node-v26.8.1
+      NPM_CONFIG_PREFIX: ${workspace}/nodejs/global
+    prepend:
+      - PATH: ${workspace}/nodejs/node-v26.8.1
+      - PATH: ${workspace}/nodejs/global/bin

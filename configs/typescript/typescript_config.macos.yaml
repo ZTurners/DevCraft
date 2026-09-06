@@ -1,0 +1,23 @@
+dependencies:
+  - nodejs
+
+install:
+  # TypeScript 7.0.2 (latest npm release at configuration time)
+  - execute:
+      skip_if_exists: ${workspace}/typescript/bin/tsc
+      command:
+        - env
+        - PATH=${workspace}/nodejs/node-v26.8.1/bin:/usr/bin:/bin
+        - ${workspace}/nodejs/node-v26.8.1/bin/node
+        - ${workspace}/nodejs/node-v26.8.1/lib/node_modules/npm/bin/npm-cli.js
+        - install
+        - --global
+        - --prefix
+        - ${workspace}/typescript
+        - typescript@7.0.2
+
+generator_active_batch:
+  file_path: ${workspace}/typescript/active.sh
+  environments:
+    prepend:
+      - PATH: ${workspace}/typescript/bin

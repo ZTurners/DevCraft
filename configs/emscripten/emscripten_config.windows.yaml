@@ -16,10 +16,6 @@ install:
         - install
         - 5.0.5
   - execute:
-      skip_if_exists: ${workspace}/emscripten/emsdk-5.0.5/upstream/emscripten/node_modules/typescript/bin/tsc
-      command:
-        - pushd "${workspace}/emscripten/emsdk-5.0.5/upstream/emscripten" && "${workspace}/emscripten/emsdk-5.0.5/node/22.16.0_64bit/bin/npm.cmd" install && popd
-  - execute:
       command:
         - ${workspace}/emscripten/emsdk-5.0.5/emsdk.bat
         - activate

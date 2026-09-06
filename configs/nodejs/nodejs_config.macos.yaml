@@ -1,0 +1,21 @@
+install:
+  # Node.js v26.8.1 (latest stable release at configuration time)
+  - download:
+      src:
+        url: https://nodejs.org/dist/v26.8.1/node-v26.8.1-darwin-arm64.tar.gz
+        SHA-256: 6e577fd0d9db776db82306629e441a9dace416702622aebdd171c9dfaa41f4d2
+      dest: ${download}/node-v26.8.1-darwin-arm64.tar.gz
+  - unzip:
+      src: ${download}/node-v26.8.1-darwin-arm64.tar.gz
+      src_sub_folder: node-v26.8.1-darwin-arm64
+      dest: ${workspace}/nodejs/node-v26.8.1
+
+generator_active_batch:
+  file_path: ${workspace}/nodejs/active.sh
+  environments:
+    set:
+      NODE_HOME: ${workspace}/nodejs/node-v26.8.1
+      NPM_CONFIG_PREFIX: ${workspace}/nodejs/global
+    prepend:
+      - PATH: ${workspace}/nodejs/node-v26.8.1/bin
+      - PATH: ${workspace}/nodejs/global/bin

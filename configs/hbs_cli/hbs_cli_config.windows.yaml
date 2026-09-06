@@ -1,10 +1,10 @@
 dependencies:
-  - emscripten
+  - nodejs
 
 install:
   - execute:
       command:
-        - ${workspace}/emscripten/emsdk-5.0.5/node/22.16.0_64bit/bin/npm.cmd
+        - ${workspace}/nodejs/node-v26.8.1/npm.cmd
         - install
         - -g
         - hbs-cli
@@ -14,4 +14,4 @@ generator_active_batch:
   file_path: ${workspace}/hbs_cli/active.bat
   environments:
     prepend:
-      - PATH: ${workspace}/emscripten/emsdk-5.0.5/node/22.16.0_64bit/bin;${workspace}/mustache/mustache_1.4.0_win_x86_64
+      - PATH: ${workspace}/nodejs/node-v26.8.1;${workspace}/mustache/mustache_1.4.0_win_x86_64

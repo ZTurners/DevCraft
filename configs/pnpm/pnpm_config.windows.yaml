@@ -18,6 +18,6 @@ generator_active_batch:
   #   - pnpm setup
   environments:
     set:
-      PNPM_HOME: ${workspace}/pnpm/global
+      PNPM_HOME: ${workspace}/pnpm
     prepend:
-      - PATH: ${workspace}/pnpm/global/bin
+      - PATH: ${workspace}/pnpm

@@ -25,4 +25,4 @@ generator_active_batch:
     prepend:
       - PATH: ${workspace}/nodejs/node-v26.8.1/bin
       - PATH: ${workspace}/pnpm
-      - PATH: ${workspace}/pnpm/global/bin
+      - PATH: ${workspace}/pnpm/bin

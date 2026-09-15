@@ -8,4 +8,5 @@ install:
       files:
         - ${workspace}/active_with_bash.windows.sh
         - ${workspace}/active_with_vscode.windows.sh
+        - ${workspace}/active_with_zcode.windows.sh
         - ${workspace}/active.windows.sh

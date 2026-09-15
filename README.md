@@ -13,6 +13,7 @@ DevCraft is a cross-platform developer environment bootstrap repository. It down
 - `workspace/active_with_codex_app.windows.bat`
 - `workspace/active_with_codex_cli.windows.bat`
 - `workspace/active_with_vscode.windows.bat`
+- `workspace/active_with_zcode.windows.bat`
 
 ### macOS
 - `bootstrap.macos.sh`
@@ -49,6 +50,12 @@ Or launch Codex CLI with the local environment:
 
 ```bat
 workspace\active_with_codex_cli.windows.bat
+```
+
+Or launch ZCode with the local environment:
+
+```bat
+workspace\active_with_zcode.windows.bat
 ```
 
 ### macOS

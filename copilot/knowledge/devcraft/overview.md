@@ -120,6 +120,7 @@ Important activation entry points include:
 - `workspace/active.windows.bat`
 - `workspace/active_with_cmd.windows.bat`
 - `workspace/active_with_vscode.windows.bat`
+- `workspace/active_with_zcode.windows.bat`
 
 ### `copilot/`
 

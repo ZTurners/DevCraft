@@ -8,4 +8,5 @@ install:
       files:
         - ${workspace}/active_with_bash.macos.sh
         - ${workspace}/active_with_vscode.macos.sh
+        - ${workspace}/active_with_zcode.macos.sh
         - ${workspace}/active.macos.sh

@@ -1,53 +1,54 @@
 install:
   - execute:
       command:
-        - if brew list --versions llvm@21 >/dev/null 2>&1; then echo "llvm@21 already installed"; else brew install llvm@21; fi &&
-        - mkdir -p ${workspace}/llvm/llvm-21 &&
-        - ln -sf $(brew --prefix llvm@21) ${workspace}/llvm/llvm-21/arm64-apple-darwin
-  # lld-21:
+        - if brew list --versions llvm >/dev/null 2>&1; then brew upgrade llvm; else brew install llvm; fi &&
+        - mkdir -p ${workspace}/llvm/llvm-23 &&
+        - ln -sf $(brew --prefix llvm) ${workspace}/llvm/llvm-23/arm64-apple-darwin
+  # Keep LLD on the current stable release because newer Apple SDK TAPI
+  # targets (for example arm64e.x1-macos) are not supported by ld64.lld 21.
   - execute:
       command:
-        - if brew list --versions lld@21 >/dev/null 2>&1; then echo "lld@21 already installed"; else brew install lld@21; fi &&
-        - mkdir -p ${workspace}/llvm/lld-21 &&
-        - ln -sf $(brew --prefix lld@21) ${workspace}/llvm/lld-21/arm64-apple-darwin
+        - if brew list --versions lld >/dev/null 2>&1; then brew upgrade lld; else brew install lld; fi &&
+        - mkdir -p ${workspace}/llvm/lld-23 &&
+        - ln -sf $(brew --prefix lld) ${workspace}/llvm/lld-23/arm64-apple-darwin
   
   # llvm for macos arm64
   # - download:
   #     src:
-  #       url: https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.6/LLVM-21.1.6-macOS-ARM64.tar.xz
-  #       SHA-256: bdf036e9987b8706471b565f50178a34218909b1858a82c426269da49780b6ba
-  #     dest: ${download}/LLVM-21.1.6-macOS-ARM64.tar.xz
+  #       url: https://github.com/llvm/llvm-project/releases/download/llvmorg-23.1.1/LLVM-23.1.1-macOS-ARM64.tar.xz
+  #       SHA-256: 64220f1c99132ef7e580447781b84f96fbba6862a43a8f6522b423052cd67502
+  #     dest: ${download}/LLVM-23.1.1-macOS-ARM64.tar.xz
   # - unzip:
-  #     src: ${download}/LLVM-21.1.6-macOS-ARM64.tar.xz
-  #     src_sub_folder: LLVM-21.1.6-macOS-ARM64
-  #     dest: ${workspace}/llvm/llvm-21/arm64-apple-darwin
+  #     src: ${download}/LLVM-23.1.1-macOS-ARM64.tar.xz
+  #     src_sub_folder: LLVM-23.1.1-macOS-ARM64
+  #     dest: ${workspace}/llvm/llvm-23/arm64-apple-darwin
 
   # llvm for linux arm64
   - download:
       src:
-        url: https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.6/LLVM-21.1.6-Linux-ARM64.tar.xz
-        SHA-256: 1d8a9e05007b8b9005c63f90d7646b2b6263451d605cca070418d0a71e669377
-      dest: ${download}/LLVM-21.1.6-Linux-ARM64.tar.xz
+        url: https://github.com/llvm/llvm-project/releases/download/llvmorg-23.1.1/LLVM-23.1.1-Linux-ARM64.tar.xz
+        SHA-256: 3fbaaa6a1f147557a4095b9911f8dc2d4c745a11863982f76ee20e248c190a80
+      dest: ${download}/LLVM-23.1.1-Linux-ARM64.tar.xz
   - unzip:
-      src: ${download}/LLVM-21.1.6-Linux-ARM64.tar.xz
-      src_sub_folder: LLVM-21.1.6-Linux-ARM64
-      dest: ${workspace}/llvm/llvm-21/aarch64-linux-gnu
+      src: ${download}/LLVM-23.1.1-Linux-ARM64.tar.xz
+      src_sub_folder: LLVM-23.1.1-Linux-ARM64
+      dest: ${workspace}/llvm/llvm-23/aarch64-linux-gnu
 
   # llvm for linux x86_64
   - download:
       src:
-        url: https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.6/LLVM-21.1.6-Linux-X64.tar.xz
-        SHA-256: 8ac1aadfa96b87b8747f7383d06ed9579f9d5c32a1af7af947b0cfe29d88ac87
-      dest: ${download}/LLVM-21.1.6-Linux-X64.tar.xz
+        url: https://github.com/llvm/llvm-project/releases/download/llvmorg-23.1.1/LLVM-23.1.1-Linux-X64.tar.xz
+        SHA-256: 832aeb58d105de1cabc7b982dd2c65de0610f7377df48ae8fc2dd8e97420a15c
+      dest: ${download}/LLVM-23.1.1-Linux-X64.tar.xz
   - unzip:
-      src: ${download}/LLVM-21.1.6-Linux-X64.tar.xz
-      src_sub_folder: LLVM-21.1.6-Linux-X64
-      dest: ${workspace}/llvm/llvm-21/x86_64-linux-gnu
+      src: ${download}/LLVM-23.1.1-Linux-X64.tar.xz
+      src_sub_folder: LLVM-23.1.1-Linux-X64
+      dest: ${workspace}/llvm/llvm-23/x86_64-linux-gnu
 generator_active_batch:
   file_path: ${workspace}/llvm/active.sh
   environments:
     # set:
-    #   HOST_LLVM_BIN: ${workspace}/llvm/llvm-21/arm64-apple-darwin/bin
+    #   HOST_LLVM_BIN: ${workspace}/llvm/llvm-23/arm64-apple-darwin/bin
     prepend:
-      - PATH: ${workspace}/llvm/llvm-21/arm64-apple-darwin/bin
-      - PATH: ${workspace}/llvm/lld-21/arm64-apple-darwin/bin
+      - PATH: ${workspace}/llvm/llvm-23/arm64-apple-darwin/bin
+      - PATH: ${workspace}/llvm/lld-23/arm64-apple-darwin/bin

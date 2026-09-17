@@ -250,9 +250,20 @@ class PortableMsvcInstaller:
                 if legacy is not None:
                     legacy.rename(windowskits)
 
-    def finalize_layout(self, host, targets):
-        msvcv = first((self.msvc_output / "VC/Tools/MSVC").glob("*")).name
-        sdkv = first((self.sdk_output / "WindowsKits/10/bin").glob("*")).name
+    def finalize_layout(self, host, targets, msvc_ver, sdk_ver):
+        # Multiple toolset versions may coexist under VC/Tools/MSVC (e.g. 14.51 kept
+        # for rollback while installing 14.52), so resolve the just-installed one from
+        # the requested version instead of grabbing the first matching directory.
+        toolset_prefix = _parse_msvc_version_prefix(msvc_ver)
+        msvc_candidates = [p.name for p in (self.msvc_output / "VC/Tools/MSVC").glob(f"{toolset_prefix}*") if p.is_dir()]
+        if not msvc_candidates:
+            sys.exit(f"No MSVC toolset folder matching {toolset_prefix!r} under {self.msvc_output / 'VC/Tools/MSVC'}")
+        msvcv = self._latest_numeric_version(msvc_candidates)
+
+        sdk_candidates = [p.name for p in (self.sdk_output / "WindowsKits/10/bin").glob(f"10.0.{sdk_ver}.*")]
+        if not sdk_candidates:
+            sys.exit(f"No Windows SDK folder matching 10.0.{sdk_ver}.* under {self.sdk_output / 'WindowsKits/10/bin'}")
+        sdkv = self._latest_numeric_version(sdk_candidates)
 
         redist = self.msvc_output / "VC/Redist"
         if redist.exists():
@@ -394,9 +405,11 @@ def _find_sdk_version_dirs(sdk_output, sdk_build):
 
 
 def _toolchain_already_installed(msvc_output, sdk_output, msvc_version, sdk_build):
-    msvc_dir = msvc_output / "VC/Tools/MSVC" / msvc_version
+    # Insiders feeds key packages by 'major.minor' while the extracted folder carries
+    # the full version, so match by the same prefix rules as the CLI argument.
+    msvc_dirs = _find_msvc_version_dirs_from_arg(msvc_output, msvc_version)
     sdk_dirs = _find_sdk_version_dirs(sdk_output, sdk_build)
-    return msvc_dir.exists() and len(sdk_dirs) > 0, msvc_dir, sdk_dirs
+    return len(msvc_dirs) > 0 and len(sdk_dirs) > 0, first(msvc_dirs), sdk_dirs
 
 
 def _find_msvc_version_dirs_from_arg(msvc_output, msvc_version_arg):
@@ -544,7 +557,7 @@ def main():
 
     installer.download_msvc(packages, msvc_ver, host, targets)
     installer.download_windows_sdk(packages, sdk_pid, targets)
-    installer.finalize_layout(host, targets)
+    installer.finalize_layout(host, targets, msvc_ver, sdk_ver)
 
     print(f"Total downloaded: {installer.total_download >> 20} MB")
     print(f"Portable MSVC installed at: {msvc_output.resolve()}")

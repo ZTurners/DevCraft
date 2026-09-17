@@ -11,6 +11,7 @@ install:
   - copy:
       src: ${configs}/conan/home
       dest: ${workspace}/conan/.conan
+      force_update: true
   # conan_profile_detect:
   - environments:
       set:

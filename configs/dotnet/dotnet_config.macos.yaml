@@ -15,7 +15,7 @@ install:
 
   - execute:
       command:
-        - ${workspace}/dotnet/dotnet-sdk-10.0.401-osx-arm64/dotnet workload install wasi-experimental
+        - ${workspace}/dotnet/dotnet-sdk-10.0.401-osx-arm64/dotnet workload install wasi-experimental wasm-tools
 
 generator_active_batch:
   file_path: ${workspace}/dotnet/active.sh

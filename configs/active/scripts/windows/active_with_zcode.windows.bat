@@ -21,7 +21,12 @@ if "%ZCODE_APP_EXE%"=="" (
     exit /b 1
 )
 
-start "" "%ZCODE_APP_EXE%"
+:: TODO: remove later
+:: --enable-unsafe-webgpu: force-enable WebGPU for GPUs not on Chrome's hardware whitelist
+:: (e.g. Moore Threads). Newer Chrome versions already include them in the
+:: whitelist, but the Chromium version bundled with ZCode is too old. Remove this flag
+:: once ZCode ships a Chromium version that natively supports these GPUs.
+start "" "%ZCODE_APP_EXE%" --enable-unsafe-webgpu
 set ZCODE_EXIT=%errorlevel%
 popd
 exit /b %ZCODE_EXIT%

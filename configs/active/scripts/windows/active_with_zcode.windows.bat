@@ -13,10 +13,13 @@ if %errorlevel% neq 0 (
 )
 
 :: start ZCode desktop app as a child process so it inherits this environment
-for /f "usebackq delims=" %%A in (`powershell -NoProfile -ExecutionPolicy Bypass -Command "$exe = $null; $default = Join-Path $env:LOCALAPPDATA 'Programs\ZCode\ZCode.exe'; if (Test-Path -LiteralPath $default) { $exe = $default }; if (-not $exe) { foreach ($hive in 'Registry::HKEY_CURRENT_USER', 'Registry::HKEY_LOCAL_MACHINE') { $key = Get-Item -LiteralPath ($hive + '\Software\Microsoft\Windows\CurrentVersion\App Paths\ZCode.exe') -ErrorAction SilentlyContinue; if ($key) { $p = $key.GetValue(''); if ($p) { $p = $p.Trim([char]34); if (Test-Path -LiteralPath $p) { $exe = $p; break } } } } }; if (-not $exe) { foreach ($candidate in @(where.exe ZCode.exe 2>$null)) { $exe = $candidate; break } }; if ($exe) { Write-Output $exe }"`) do set "ZCODE_APP_EXE=%%A"
+:: locate ZCode.exe via the zcode:// protocol handler registration, which the app
+:: itself writes at first launch: HKEY_CLASSES_ROOT\zcode\shell\open\command;
+:: the exe path is the first token of the registered command
+for /f "usebackq delims=" %%A in (`powershell -NoProfile -ExecutionPolicy Bypass -Command "$p = $null; $key = Get-Item -LiteralPath 'Registry::HKEY_CLASSES_ROOT\zcode\shell\open\command' -ErrorAction SilentlyContinue; if ($key) { $cmd = $key.GetValue(''); if ($cmd) { $p = $cmd.Trim(); if ($p.StartsWith([char]34)) { $j = $p.IndexOf([char]34, 1); if ($j -gt 0) { $p = $p.Substring(1, $j - 1) } } else { $i = $p.IndexOf(' '); if ($i -gt 0) { $p = $p.Substring(0, $i) } }; if (-not (Test-Path -LiteralPath $p)) { $p = $null } } }; if ($p) { Write-Output $p }"`) do set "ZCODE_APP_EXE=%%A"
 
 if "%ZCODE_APP_EXE%"=="" (
-    echo ZCode desktop app is not installed.
+    echo ZCode desktop app is not installed or its zcode:// protocol handler is not registered.
     popd
     exit /b 1
 )

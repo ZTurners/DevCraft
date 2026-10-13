@@ -173,18 +173,40 @@ class _InstallProgressBar:
                 return head + middle + tail_text
             return head + tail_text.lstrip(" |")
 
-        # Degrade on narrow terminals: drop the skipped note, then the stats
-        # and elapsed, then hard-truncate what is left.
+        # Degrade on narrow terminals: drop the skipped note, then the stats,
+        # keeping only the elapsed time, then hard-truncate what is left. The
+        # flags record what survived so the colored rebuild below produces the
+        # exact same visible text.
+        include_note = bool(skipped_note)
+        include_stats = True
         line = _join(tail)
-        if len(line) > columns - 1 and skipped_note:
+        if len(line) > columns - 1 and include_note:
+            include_note = False
             line = _join(f" | Installed: {self.m_work_done} | Remaining: {remaining} | {elapsed_text}")
         if len(line) > columns - 1:
+            include_stats = False
             line = _join(f" | {elapsed_text}")
         if len(line) > columns - 1:
             line = line[: columns - 1]
-        if self.m_use_colors:
-            line = "\033[36m" + line + "\033[0m"
-        return line
+            if self.m_use_colors:
+                line = "\033[36m" + line + "\033[0m"
+            return line
+
+        if not self.m_use_colors:
+            return line
+
+        # Colored rebuild of the identical visible text: head + current config
+        # cyan, installed count green, skipped note gray, remaining count red.
+        if include_stats:
+            tail_colored = f"\033[32mInstalled: {self.m_work_done}\033[0m"
+            if include_note:
+                tail_colored += f" \033[90m({self.m_skipped} skipped)\033[0m"
+            tail_colored += f" | \033[31mRemaining: {remaining}\033[0m | \033[36m{elapsed_text}\033[0m"
+        else:
+            tail_colored = f"\033[36m{elapsed_text}\033[0m"
+        if middle:
+            return f"\033[36m{head}{middle}\033[0m | {tail_colored}"
+        return f"\033[36m{head}\033[0m{tail_colored}"
 
 class WorkspaceInstaller:
     def __init__(self):

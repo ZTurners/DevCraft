@@ -63,8 +63,20 @@ echo Using Python tar extraction on Windows (no external tar bootstrap)
         echo Downloading Python %PYTHON_VERSION% ...
         if not exist "%ZIP_FILE%" (
             echo Downloading from %PYTHON_URL% ...
-            powershell -Command "Invoke-WebRequest -Uri '%PYTHON_URL%' -OutFile '%ZIP_FILE%'" 
-
+            where curl.exe >nul 2>&1
+            if not errorlevel 1 (
+                curl.exe -fL --progress-bar -o "%ZIP_FILE%.tmp" "%PYTHON_URL%"
+            ) else (
+                echo curl.exe not found, falling back to Invoke-WebRequest ...
+                powershell -Command "Invoke-WebRequest -Uri '%PYTHON_URL%' -OutFile '%ZIP_FILE%.tmp'"
+            )
+            if errorlevel 1 (
+                if exist "%ZIP_FILE%.tmp" del /f /q "%ZIP_FILE%.tmp"
+                echo Error: Failed to download %PYTHON_URL%
+                pause
+                exit /b 1
+            )
+            move /y "%ZIP_FILE%.tmp" "%ZIP_FILE%" >nul
         ) else (
             echo ZIP file already exists at %ZIP_FILE%
         )

@@ -23,13 +23,53 @@ install:
   # emsdk's own downloader (urllib, no resume/retry) is flaky against the GCS
   # deps bucket and leaves partial files that later runs treat as complete
   # ("already downloaded, skipping"); pre-seed the node zip with DevCraft's
-  # curl-based download (retry + Content-Length check) so emsdk install finds
-  # a complete file and skips its own download
+  # multi-threaded download (retry + checksum verification) so emsdk install
+  # finds a complete file and skips its own download. Cache under a renamed
+  # file in the persistent ${download} dir (sdk_root is wiped on reinstall;
+  # the emsdk- prefix avoids colliding with the nodejs config's official
+  # node zip of the same name), then copy into emsdk's downloads/ keeping
+  # the original filename emsdk looks for
   - download:
       src:
         url: https://storage.googleapis.com/webassembly/emscripten-releases-builds/deps/node-v$var{emscripten_node_version}-win-x64.zip
         MD5: 9430c310f660c88ee41aa4bd28979cd4  # GCS x-goog-hash, update on version bump
+      dest: ${download}/emsdk-node-v$var{emscripten_node_version}-win-x64.zip
+  - copy:
+      src: ${download}/emsdk-node-v$var{emscripten_node_version}-win-x64.zip
       dest: ${workspace}/emscripten/emsdk-$var{emscripten_version}/downloads/node-v$var{emscripten_node_version}-win-x64.zip
+
+  # same pre-seed for emsdk's python tool and the wasm-binaries release
+  # archive (llvm+emscripten+binaryen, ~600MB) — emsdk's own urllib downloader
+  # has no retries and shows no progress, which is where installs hang on
+  # flaky GCS connections; download URLs and MD5s come from
+  # emsdk_manifest.json / emscripten-releases-tags.json + GCS x-goog-hash
+  - download:
+      src:
+        url: https://storage.googleapis.com/webassembly/emscripten-releases-builds/deps/python-$var{emscripten_python_version}-0-win-amd64.zip
+        MD5: 757cf68f33352ce1ee1350eb88e0fc49  # GCS x-goog-hash; '-0' is emsdk's repackaging number
+      dest: ${download}/emsdk-python-$var{emscripten_python_version}-0-win-amd64.zip
+  - copy:
+      src: ${download}/emsdk-python-$var{emscripten_python_version}-0-win-amd64.zip
+      dest: ${workspace}/emscripten/emsdk-$var{emscripten_version}/downloads/python-$var{emscripten_python_version}-0-win-amd64.zip
+
+  # release hash below is pinned to emscripten_version via
+  # emscripten-releases-tags.json ("5.0.5": "6eae7034..."); update both together
+  - download:
+      src:
+        url: https://storage.googleapis.com/webassembly/emscripten-releases-builds/win/6eae703422b3962d1ed75e15f728ece57aad6bd6/wasm-binaries.zip
+        MD5: 6fadf301e957be9a5d5d41c5b42b7db8  # GCS x-goog-hash
+      dest: ${download}/emsdk-wasm-binaries-$var{emscripten_version}.zip
+  - copy:
+      src: ${download}/emsdk-wasm-binaries-$var{emscripten_version}.zip
+      dest: ${workspace}/emscripten/emsdk-$var{emscripten_version}/downloads/wasm-binaries.zip
+
+  # emsdk re-downloads archives even when they already sit in downloads/
+  # (download_file is called with download_even_if_exists=True unless
+  # EMSDK_KEEP_DOWNLOADS is set); with this, the pre-seeded node zip and any
+  # archive kept from a previous install are reused instead of re-fetched
+  - environments:
+      set:
+        EMSDK_KEEP_DOWNLOADS: "1"
 
   # install and activate the pinned emscripten toolchain
   - execute:

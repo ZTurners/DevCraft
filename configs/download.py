@@ -171,6 +171,7 @@ def download_file(url, dest,
         if attempt > 1:
             print(f"Running download attempt {attempt}/{max_attempts}...")
         print(f"Downloading... {url}")
+        print(f"    to {dest}")
 
         try:
             if need_auth:

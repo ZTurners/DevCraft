@@ -120,12 +120,17 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# Install PyYAML (YAML configs) + pypdl (multi-threaded downloads in configs/download.py)
-echo "Installing PyYAML and pypdl..."
-python -m pip install pyyaml pypdl
-if [ $? -ne 0 ]; then
-    echo "PyYAML/pypdl install failed"
-    exit 1
+# Install PyYAML (YAML configs) + pypdl (multi-threaded downloads in configs/download.py);
+# pip show is a local check, so an already-provisioned machine skips the pypi round-trip
+if python -m pip show pyyaml >/dev/null 2>&1 && python -m pip show pypdl >/dev/null 2>&1; then
+    echo "PyYAML and pypdl already installed, skipping pip install"
+else
+    echo "Installing PyYAML and pypdl..."
+    python -m pip install pyyaml pypdl
+    if [ $? -ne 0 ]; then
+        echo "PyYAML/pypdl install failed"
+        exit 1
+    fi
 fi
 
 # Installation summary

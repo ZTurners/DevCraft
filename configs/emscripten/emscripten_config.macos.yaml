@@ -26,6 +26,14 @@ install:
         - ${workspace}/emscripten/emsdk-$var{emscripten_version}/emsdk
         - ${workspace}/emscripten/emsdk-$var{emscripten_version}/emsdk_env.sh
 
+  # emsdk re-downloads archives even when they already sit in downloads/
+  # (download_file is called with download_even_if_exists=True unless
+  # EMSDK_KEEP_DOWNLOADS is set); with this, archives kept from a previous
+  # install are reused instead of re-fetched
+  - environments:
+      set:
+        EMSDK_KEEP_DOWNLOADS: "1"
+
   # install and activate the pinned emscripten toolchain
   - execute:
       terminal: true

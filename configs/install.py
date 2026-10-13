@@ -1403,14 +1403,25 @@ class WorkspaceInstaller:
         """Path of the config copy stored inside an installed sdk root."""
         return os.path.join(sdk_root, os.path.basename(config_file_path))
 
-    @staticmethod
-    def _rmtree_force(path):
+    # Inline delete-progress redraw cadence; per-item prints would dominate
+    # the runtime on SDK-sized trees
+    _REMOVE_PROGRESS_INTERVAL_SECONDS = 0.1
+
+    def _rmtree_force(self, path, progress_label=None):
         """shutil.rmtree that clears read-only flags before retrying.
 
         Archives for Unix targets (e.g. LLVM's Linux tarballs) contain files
         with 0444/0555 permissions; on Windows these map to read-only files
         that plain shutil.rmtree cannot delete (WinError 5).
+
+        With progress_label (and a terminal stdout), the tree is scanned and
+        deleted entry by entry while an inline percentage line is redrawn.
         """
+        if (progress_label and sys.stdout.isatty()
+                and os.path.isdir(path) and not os.path.islink(path)):
+            self._rmtree_with_progress(path, progress_label)
+            return
+
         def _clear_readonly(func, target, _exc):
             os.chmod(target, stat.S_IWRITE)
             func(target)
@@ -1419,6 +1430,83 @@ class WorkspaceInstaller:
             shutil.rmtree(path, onexc=_clear_readonly)
         else:
             shutil.rmtree(path, onerror=_clear_readonly)
+
+    def _rmtree_with_progress(self, path, label):
+        """Delete a tree bottom-up, redrawing 'label: NN% [done/total]' as it goes."""
+        started = time.monotonic()
+        last_draw = 0.0
+
+        def _draw(body, force=False):
+            nonlocal last_draw
+            now = time.monotonic()
+            if not force and now - last_draw < self._REMOVE_PROGRESS_INTERVAL_SECONDS:
+                return
+            last_draw = now
+            # \033[K wipes the tail of the previous, possibly longer line
+            print(f"\r{label}: {body}\033[K", end="", flush=True)
+
+        # Scan pass: entry counts are needed before the delete pass can show a
+        # percentage; counting a big tree takes a while, so it shares the line
+        file_paths = []
+        dir_paths = []
+        for root, dirs, files in os.walk(path, topdown=False, followlinks=False):
+            for name in files:
+                file_paths.append(os.path.join(root, name))
+            for name in dirs:
+                dir_paths.append(os.path.join(root, name))
+            _draw(f"scanning... {len(file_paths)} files")
+
+        total = len(file_paths) + len(dir_paths)
+        done = 0
+
+        def _draw_progress():
+            _draw(f"{done * 100 // max(1, total)}% [{done}/{total} items]")
+
+        try:
+            for file_path in file_paths:
+                self._remove_file_force(file_path)
+                done += 1
+                _draw_progress()
+            # topdown=False yields children before parents, so directories
+            # disappear in dependency order; symlinked dirs were never
+            # descended into and are removed as links
+            for dir_path in dir_paths:
+                self._remove_dir_force(dir_path)
+                done += 1
+                _draw_progress()
+            os.rmdir(path)
+        except Exception:
+            print()  # leave the progress line before the error text
+            raise
+        elapsed_text = self._format_duration(time.monotonic() - started)
+        _draw(f"100% [{total} items removed in {elapsed_text}]", force=True)
+        print()
+
+    @staticmethod
+    def _remove_file_force(path):
+        try:
+            os.unlink(path)
+        except FileNotFoundError:
+            pass  # already gone; the goal is an empty tree
+        except PermissionError:
+            os.chmod(path, stat.S_IWRITE)
+            os.unlink(path)
+
+    @staticmethod
+    def _remove_dir_force(path):
+        if os.path.islink(path):
+            try:
+                os.unlink(path)  # POSIX directory symlinks
+                return
+            except OSError:
+                pass  # Windows directory symlinks/junctions need rmdir below
+        try:
+            os.rmdir(path)
+        except FileNotFoundError:
+            pass
+        except PermissionError:
+            os.chmod(path, stat.S_IWRITE)
+            os.rmdir(path)
 
     def _validate_installed_config_state(self, config_file_path, sdk_root):
         """Wipe the sdk root when the stored config copy is missing or changed.
@@ -1440,7 +1528,8 @@ class WorkspaceInstaller:
 
         print(f"\nConfig change detected: {reason}.")
         print(f"Removing sdk root for a clean reinstall: {sdk_root}")
-        self._rmtree_force(sdk_root)
+        self.m_progress_bar.set_step("removing old install")
+        self._rmtree_force(sdk_root, progress_label="Removing old install")
 
     def _remove_failed_sdk_root(self, sdk_root, config_display_name):
         """Remove the sdk root after a failed install so no broken state remains."""
@@ -1448,8 +1537,9 @@ class WorkspaceInstaller:
             return
 
         print(f"\nInstall failed for '{config_display_name}'; removing sdk root: {sdk_root}")
+        self.m_progress_bar.set_step("removing failed install")
         try:
-            self._rmtree_force(sdk_root)
+            self._rmtree_force(sdk_root, progress_label="Removing failed install")
         except Exception as e:
             print(f"Warning: could not remove sdk root '{sdk_root}': {e}")
 

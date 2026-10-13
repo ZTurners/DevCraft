@@ -18,10 +18,18 @@ install:
       set:
         NUGET_PACKAGES: ${workspace}/nuget
 
+  # NuGet sources: checked-in NuGet.config copied into the workspace
+  # (conan-home style) and passed to the workload install via --configfile;
+  # it prefers the Huawei Cloud nuget.org mirror, with nuget.org as fallback
+  - copy:
+      src: ${configs}/dotnet/NuGet.config
+      dest: ${workspace}/dotnet/NuGet.config
+      force_update: true
+
   - execute:
       terminal: true
       command:
-        - ${workspace}/dotnet/dotnet-sdk-$var{dotnet_version}-osx-arm64/dotnet workload install wasi-experimental wasm-tools
+        - ${workspace}/dotnet/dotnet-sdk-$var{dotnet_version}-osx-arm64/dotnet workload install wasi-experimental wasm-tools --verbosity detailed --configfile ${workspace}/dotnet/NuGet.config
 
 generator_active_batch:
   file_path: ${workspace}/dotnet/active.sh

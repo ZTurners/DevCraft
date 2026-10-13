@@ -1,0 +1,2607 @@
+13-10-26 19:18:38 - ERROR: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 69, in worker
+    raise Exception(
+        f"Incorrect segment size: expected {size} bytes, received {self.curr} bytes"
+    )
+Exception: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+13-10-26 19:18:39 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 459, in read
+    await self._wait("read")
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 365, in _wait
+    await waiter
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:18:41 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 424, in read
+    raise self._exception
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:18:43 - ERROR: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 69, in worker
+    raise Exception(
+        f"Incorrect segment size: expected {size} bytes, received {self.curr} bytes"
+    )
+Exception: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+13-10-26 19:18:44 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 459, in read
+    await self._wait("read")
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 365, in _wait
+    await waiter
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:18:47 - ERROR: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 69, in worker
+    raise Exception(
+        f"Incorrect segment size: expected {size} bytes, received {self.curr} bytes"
+    )
+Exception: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+13-10-26 19:18:57 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 459, in read
+    await self._wait("read")
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 365, in _wait
+    await waiter
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:19:00 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 459, in read
+    await self._wait("read")
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 365, in _wait
+    await waiter
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:19:01 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 459, in read
+    await self._wait("read")
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 365, in _wait
+    await waiter
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:19:03 - ERROR: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 69, in worker
+    raise Exception(
+        f"Incorrect segment size: expected {size} bytes, received {self.curr} bytes"
+    )
+Exception: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+13-10-26 19:19:04 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 459, in read
+    await self._wait("read")
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 365, in _wait
+    await waiter
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:19:07 - ERROR: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 69, in worker
+    raise Exception(
+        f"Incorrect segment size: expected {size} bytes, received {self.curr} bytes"
+    )
+Exception: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+13-10-26 19:19:13 - ERROR: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 69, in worker
+    raise Exception(
+        f"Incorrect segment size: expected {size} bytes, received {self.curr} bytes"
+    )
+Exception: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+13-10-26 19:19:15 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 459, in read
+    await self._wait("read")
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 365, in _wait
+    await waiter
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:19:17 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 424, in read
+    raise self._exception
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:19:18 - ERROR: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 69, in worker
+    raise Exception(
+        f"Incorrect segment size: expected {size} bytes, received {self.curr} bytes"
+    )
+Exception: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+13-10-26 19:19:19 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 459, in read
+    await self._wait("read")
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 365, in _wait
+    await waiter
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:19:21 - ERROR: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 69, in worker
+    raise Exception(
+        f"Incorrect segment size: expected {size} bytes, received {self.curr} bytes"
+    )
+Exception: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+13-10-26 19:19:28 - ERROR: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 69, in worker
+    raise Exception(
+        f"Incorrect segment size: expected {size} bytes, received {self.curr} bytes"
+    )
+Exception: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+13-10-26 19:19:29 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 459, in read
+    await self._wait("read")
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 365, in _wait
+    await waiter
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:19:31 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 459, in read
+    await self._wait("read")
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 365, in _wait
+    await waiter
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:19:33 - ERROR: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 69, in worker
+    raise Exception(
+        f"Incorrect segment size: expected {size} bytes, received {self.curr} bytes"
+    )
+Exception: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+13-10-26 19:19:34 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 459, in read
+    await self._wait("read")
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 365, in _wait
+    await waiter
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:19:36 - ERROR: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 69, in worker
+    raise Exception(
+        f"Incorrect segment size: expected {size} bytes, received {self.curr} bytes"
+    )
+Exception: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+13-10-26 19:19:43 - ERROR: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 69, in worker
+    raise Exception(
+        f"Incorrect segment size: expected {size} bytes, received {self.curr} bytes"
+    )
+Exception: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+13-10-26 19:19:44 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 459, in read
+    await self._wait("read")
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 365, in _wait
+    await waiter
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:19:47 - ERROR: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 69, in worker
+    raise Exception(
+        f"Incorrect segment size: expected {size} bytes, received {self.curr} bytes"
+    )
+Exception: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+13-10-26 19:19:48 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 424, in read
+    raise self._exception
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:19:51 - ERROR: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 69, in worker
+    raise Exception(
+        f"Incorrect segment size: expected {size} bytes, received {self.curr} bytes"
+    )
+Exception: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+13-10-26 19:19:52 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 424, in read
+    raise self._exception
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:19:59 - ERROR: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 69, in worker
+    raise Exception(
+        f"Incorrect segment size: expected {size} bytes, received {self.curr} bytes"
+    )
+Exception: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+13-10-26 19:20:00 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 459, in read
+    await self._wait("read")
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 365, in _wait
+    await waiter
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:20:04 - ERROR: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 69, in worker
+    raise Exception(
+        f"Incorrect segment size: expected {size} bytes, received {self.curr} bytes"
+    )
+Exception: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+13-10-26 19:20:05 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 424, in read
+    raise self._exception
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:20:10 - ERROR: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 69, in worker
+    raise Exception(
+        f"Incorrect segment size: expected {size} bytes, received {self.curr} bytes"
+    )
+Exception: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+13-10-26 19:20:12 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 459, in read
+    await self._wait("read")
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 365, in _wait
+    await waiter
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:20:19 - ERROR: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 69, in worker
+    raise Exception(
+        f"Incorrect segment size: expected {size} bytes, received {self.curr} bytes"
+    )
+Exception: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+13-10-26 19:20:20 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 424, in read
+    raise self._exception
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:20:25 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 459, in read
+    await self._wait("read")
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 365, in _wait
+    await waiter
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:20:28 - ERROR: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 69, in worker
+    raise Exception(
+        f"Incorrect segment size: expected {size} bytes, received {self.curr} bytes"
+    )
+Exception: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+13-10-26 19:20:30 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 459, in read
+    await self._wait("read")
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 365, in _wait
+    await waiter
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:20:36 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 459, in read
+    await self._wait("read")
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 365, in _wait
+    await waiter
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:20:43 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 459, in read
+    await self._wait("read")
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 365, in _wait
+    await waiter
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:20:45 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 424, in read
+    raise self._exception
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:20:49 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 459, in read
+    await self._wait("read")
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 365, in _wait
+    await waiter
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:20:53 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 424, in read
+    raise self._exception
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:20:55 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 424, in read
+    raise self._exception
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:20:57 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 424, in read
+    raise self._exception
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:21:03 - ERROR: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 69, in worker
+    raise Exception(
+        f"Incorrect segment size: expected {size} bytes, received {self.curr} bytes"
+    )
+Exception: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+13-10-26 19:21:04 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 459, in read
+    await self._wait("read")
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 365, in _wait
+    await waiter
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:21:06 - ERROR: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 69, in worker
+    raise Exception(
+        f"Incorrect segment size: expected {size} bytes, received {self.curr} bytes"
+    )
+Exception: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+13-10-26 19:21:07 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 424, in read
+    raise self._exception
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:21:13 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 424, in read
+    raise self._exception
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:21:16 - ERROR: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 69, in worker
+    raise Exception(
+        f"Incorrect segment size: expected {size} bytes, received {self.curr} bytes"
+    )
+Exception: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+13-10-26 19:21:21 - ERROR: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 69, in worker
+    raise Exception(
+        f"Incorrect segment size: expected {size} bytes, received {self.curr} bytes"
+    )
+Exception: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+13-10-26 19:21:22 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 424, in read
+    raise self._exception
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:21:29 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 424, in read
+    raise self._exception
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:21:33 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 424, in read
+    raise self._exception
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:21:41 - ERROR: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 69, in worker
+    raise Exception(
+        f"Incorrect segment size: expected {size} bytes, received {self.curr} bytes"
+    )
+Exception: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+13-10-26 19:21:44 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 424, in read
+    raise self._exception
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:22:16 - ERROR: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 69, in worker
+    raise Exception(
+        f"Incorrect segment size: expected {size} bytes, received {self.curr} bytes"
+    )
+Exception: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+13-10-26 19:22:18 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 459, in read
+    await self._wait("read")
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 365, in _wait
+    await waiter
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:22:26 - ERROR: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 69, in worker
+    raise Exception(
+        f"Incorrect segment size: expected {size} bytes, received {self.curr} bytes"
+    )
+Exception: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+13-10-26 19:22:28 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 459, in read
+    await self._wait("read")
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 365, in _wait
+    await waiter
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:22:33 - ERROR: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 69, in worker
+    raise Exception(
+        f"Incorrect segment size: expected {size} bytes, received {self.curr} bytes"
+    )
+Exception: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+13-10-26 19:22:35 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 424, in read
+    raise self._exception
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:22:42 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 459, in read
+    await self._wait("read")
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 365, in _wait
+    await waiter
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:22:46 - ERROR: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 69, in worker
+    raise Exception(
+        f"Incorrect segment size: expected {size} bytes, received {self.curr} bytes"
+    )
+Exception: Incorrect segment size: expected 8922 bytes, received 27114 bytes
+13-10-26 19:23:08 - DEBUG: waiting for download to start
+13-10-26 19:23:08 - DEBUG: Starting download tasks
+13-10-26 19:23:08 - DEBUG: Starting producer and consumer tasks
+13-10-26 19:23:08 - DEBUG: Starting progress monitor
+13-10-26 19:23:08 - DEBUG: Producer started
+13-10-26 19:23:08 - DEBUG: Fetching headers with HEAD to get metadata
+13-10-26 19:23:08 - DEBUG: Consumer 0 started
+13-10-26 19:23:10 - DEBUG: Fetching headers with GET to fill missing metadata
+13-10-26 19:23:11 - DEBUG: file size: 35690
+13-10-26 19:23:11 - DEBUG: ETag acquired from header
+13-10-26 19:23:11 - DEBUG: Consumer 0 received task
+13-10-26 19:23:11 - DEBUG: Download started 0
+13-10-26 19:23:11 - DEBUG: Single-Segment download started 0
+13-10-26 19:23:11 - DEBUG: Downloaded single segment 0
+13-10-26 19:23:11 - DEBUG: Download exited 0
+13-10-26 19:23:11 - DEBUG: Consumer 0 completed task
+13-10-26 19:23:12 - DEBUG: All downloads completed
+13-10-26 19:23:12 - DEBUG: Producer exited
+13-10-26 19:23:12 - DEBUG: Consumer 0 exited
+13-10-26 19:23:12 - DEBUG: exiting progress monitor
+13-10-26 19:24:59 - ERROR: Incorrect segment size: expected 1067 bytes, received 2021 bytes
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 69, in worker
+    raise Exception(
+        f"Incorrect segment size: expected {size} bytes, received {self.curr} bytes"
+    )
+Exception: Incorrect segment size: expected 1067 bytes, received 2021 bytes
+13-10-26 19:25:00 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 424, in read
+    raise self._exception
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:25:13 - ERROR: 400, message:
+  Can not decode content-encoding: gzip
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1255, in feed_data
+    chunk = self.decompressor.decompress_sync(chunk, max_length=max_length)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\compression_utils.py", line 388, in decompress_sync
+    result = self._decompressor.decompress(
+        self._decompressor.unconsumed_tail + data, max_length
+    )
+zlib.error: Error -3 while decompressing data: incorrect header check
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "aiohttp/_http_parser.pyx", line 954, in aiohttp._http_parser.cb_on_body
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\http_parser.py", line 1257, in feed_data
+    raise ContentEncodingError(
+        "Can not decode content-encoding: %s" % self.encoding
+    )
+aiohttp.http_exceptions.ContentEncodingError: 400, message:
+  Can not decode content-encoding: gzip
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 66, in worker
+    await self.download(url, segment_path, "ab", **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 23, in download
+    async for chunk in response.content.iter_chunked(MEGABYTE):
+    ...<8 lines>...
+                await asyncio.sleep(sleep_time)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 46, in __anext__
+    rv = await self.read_func()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 459, in read
+    await self._wait("read")
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\aiohttp\streams.py", line 365, in _wait
+    await waiter
+aiohttp.client_exceptions.ClientPayloadError: 400, message:
+  Can not decode content-encoding: gzip
+13-10-26 19:25:16 - ERROR: Incorrect segment size: expected 1067 bytes, received 2021 bytes
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 69, in worker
+    raise Exception(
+        f"Incorrect segment size: expected {size} bytes, received {self.curr} bytes"
+    )
+Exception: Incorrect segment size: expected 1067 bytes, received 2021 bytes
+13-10-26 19:25:18 - ERROR: Incorrect segment size: expected 4269 bytes, received 10751 bytes
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 69, in worker
+    raise Exception(
+        f"Incorrect segment size: expected {size} bytes, received {self.curr} bytes"
+    )
+Exception: Incorrect segment size: expected 4269 bytes, received 10751 bytes
+13-10-26 19:25:20 - ERROR: Incorrect segment size: expected 4269 bytes, received 10751 bytes
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 69, in worker
+    raise Exception(
+        f"Incorrect segment size: expected {size} bytes, received {self.curr} bytes"
+    )
+Exception: Incorrect segment size: expected 4269 bytes, received 10751 bytes
+13-10-26 19:25:22 - ERROR: Incorrect segment size: expected 4269 bytes, received 10751 bytes
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 69, in worker
+    raise Exception(
+        f"Incorrect segment size: expected {size} bytes, received {self.curr} bytes"
+    )
+Exception: Incorrect segment size: expected 4269 bytes, received 10751 bytes
+13-10-26 19:25:23 - ERROR: Incorrect segment size: expected 4269 bytes, received 10751 bytes
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 63, in process_tasks
+    await self._download(task)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 110, in _download
+    await self._multi_segment(segment_table, file_path, speed_limit, **kwargs)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\consumer.py", line 127, in _multi_segment
+    await auto_cancel_gather(*tasks)
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\utils.py", line 385, in auto_cancel_gather
+    return await asyncio.gather(*tasks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\python\versions\3.13.5\Lib\site-packages\pypdl\downloader.py", line 69, in worker
+    raise Exception(
+        f"Incorrect segment size: expected {size} bytes, received {self.curr} bytes"
+    )
+Exception: Incorrect segment size: expected 4269 bytes, received 10751 bytes
+13-10-26 19:25:51 - DEBUG: waiting for download to start
+13-10-26 19:25:51 - DEBUG: Starting download tasks
+13-10-26 19:25:51 - DEBUG: Starting producer and consumer tasks
+13-10-26 19:25:51 - DEBUG: Starting progress monitor
+13-10-26 19:25:51 - DEBUG: Producer started
+13-10-26 19:25:51 - DEBUG: Fetching headers with HEAD to get metadata
+13-10-26 19:25:51 - DEBUG: Consumer 0 started
+13-10-26 19:25:52 - DEBUG: Fetching headers with GET to fill missing metadata
+13-10-26 19:25:54 - DEBUG: file size: 4393
+13-10-26 19:25:54 - DEBUG: ETag acquired from header
+13-10-26 19:25:54 - DEBUG: Single segment mode, accept-ranges or size not found
+13-10-26 19:25:54 - DEBUG: Consumer 0 received task
+13-10-26 19:25:54 - DEBUG: Download started 0
+13-10-26 19:25:54 - DEBUG: Single-Segment download started 0
+13-10-26 19:25:55 - DEBUG: Downloaded single segment 0
+13-10-26 19:25:55 - DEBUG: Download exited 0
+13-10-26 19:25:55 - DEBUG: Consumer 0 completed task
+13-10-26 19:25:56 - DEBUG: All downloads completed
+13-10-26 19:25:56 - DEBUG: Producer exited
+13-10-26 19:25:56 - DEBUG: Consumer 0 exited
+13-10-26 19:25:56 - DEBUG: exiting progress monitor

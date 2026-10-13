@@ -120,11 +120,11 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# Install PyYAML for configuration file support
-echo "Installing PyYAML..."
-python -m pip install pyyaml
+# Install PyYAML (YAML configs) + pypdl (multi-threaded downloads in configs/download.py)
+echo "Installing PyYAML and pypdl..."
+python -m pip install pyyaml pypdl
 if [ $? -ne 0 ]; then
-    echo "PyYAML install failed"
+    echo "PyYAML/pypdl install failed"
     exit 1
 fi
 

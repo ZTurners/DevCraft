@@ -187,13 +187,14 @@ echo Using Python tar extraction on Windows (no external tar bootstrap)
 
     python --version
 
-    :: Install PyYAML so configs/install.py can parse YAML configs
-    echo Installing PyYAML (PyYAML is required for parsing YAML configs)...
-    "%PYTHON_INSTALL_DIR%\python.exe" -m pip install --upgrade --disable-pip-version-check --no-cache-dir pyyaml
+    :: Install PyYAML + pypdl so configs/install.py can parse YAML configs and
+    :: download tool archives multi-threaded (configs/download.py)
+    echo Installing PyYAML and pypdl (PyYAML for YAML configs, pypdl for downloads)...
+    "%PYTHON_INSTALL_DIR%\python.exe" -m pip install --upgrade --disable-pip-version-check --no-cache-dir pyyaml pypdl
     if %ERRORLEVEL% neq 0 (
-        echo Warning: Failed to install PyYAML automatically.
-        echo You can install it manually by running:
-        echo    python -m pip install pyyaml
+        echo Warning: Failed to install PyYAML/pypdl automatically.
+        echo You can install them manually by running:
+        echo    python -m pip install pyyaml pypdl
     ) else (
-        echo PyYAML installed successfully.
+        echo PyYAML and pypdl installed successfully.
     )

@@ -12,14 +12,18 @@ try:
 except Exception:
     yaml = None
 import configparser
-import urllib.request
 import datetime
-import time
 import zipfile
 import tarfile
 import copy
 import heapq
 import re
+
+# The workspace python is an embeddable build governed by python313._pth,
+# which pins sys.path and never adds the script's own directory; insert it
+# explicitly so the sibling download module imports
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import download
 
 # File-level config variables: '$var{name}' tokens in a config are replaced at
 # load time with values from its top-level 'variables' mapping (merged with the
@@ -167,16 +171,16 @@ class WorkspaceInstaller:
 
     def _process_download(self, download_config, context):
         """Handle download node."""
-        # download_config is the child node data: { src: {url, auth_required} or src_url, dest }
-        
+        # download_config is the child node data: { src: {url, auth_required, MD5, SHA-256, SHA-512}, dest }
+
         # Handle src as either nested object or flat src_url
         if "src" in download_config and isinstance(download_config["src"], dict):
             src_url = download_config["src"]["url"]
             need_auth = download_config["src"].get("auth_required", False)
+            expected_md5_hash = download_config["src"].get("MD5", None)
             expected_sha256_hash = download_config["src"].get("SHA-256", None)
             expected_sha512_hash = download_config["src"].get("SHA-512", None)
-        
-        downloading_file = self._formalize_path(download_config["dest"]) + ".downloading"
+
         downloaded_file = self._formalize_path(download_config["dest"])
 
         # Check if file already exists
@@ -192,143 +196,16 @@ class WorkspaceInstaller:
         # Create directory for downloaded file
         os.makedirs(os.path.dirname(downloaded_file), exist_ok=True)
 
-        # Download using curl with authentication
-        print(f"Downloading... {src_url}")
-
-        # Prepare curl command
-        curl_cmd = [
-            "curl",
-            "--progress-bar",  # Show download progress
-            "-L",  # Follow redirects
-        ]
-
-        # Add authentication if needed
-        if need_auth:                    
-            from urllib.parse import urlparse
-            domain = urlparse(src_url).netloc
-            print(f"\nDownloading from {domain}")
-            
-            username = input("Username: ")
-            curl_cmd.extend(["--user", f"{username}"])  # Curl will prompt for password
-
-        # Add output file specification
-        curl_cmd.extend([
-            "-o", downloading_file,  # Output file
-            "-S",  # Show error
-            "--retry", "3",  # Retry up to 3 times
-            "--retry-delay", "5",  # Wait 5 seconds between retries
-            src_url
-        ])
-
-        # Check size of the file when no SHA-256 provided.
-        # Attempt to determine expected size via HTTP HEAD Content-Length header.
-        expected_size = None
-        try:
-            req = urllib.request.Request(src_url, method='HEAD')
-            with urllib.request.urlopen(req, timeout=10) as resp:
-                cl = resp.getheader('Content-Length') or resp.getheader('content-length')
-                if cl:
-                    expected_size = int(cl)
-        except Exception as e:
-            print(f"Warning: could not determine remote Content-Length: {e}")
-
-        # Execute curl and check result. Retry up to 3 times on failure.
-        max_attempts = 10
-        attempt = 1
-        last_err = None
-        while attempt < max_attempts:
-            result = subprocess.run(curl_cmd, text=True, check=True)
-            if result.returncode == 0:
-                # success
-                print("Download command succeeded")
-
-                # get file_size from downloading file
-                file_size = os.path.getsize(downloading_file)
-                # If expected_size is unknown (server gave no Content-Length) accept any
-                # non-empty file; otherwise require an exact size match.
-                if expected_size is None and file_size > 0:
-                    last_err = None
-                    break
-                elif file_size == expected_size:
-                    last_err = None
-                    break
-                else:
-                    last_err = f"Downloaded file size {file_size} does not match expected size {expected_size}"
-            else:
-                last_err = result.stderr.strip() or result.stdout.strip()
-            
-            print(f"Download attempt {attempt} failed: {last_err}")
-
-            if attempt < max_attempts:
-                print("Retrying download...")
-                # Remove the partial file before retrying so curl starts fresh
-                # instead of attempting a byte-range resume that some servers reject.
-                if os.path.exists(downloading_file):
-                    try:
-                        os.remove(downloading_file)
-                    except Exception:
-                        pass
-                time.sleep(2)
-            attempt += 1
-            print(f"Running download attempt {attempt}/{max_attempts}...")
-
-        if last_err:
-            raise Exception(f"Download command failed after {max_attempts} attempts: {last_err}")
-
-        
-        # Verify the downloaded file
-        if not os.path.exists(downloading_file):
-            raise Exception("Downloaded file does not exist")
-        
-        file_size = os.path.getsize(downloading_file)
-        if file_size == 0:
-            raise Exception("Downloaded file is empty")
-
-        if not expected_sha256_hash:
-            print("No SHA-256 checksum provided, skipping verification.")
-
-        # If a SHA-256 checksum is provided in the config, verify it now.
-        if expected_sha256_hash:
-            expected_sha256_hash = expected_sha256_hash.strip().lower()
-            print(f"Verifying SHA-256 checksum for {downloading_file}...")
-            sha256 = hashlib.sha256()
-            with open(downloading_file, 'rb') as fh:
-                for chunk in iter(lambda: fh.read(8192), b''):
-                    sha256.update(chunk)
-            actual_hash = sha256.hexdigest().lower()
-            if actual_hash != expected_sha256_hash:
-                # remove the corrupt download
-                try:
-                    os.remove(downloading_file)
-                except Exception:
-                    pass
-                raise Exception(f"SHA-256 mismatch: expected {expected_sha256_hash}, got {actual_hash}")
-            else:
-                print("SHA-256 verification passed")
-
-        if expected_sha512_hash:
-            expected_sha512_hash = expected_sha512_hash.strip().lower()
-            print(f"Verifying SHA-512 checksum for {downloading_file}...")
-            sha512 = hashlib.sha512()
-            with open(downloading_file, 'rb') as fh:
-                for chunk in iter(lambda: fh.read(8192), b''):
-                    sha512.update(chunk)
-            actual_hash = sha512.hexdigest().lower()
-            if actual_hash != expected_sha512_hash:
-                # remove the corrupt download
-                try:
-                    os.remove(downloading_file)
-                except Exception:
-                    pass
-                raise Exception(f"SHA-512 mismatch: expected {expected_sha512_hash}, got {actual_hash}")
-            else:
-                print("SHA-512 verification passed")
-
-        
-        # Rename the downloading file to final name
-        os.rename(downloading_file, downloaded_file)
-
-        print("\nDownload completed and verified.")
+        # The multi-threaded download and verification pipeline lives in
+        # download.py; its staged '.downloading' file is only renamed to dest
+        # after Content-Length and all requested checksums pass
+        download.download_file(
+            src_url,
+            downloaded_file,
+            expected_md5_hash=expected_md5_hash,
+            expected_sha256_hash=expected_sha256_hash,
+            expected_sha512_hash=expected_sha512_hash,
+            need_auth=need_auth)
 
     def _process_unzip_source(self, unzip_config, context):
         """Handle unzip node."""

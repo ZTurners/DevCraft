@@ -20,6 +20,17 @@ install:
       src_sub_folder: emsdk-$var{emscripten_version}
       dest: ${workspace}/emscripten/emsdk-$var{emscripten_version}
 
+  # emsdk's own downloader (urllib, no resume/retry) is flaky against the GCS
+  # deps bucket and leaves partial files that later runs treat as complete
+  # ("already downloaded, skipping"); pre-seed the node zip with DevCraft's
+  # curl-based download (retry + Content-Length check) so emsdk install finds
+  # a complete file and skips its own download
+  - download:
+      src:
+        url: https://storage.googleapis.com/webassembly/emscripten-releases-builds/deps/node-v$var{emscripten_node_version}-win-x64.zip
+        MD5: 9430c310f660c88ee41aa4bd28979cd4  # GCS x-goog-hash, update on version bump
+      dest: ${workspace}/emscripten/emsdk-$var{emscripten_version}/downloads/node-v$var{emscripten_node_version}-win-x64.zip
+
   # install and activate the pinned emscripten toolchain
   - execute:
       terminal: true

@@ -14,6 +14,7 @@ install:
   # constexpr fix (microsoft/STL PR #6137) needs it for clang-cl >= 22. Drop --insiders
   # once 14.52 (or newer) reaches the stable channel.
   - execute:
+      terminal: true
       command:
         - python
         - ${configs}/visual_studio/scripts/portable_msvc_install.py
@@ -43,7 +44,7 @@ generator_active_batch:
       WindowsSDKVersion: $var{windows_sdk_version}\
       INCLUDE: ${workspace}/visual_studio/VC/Tools/MSVC/$var{msvc_version}/include;${workspace}/visual_studio/WindowsKits/10/Include/$var{windows_sdk_version}/ucrt;${workspace}/visual_studio/WindowsKits/10/Include/$var{windows_sdk_version}/shared;${workspace}/visual_studio/WindowsKits/10/Include/$var{windows_sdk_version}/um;${workspace}/visual_studio/WindowsKits/10/Include/$var{windows_sdk_version}/winrt;${workspace}/visual_studio/WindowsKits/10/Include/$var{windows_sdk_version}/cppwinrt
       LIB: ${workspace}/visual_studio/VC/Tools/MSVC/$var{msvc_version}/lib/x64;${workspace}/visual_studio/WindowsKits/10/Lib/$var{windows_sdk_version}/ucrt/x64;${workspace}/visual_studio/WindowsKits/10/Lib/$var{windows_sdk_version}/um/x64
-      DEVCRAFT_VISUAL_STUDIO_MAJOR_VERSION: 18
+      DEVCRAFT_VISUAL_STUDIO_MAJOR_VERSION: "18"
       DEVCRAFT_PORTABLE_MSVC_ROOT: ${workspace}/visual_studio
       DEVCRAFT_PORTABLE_MSVC_SETUP_X64: ${workspace}/visual_studio/setup_x64.bat
     prepend:

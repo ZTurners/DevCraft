@@ -29,7 +29,7 @@ generator_active_batch:
   environments:
     set:
       DOTNET_ROOT: ${workspace}/dotnet/dotnet-sdk-$var{dotnet_version}-win-x64
-      DOTNET_CLI_TELEMETRY_OPTOUT: 1
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
       DOTNET_CLI_UI_LANGUAGE: en-US
       NUGET_PACKAGES: ${workspace}/nuget
     prepend:

@@ -5,6 +5,7 @@ dependencies:
 
 variables:
   emscripten_version: "5.0.5"
+  emscripten_release_commit: "6eae703422b3962d1ed75e15f728ece57aad6bd6"
   emscripten_python_version: "3.13.3"
   emscripten_node_version: "22.16.0"
   emscripten_typescript_version: "5.9.3"
@@ -52,16 +53,19 @@ install:
       src: ${download}/emsdk-python-$var{emscripten_python_version}-0-win-amd64.zip
       dest: ${workspace}/emscripten/emsdk-$var{emscripten_version}/downloads/python-$var{emscripten_python_version}-0-win-amd64.zip
 
-  # release hash below is pinned to emscripten_version via
-  # emscripten-releases-tags.json ("5.0.5": "6eae7034..."); update both together
+  # release commit is pinned to emscripten_version via
+  # emscripten-releases-tags.json ("5.0.5": "6eae7034..."); update both together.
+  # emsdk caches this archive as '<release-commit>-wasm-binaries.zip'
+  # (emsdk_manifest.json download_prefix "%releases-tag%-"), so the pre-seed
+  # copy must carry the commit prefix or emsdk re-downloads the ~600MB archive
   - download:
       src:
-        url: https://storage.googleapis.com/webassembly/emscripten-releases-builds/win/6eae703422b3962d1ed75e15f728ece57aad6bd6/wasm-binaries.zip
+        url: https://storage.googleapis.com/webassembly/emscripten-releases-builds/win/$var{emscripten_release_commit}/wasm-binaries.zip
         MD5: 6fadf301e957be9a5d5d41c5b42b7db8  # GCS x-goog-hash
       dest: ${download}/emsdk-wasm-binaries-$var{emscripten_version}.zip
   - copy:
       src: ${download}/emsdk-wasm-binaries-$var{emscripten_version}.zip
-      dest: ${workspace}/emscripten/emsdk-$var{emscripten_version}/downloads/wasm-binaries.zip
+      dest: ${workspace}/emscripten/emsdk-$var{emscripten_version}/downloads/$var{emscripten_release_commit}-wasm-binaries.zip
 
   # emsdk re-downloads archives even when they already sit in downloads/
   # (download_file is called with download_even_if_exists=True unless

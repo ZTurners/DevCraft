@@ -2,9 +2,9 @@
 
 Uses pypdl (installed by bootstrap alongside PyYAML) for parallel multi-segment
 downloads, degrading to a single-connection pypdl download and finally to a
-single-stream curl. Downloads are staged as '.downloading' and only renamed to
-the final destination after Content-Length (curl tier) and all requested
-MD5/SHA-256/SHA-512 checksums pass.
+single-stream curl. Downloads are staged as '.tmp/<name>.downloading' next to
+the final destination and only renamed to it after Content-Length (curl tier)
+and all requested MD5/SHA-256/SHA-512 checksums pass.
 """
 
 import glob
@@ -160,11 +160,14 @@ def download_file(url, dest,
                   max_attempts=MAX_ATTEMPTS):
     """Download url to dest, multi-threaded via pypdl when possible.
 
-    The download is staged as dest + '.downloading' and only renamed to dest
-    after Content-Length (curl tier) and all requested checksums pass.
-    Raises when every attempt fails.
+    The download is staged as '<dest dir>/.tmp/<basename>.downloading' so the
+    in-flight file (plus pypdl's segment parts) never clutters the destination
+    folder itself, and only renamed to dest after Content-Length (curl tier)
+    and all requested checksums pass. Raises when every attempt fails.
     """
-    downloading_file = dest + ".downloading"
+    staging_dir = os.path.join(os.path.dirname(dest), ".tmp")
+    os.makedirs(staging_dir, exist_ok=True)
+    downloading_file = os.path.join(staging_dir, os.path.basename(dest) + ".downloading")
     last_err = None
     warned = False
     for attempt in range(1, max_attempts + 1):

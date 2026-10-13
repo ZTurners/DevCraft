@@ -35,6 +35,10 @@ import download
 _CONFIG_VARIABLE_PATTERN = re.compile(r"\$var\{([A-Za-z0-9_]+)\}")
 _CONFIG_VARIABLE_NAME_PATTERN = re.compile(r"[A-Za-z0-9_]+")
 
+# Matches the SGR escape sequences _colorize emits; used to keep summary.txt
+# ANSI-free while the console copy stays colored
+_ANSI_ESCAPE_PATTERN = re.compile(r"\x1b\[[0-9;]*m")
+
 class _InstallProgressBar:
     """Sticky status line pinned to the terminal's bottom row during installs.
 
@@ -53,13 +57,17 @@ class _InstallProgressBar:
         self.m_total = 0
         self.m_done = 0
         self.m_skipped = 0
+        # "work" items are configs that actually install this run (fresh +
+        # reinstall); skips and no-sdk_root runs do not count as installs
+        self.m_work_total = 0
+        self.m_work_done = 0
         self.m_current = ""
         self.m_step = ""
         self.m_started_at = 0.0
         self.m_lock = threading.Lock()
         self.m_refresh_thread = None
 
-    def start(self, total):
+    def start(self, total, work_total=None):
         if not self.m_enabled:
             return
         columns, lines = shutil.get_terminal_size()
@@ -67,6 +75,7 @@ class _InstallProgressBar:
             self.m_enabled = False
             return
         self.m_total = total
+        self.m_work_total = work_total if work_total is not None else total
         self.m_started_at = time.monotonic()
         self.m_active = True
         # Reserve the bottom row. The screen is scrolled up two rows first so
@@ -99,12 +108,13 @@ class _InstallProgressBar:
             self.m_step = step
         self._render()
 
-    def finish_config(self, skipped=False):
+    def finish_config(self, skipped=False, work=False):
         if not self.m_active:
             return
         with self.m_lock:
             self.m_done += 1
             self.m_skipped += 1 if skipped else 0
+            self.m_work_done += 1 if work else 0
             self.m_current = ""
             self.m_step = ""
         self._render()
@@ -134,21 +144,23 @@ class _InstallProgressBar:
     def _format_line(self, columns):
         elapsed_seconds = int(time.monotonic() - self.m_started_at)
         elapsed_text = time.strftime("%H:%M:%S", time.gmtime(elapsed_seconds))
+        # [configs processed this run / total configs]; skipped configs count
+        # too, so the head keeps moving through already-installed stretches
         in_progress = bool(self.m_current)
         index = self.m_done + (1 if in_progress else 0)
-        remaining = max(0, self.m_total - index)
-        skipped_note = f" ({self.m_skipped} skipped)" if self.m_skipped else ""
         head = f"[{index}/{self.m_total}] "
-        tail = f" | Installed: {self.m_done}{skipped_note} | Remaining: {remaining} | {elapsed_text}"
         if self.m_current:
             middle = f"Installing: {self.m_current}"
             if self.m_step:
                 middle += f" ({self.m_step})"
         else:
             middle = ""
+        # Installed/Remaining count real installs only (fresh + reinstall);
+        # Remaining includes the one currently in progress
+        remaining = max(0, self.m_work_total - self.m_work_done)
+        skipped_note = f" ({self.m_skipped} skipped)" if self.m_skipped else ""
+        tail = f" | Installed: {self.m_work_done}{skipped_note} | Remaining: {remaining} | {elapsed_text}"
 
-        # Shrink the current-config section to fit one row, dropping it only
-        # for very narrow terminals.
         budget = columns - 1 - len(head) - len(tail)
         if middle and budget < len(middle):
             if budget >= 12:
@@ -156,19 +168,18 @@ class _InstallProgressBar:
             else:
                 middle = ""
 
-        if middle:
-            line = head + middle + tail
-        else:
-            line = head + tail.lstrip(" |")
+        def _join(tail_text):
+            if middle:
+                return head + middle + tail_text
+            return head + tail_text.lstrip(" |")
 
-        # Degrade the tail itself on narrow terminals: drop the skipped note,
-        # then the elapsed time, then hard-truncate what is left.
-        if len(line) > columns - 1 and self.m_skipped:
-            tail = f" | Installed: {self.m_done} | Remaining: {remaining} | {elapsed_text}"
-            line = head + middle + tail if middle else head + tail.lstrip(" |")
+        # Degrade on narrow terminals: drop the skipped note, then the stats
+        # and elapsed, then hard-truncate what is left.
+        line = _join(tail)
+        if len(line) > columns - 1 and skipped_note:
+            line = _join(f" | Installed: {self.m_work_done} | Remaining: {remaining} | {elapsed_text}")
         if len(line) > columns - 1:
-            tail = f" | Installed: {self.m_done} | Remaining: {remaining}"
-            line = head + middle + tail if middle else head + tail.lstrip(" |")
+            line = _join(f" | {elapsed_text}")
         if len(line) > columns - 1:
             line = line[: columns - 1]
         if self.m_use_colors:
@@ -189,6 +200,7 @@ class WorkspaceInstaller:
         self.m_current_node = None
         self.m_current_install_step = None
         self.m_user_aborted = False
+        self.m_nothing_to_do = False
         # Colored console output: only when writing to a terminal and NO_COLOR
         # is unset. ANSI processing is enabled for any terminal on Windows
         # (not just colored runs) because the bottom progress bar also emits
@@ -208,7 +220,7 @@ class WorkspaceInstaller:
         lines.append(f"  Error: {error}")
         return "\n".join(lines)
 
-    def _record_config_summary(self, config_name, status, message="", variables=None):
+    def _record_config_summary(self, config_name, status, message="", variables=None, duration_seconds=None):
         """Record per-config install result for final summary output."""
         sdk_name = config_name.replace('\\', '/').split('/', 1)[0] if isinstance(config_name, str) and config_name else "N/A"
         self.m_summary_data.append({
@@ -218,7 +230,19 @@ class WorkspaceInstaller:
             "status": status,
             "message": message,
             "variables": variables or {},
+            "duration_seconds": duration_seconds,
         })
+
+    @staticmethod
+    def _format_duration(seconds):
+        seconds = int(round(seconds))
+        if seconds < 60:
+            return f"{seconds}s"
+        minutes, sec = divmod(seconds, 60)
+        if minutes < 60:
+            return f"{minutes}m{sec:02d}s"
+        hours, minutes = divmod(minutes, 60)
+        return f"{hours}h{minutes:02d}m{sec:02d}s"
 
     def build_run_summary(self, run_error=None):
         """Build a timestamped summary for the full install run."""
@@ -234,17 +258,25 @@ class WorkspaceInstaller:
         lines.append(f"Started (UTC): {self.m_run_started_at.isoformat()}")
         lines.append(f"Finished (UTC): {run_finished_at.isoformat()}")
         lines.append(f"Duration (seconds): {total_seconds}")
-        lines.append(f"Overall result: {'FAILED' if run_error else 'SUCCESS'}")
+        overall = "FAILED" if run_error else "SUCCESS"
+        lines.append(self._colorize(f"Overall result: {overall}", overall))
         lines.append(f"Configs processed: {total_count}")
-        lines.append(f"Successful SDK installs: {len(success_items)}")
-        lines.append(f"Failed SDK installs: {len(failed_items)}")
-        lines.append(f"Skipped SDK installs (already up to date): {len(skipped_items)}")
+        lines.append(self._colorize(f"New SDK installs (this run): {len(success_items)}", "SUCCESS"))
+        # keep a zero-failure count uncolored; red is reserved for real failures
+        if failed_items:
+            lines.append(self._colorize(f"Failed SDK installs: {len(failed_items)}", "FAILED"))
+        else:
+            lines.append(f"Failed SDK installs: {len(failed_items)}")
+        lines.append(self._colorize(f"Skipped SDK installs (already up to date): {len(skipped_items)}", "SKIPPED"))
 
         lines.append("")
-        lines.append("Successful installs:")
+        lines.append("New installs (fresh or reinstalled this run):")
         if success_items:
             for item in success_items:
-                lines.append(f"  - {item['sdk']} | {item['config']} | {item['timestamp']}")
+                duration = item.get("duration_seconds")
+                duration_text = f" | {self._format_duration(duration)}" if duration is not None else ""
+                lines.append(self._colorize(
+                    f"  - {item['sdk']} | {item['config']} | {item['timestamp']}{duration_text}", "SUCCESS"))
                 for name, value in item["variables"].items():
                     lines.append(f"      - {name}={value}")
         else:
@@ -255,7 +287,7 @@ class WorkspaceInstaller:
         if failed_items:
             for item in failed_items:
                 fail_message = item.get("message") or "Unknown error"
-                lines.append(f"  - {item['sdk']} | {item['config']} | {item['timestamp']} | {fail_message}")
+                lines.append(self._colorize(f"  - {item['sdk']} | {item['config']} | {item['timestamp']} | {fail_message}", "FAILED"))
         else:
             lines.append("  - None")
 
@@ -263,13 +295,15 @@ class WorkspaceInstaller:
         lines.append("Skipped installs (already up to date):")
         if skipped_items:
             for item in skipped_items:
-                lines.append(f"  - {item['sdk']} | {item['config']} | {item['timestamp']}")
+                lines.append(self._colorize(f"  - {item['sdk']} | {item['config']} | {item['timestamp']}", "SKIPPED"))
+                for name, value in item["variables"].items():
+                    lines.append(f"      - {name}={value}")
         else:
             lines.append("  - None")
 
         if run_error:
             lines.append("")
-            lines.append(self.build_failure_summary(run_error))
+            lines.append(self._colorize(self.build_failure_summary(run_error), "FAILED"))
 
         return "\n".join(lines)
 
@@ -837,10 +871,17 @@ class WorkspaceInstaller:
             for var_name, var_value in env_config["set"].items():
                 # Replace variables in value
                 var_value = self._formalize_path(var_value)
+                if not isinstance(var_value, str):
+                    # os.environ only accepts strings; an unquoted number in a
+                    # config would otherwise die with an opaque TypeError
+                    raise TypeError(
+                        f"environment variable '{var_name}' must be a quoted string "
+                        f"in the config (got {type(var_value).__name__}: {var_value!r})"
+                    )
                 # Set environment variable
                 os.environ[var_name] = var_value
                 print(f"  Set {var_name}={var_value}")
-        
+
         # Handle "prepend" environment variables
         if "prepend" in env_config and isinstance(env_config["prepend"], list):
             for item_env in env_config["prepend"]:
@@ -848,6 +889,11 @@ class WorkspaceInstaller:
                     for var_name, var_value in item_env.items():
                         # Replace variables in value
                         var_value = self._formalize_path(var_value)
+                        if not isinstance(var_value, str):
+                            raise TypeError(
+                                f"environment variable '{var_name}' must be a quoted string "
+                                f"in the config (got {type(var_value).__name__}: {var_value!r})"
+                            )
                         # Prepend to existing value
                         existing_value = os.environ.get(var_name, "")
                         if existing_value:
@@ -1429,6 +1475,9 @@ class WorkspaceInstaller:
             "missing": "\033[33m",           # yellow
             "reinstall-needed": "\033[31m",  # red
             "no sdk_root": "\033[90m",       # gray
+            "SUCCESS": "\033[32m",           # green
+            "FAILED": "\033[31m",            # red
+            "SKIPPED": "\033[90m",           # gray
         }
         ansi = palette.get(status)
         return f"{ansi}{text}\033[0m" if ansi else text
@@ -1722,6 +1771,7 @@ class WorkspaceInstaller:
             sdk_root = self._resolve_sdk_root(config_path, sdk_root_raw) if sdk_root_raw else ''
             status = self._get_install_status(config_path, sdk_root)
             status_counts[status] = status_counts.get(status, 0) + 1
+            records[rel]['install_status'] = status
             print(f"  {index:>2}. {rel.ljust(name_width)}  [{self._colorize(status, status)}]")
             for name, value in records[rel]['variables'].items():
                 print(f"        - {name}={value}")
@@ -1734,13 +1784,23 @@ class WorkspaceInstaller:
         _summary_line("installed", "up to date, no reinstall")
         _summary_line("missing", "fresh install")
         _summary_line("reinstall-needed", "sdk root will be removed and reinstalled")
+        _summary_line("no sdk_root", "no marker mechanism; install steps run every time")
+
+        # Nothing missing and nothing to reinstall: skip the confirmation
+        # prompt, the install pass and the run summary entirely.
+        if status_counts.get("missing", 0) + status_counts.get("reinstall-needed", 0) == 0:
+            print("\nNothing to install — all configs are already up to date. Exiting.")
+            self.m_nothing_to_do = True
+            return
 
         if not self._confirm_proceed():
             self.m_user_aborted = True
             print("Aborted by user. No changes were made.")
             return
 
-        self.m_progress_bar.start(len(ordered))
+        self.m_progress_bar.start(
+            len(ordered),
+            status_counts.get("missing", 0) + status_counts.get("reinstall-needed", 0))
 
         # Process each config file in dependency order.
         applied_env_rels = set()
@@ -1752,6 +1812,8 @@ class WorkspaceInstaller:
             except Exception:
                 display_name = os.path.basename(config_path)
 
+            config_started = time.monotonic()
+
             print(f"\n{'='*70}")
             print(f"Processing config: {display_name}")
             print(f"{'='*70}")
@@ -1760,21 +1822,23 @@ class WorkspaceInstaller:
             self.m_current_install_step = None
             self.m_progress_bar.begin_config(display_name)
 
-            # Apply the environments exported by this config's dependencies
-            # (from their generator_active_batch declarations, whether or not
-            # they are being reinstalled) so install steps below can use the
-            # tools those dependencies provide.
-            for dep_rel in ordered:
-                if dep_rel not in dep_closure[rel] or dep_rel in applied_env_rels:
-                    continue
-                applied_env_rels.add(dep_rel)
-                if not records[dep_rel]['batch_environments']:
-                    continue
-                print(f"\nApplying environments from dependency: {records[dep_rel]['base']}")
-                self._process_environments(records[dep_rel]['batch_environments'], None)
-
             sdk_root = ""
             try:
+                # Apply the environments exported by this config's dependencies
+                # (from their generator_active_batch declarations, whether or not
+                # they are being reinstalled) so install steps below can use the
+                # tools those dependencies provide. Kept inside the try so a
+                # failure here records this config as FAILED in the run summary
+                # instead of aborting the run without any summary entry.
+                for dep_rel in ordered:
+                    if dep_rel not in dep_closure[rel] or dep_rel in applied_env_rels:
+                        continue
+                    applied_env_rels.add(dep_rel)
+                    if not records[dep_rel]['batch_environments']:
+                        continue
+                    print(f"\nApplying environments from dependency: {records[dep_rel]['base']}")
+                    self._process_environments(records[dep_rel]['batch_environments'], None)
+
                 sdk_root_raw = records[rel].get('sdk_root', '')
                 if sdk_root_raw:
                     sdk_root = self._resolve_sdk_root(config_path, sdk_root_raw)
@@ -1792,8 +1856,12 @@ class WorkspaceInstaller:
 
             if sdk_root:
                 self._store_installed_config_marker(config_path, sdk_root)
-            self._record_config_summary(display_name, "SUCCESS", variables=records[rel]['variables'])
-            self.m_progress_bar.finish_config()
+            self._record_config_summary(
+                display_name, "SUCCESS",
+                variables=records[rel]['variables'],
+                duration_seconds=time.monotonic() - config_started)
+            self.m_progress_bar.finish_config(
+                work=records[rel].get('install_status') in ("missing", "reinstall-needed"))
 
 def main():
     dev_env_installer = WorkspaceInstaller()
@@ -1808,12 +1876,17 @@ def main():
     except Exception as e:
         run_error = e
 
+    if dev_env_installer.m_nothing_to_do:
+        sys.exit(0)
+
     if dev_env_installer.m_user_aborted:
         print("\nInstall aborted by user (confirmation declined).")
         sys.exit(1)
 
     summary_text = dev_env_installer.build_run_summary(run_error)
-    summary_path = dev_env_installer.write_run_summary(summary_text)
+    # Console copy is colored; summary.txt gets the same text with the color
+    # escapes stripped so the file stays plain
+    summary_path = dev_env_installer.write_run_summary(_ANSI_ESCAPE_PATTERN.sub("", summary_text))
     print("\n" + summary_text)
     print(f"Summary written to: {summary_path}")
 

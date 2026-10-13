@@ -1,17 +1,22 @@
+sdk_root: ${workspace}/tracy
+
+variables:
+  tracy_version: "0.13.1"
+
 install:
   # tracy-client-0.13.1:
   - download:
       src:
-        url: https://github.com/wolfpld/tracy/releases/download/v0.13.1/windows-0.13.1.zip
+        url: https://github.com/wolfpld/tracy/releases/download/v$var{tracy_version}/windows-$var{tracy_version}.zip
         SHA-256: ee6db1a7e71a12deb5973a8dbfdf9f36d3635bec0e0b31b1cc74f28de7dac4c9
-      dest: ${download}/tracy-client-0.13.1-windows-x86_64.zip
+      dest: ${download}/tracy-client-$var{tracy_version}-windows-x86_64.zip
   - unzip:
-      src: ${download}/tracy-client-0.13.1-windows-x86_64.zip
-      dest: ${workspace}/tracy/tracy-client-0.13.1
+      src: ${download}/tracy-client-$var{tracy_version}-windows-x86_64.zip
+      dest: ${workspace}/tracy/tracy-client-$var{tracy_version}
 
 generator_active_batch:
   file_path: ${workspace}/tracy/active.bat
   environments:
     set: {}
     prepend:
-      - PATH: ${workspace}/tracy/tracy-client-0.13.1
+      - PATH: ${workspace}/tracy/tracy-client-$var{tracy_version}

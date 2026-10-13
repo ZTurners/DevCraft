@@ -1,14 +1,19 @@
+sdk_root: ${workspace}/mustache
+
+variables:
+  mustache_version: "1.4.0"
+
 install:
   - download:
       src:
-        url: https://github.com/cbroglie/mustache/releases/download/v1.4.0/mustache_1.4.0_windows_amd64.tar.gz
-      dest: ${download}/mustache_1.4.0_windows_amd64.tar.gz
+        url: https://github.com/cbroglie/mustache/releases/download/v$var{mustache_version}/mustache_$var{mustache_version}_windows_amd64.tar.gz
+      dest: ${download}/mustache_$var{mustache_version}_windows_amd64.tar.gz
   - unzip:
-      src: ${download}/mustache_1.4.0_windows_amd64.tar.gz
+      src: ${download}/mustache_$var{mustache_version}_windows_amd64.tar.gz
       src_sub_folder: ""
-      dest: ${workspace}/mustache/mustache_1.4.0_windows_amd64
+      dest: ${workspace}/mustache/mustache_$var{mustache_version}_windows_amd64
 generator_active_batch:
   file_path: ${workspace}/mustache/active.bat
   environments:
     prepend:
-      - PATH: ${workspace}/mustache/mustache_1.4.0_windows_amd64
+      - PATH: ${workspace}/mustache/mustache_$var{mustache_version}_windows_amd64

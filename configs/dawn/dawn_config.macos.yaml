@@ -1,14 +1,22 @@
+sdk_root: ${workspace}/dawn
+
+variables:
+  # Quoted: an unquoted value like 20260423.175430 parses as a YAML float and
+  # loses the trailing zero.
+  dawn_version: "20260423.175430"
+  dawn_commit: "31e25af254ab572c77054edec4946d2244e184dd"
+
 install:
   # Download Dawn pre-compiled release for macOS (Release build).
   - download:
       src:
-        url: https://github.com/google/dawn/releases/download/v20260423.175430/Dawn-31e25af254ab572c77054edec4946d2244e184dd-macos-latest-Release.tar.gz
+        url: https://github.com/google/dawn/releases/download/v$var{dawn_version}/Dawn-$var{dawn_commit}-macos-latest-Release.tar.gz
         SHA-256: 8d1db80315ab55ad2c61857d1c7ae4c242a9cc67d0639c709a052fc6af3a7bac
-      dest: ${download}/Dawn-31e25af254ab572c77054edec4946d2244e184dd-macos-latest-Release.tar.gz
+      dest: ${download}/Dawn-$var{dawn_commit}-macos-latest-Release.tar.gz
   - unzip:
-      src: ${download}/Dawn-31e25af254ab572c77054edec4946d2244e184dd-macos-latest-Release.tar.gz
-      src_sub_folder: Dawn-31e25af254ab572c77054edec4946d2244e184dd-macos-latest-Release
-      dest: ${workspace}/dawn/v20260423.175430
+      src: ${download}/Dawn-$var{dawn_commit}-macos-latest-Release.tar.gz
+      src_sub_folder: Dawn-$var{dawn_commit}-macos-latest-Release
+      dest: ${workspace}/dawn/v$var{dawn_version}
   - download:
       src:
         url: https://github.com/ZTurners/DevCraftArtifactory/releases/download/init/tint.macos.tar.gz
@@ -22,16 +30,16 @@ install:
       command:
         - cp -f
         - ${workspace}/dawn/tint.macos/tint
-        - ${workspace}/dawn/v20260423.175430/bin/tint
+        - ${workspace}/dawn/v$var{dawn_version}/bin/tint
   - make_execute_permission:
       files:
-        - ${workspace}/dawn/v20260423.175430/bin/tint
+        - ${workspace}/dawn/v$var{dawn_version}/bin/tint
 
 generator_active_batch:
   file_path: ${workspace}/dawn/active.sh
   environments:
     set:
-      DAWN_ROOT: ${workspace}/dawn/v20260423.175430
-      DAWN_CMAKE_DIR: ${workspace}/dawn/v20260423.175430/lib/cmake/Dawn
+      DAWN_ROOT: ${workspace}/dawn/v$var{dawn_version}
+      DAWN_CMAKE_DIR: ${workspace}/dawn/v$var{dawn_version}/lib/cmake/Dawn
     prepend:
-      - PATH: ${workspace}/dawn/v20260423.175430/bin
+      - PATH: ${workspace}/dawn/v$var{dawn_version}/bin

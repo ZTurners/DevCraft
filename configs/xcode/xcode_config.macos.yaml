@@ -1,3 +1,5 @@
+sdk_root: ${workspace}/xcode
+
 install:
   # command_line_tools:
   - execute:

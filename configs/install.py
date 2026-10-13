@@ -19,6 +19,15 @@ import zipfile
 import tarfile
 import copy
 import heapq
+import re
+
+# File-level config variables: '$var{name}' tokens in a config are replaced at
+# load time with values from its top-level 'variables' mapping (merged with the
+# variables inherited from its dependencies). The syntax is deliberately
+# distinct from the '${workspace}'-style path tokens resolved by
+# _formalize_path, so the two mechanisms never interact.
+_CONFIG_VARIABLE_PATTERN = re.compile(r"\$var\{([A-Za-z0-9_]+)\}")
+_CONFIG_VARIABLE_NAME_PATTERN = re.compile(r"[A-Za-z0-9_]+")
 
 class WorkspaceInstaller:
     def __init__(self):
@@ -33,6 +42,13 @@ class WorkspaceInstaller:
         self.m_current_config = None
         self.m_current_node = None
         self.m_current_install_step = None
+        self.m_user_aborted = False
+        # Colored console output: only when writing to a terminal and NO_COLOR
+        # is unset. "os.system('')" enables ANSI processing in legacy Windows
+        # consoles (Windows Terminal supports it natively).
+        self.m_use_colors = (not os.environ.get("NO_COLOR")) and sys.stdout.isatty()
+        if self.m_use_colors and self.m_system_name == "Windows":
+            os.system("")
 
     def build_failure_summary(self, error):
         """Build a compact failure summary for console output."""
@@ -43,15 +59,16 @@ class WorkspaceInstaller:
         lines.append(f"  Error: {error}")
         return "\n".join(lines)
 
-    def _record_config_summary(self, config_name, status, message=""):
+    def _record_config_summary(self, config_name, status, message="", variables=None):
         """Record per-config install result for final summary output."""
-        sdk_name = config_name.split('/', 1)[0] if isinstance(config_name, str) and config_name else "N/A"
+        sdk_name = config_name.replace('\\', '/').split('/', 1)[0] if isinstance(config_name, str) and config_name else "N/A"
         self.m_summary_data.append({
             "timestamp": datetime.datetime.now(datetime.UTC).isoformat(),
             "sdk": sdk_name,
             "config": config_name,
             "status": status,
             "message": message,
+            "variables": variables or {},
         })
 
     def build_run_summary(self, run_error=None):
@@ -61,6 +78,7 @@ class WorkspaceInstaller:
         total_count = len(self.m_summary_data)
         success_items = [item for item in self.m_summary_data if item.get("status") == "SUCCESS"]
         failed_items = [item for item in self.m_summary_data if item.get("status") == "FAILED"]
+        skipped_items = [item for item in self.m_summary_data if item.get("status") == "SKIPPED"]
 
         lines = []
         lines.append("DevCraft Install Summary")
@@ -71,12 +89,15 @@ class WorkspaceInstaller:
         lines.append(f"Configs processed: {total_count}")
         lines.append(f"Successful SDK installs: {len(success_items)}")
         lines.append(f"Failed SDK installs: {len(failed_items)}")
+        lines.append(f"Skipped SDK installs (already up to date): {len(skipped_items)}")
 
         lines.append("")
         lines.append("Successful installs:")
         if success_items:
             for item in success_items:
                 lines.append(f"  - {item['sdk']} | {item['config']} | {item['timestamp']}")
+                for name, value in item["variables"].items():
+                    lines.append(f"      - {name}={value}")
         else:
             lines.append("  - None")
 
@@ -86,6 +107,14 @@ class WorkspaceInstaller:
             for item in failed_items:
                 fail_message = item.get("message") or "Unknown error"
                 lines.append(f"  - {item['sdk']} | {item['config']} | {item['timestamp']} | {fail_message}")
+        else:
+            lines.append("  - None")
+
+        lines.append("")
+        lines.append("Skipped installs (already up to date):")
+        if skipped_items:
+            for item in skipped_items:
+                lines.append(f"  - {item['sdk']} | {item['config']} | {item['timestamp']}")
         else:
             lines.append("  - None")
 
@@ -809,6 +838,7 @@ class WorkspaceInstaller:
     def _process_execute(self, command_config, context):
         """Handle execute node."""
         print("\nExecuting installation command...")
+        passthrough = False
 
         # Handle new object format: { command: [...], dest: "...", skip_if_exists: "..." }
         if isinstance(command_config, dict):
@@ -819,6 +849,11 @@ class WorkspaceInstaller:
                 if os.path.exists(skip_path):
                     print(f"Skipping execute: '{skip_path}' already exists.")
                     return
+
+            # terminal: pass the child's stdout/stderr straight to the console
+            # instead of capturing them. CLIs like cargo/pip/npm only render
+            # progress bars when attached to a real terminal.
+            passthrough = bool(command_config.get("terminal", False))
 
             cmd_list = command_config.get("command", [])
             
@@ -852,10 +887,10 @@ class WorkspaceInstaller:
                     shell=True,
                     check=True,
                     text=True,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
+                    stdout=None if passthrough else subprocess.PIPE,
+                    stderr=None if passthrough else subprocess.PIPE,
                 )
-                if result.stdout:
+                if not passthrough and result.stdout:
                     print(result.stdout.rstrip())
                 print("Command executed successfully.")
             except subprocess.CalledProcessError as e:
@@ -1149,6 +1184,232 @@ class WorkspaceInstaller:
 
         return normalized
 
+    def _extract_variables(self, config_file_path, config):
+        """Read and validate the optional top-level variables mapping from a config.
+
+        Values must be scalars (str/int/float); they are literal and never
+        interpolated themselves. Returns {} when the config declares none.
+        """
+        variables = config.get('variables')
+        if variables is None:
+            return {}
+        if not isinstance(variables, dict):
+            raise TypeError(f"'variables' must be a mapping in {config_file_path}")
+
+        validated = {}
+        for name, value in variables.items():
+            if not isinstance(name, str) or not _CONFIG_VARIABLE_NAME_PATTERN.fullmatch(name):
+                raise TypeError(
+                    f"Invalid variable name {name!r} in {config_file_path} "
+                    f"(allowed: letters, digits, underscore)"
+                )
+            if isinstance(value, bool) or not isinstance(value, (str, int, float)):
+                raise TypeError(f"Variable '{name}' must map to a scalar value in {config_file_path}")
+            validated[name] = value
+        return validated
+
+    def _interpolate_config_text(self, text, variables, config_file_path):
+        """Replace every $var{name} token in one string; unknown names are an error."""
+        def _replace(match):
+            name = match.group(1)
+            if name not in variables:
+                raise RuntimeError(f"Undefined variable '$var{{{name}}}' in {config_file_path}")
+            return str(variables[name])
+
+        return _CONFIG_VARIABLE_PATTERN.sub(_replace, text)
+
+    def _interpolate_config_variables(self, node, variables, config_file_path):
+        """Recursively interpolate $var{name} tokens in all strings of a config tree."""
+        if isinstance(node, dict):
+            return {
+                key: self._interpolate_config_variables(value, variables, config_file_path)
+                for key, value in node.items()
+            }
+        if isinstance(node, list):
+            return [self._interpolate_config_variables(item, variables, config_file_path) for item in node]
+        if isinstance(node, str):
+            return self._interpolate_config_text(node, variables, config_file_path)
+        return node
+
+    def _compute_effective_variables(self, records):
+        """Merge each config's variables with the variables inherited from its dependencies.
+
+        Resolution walks the dependency closure, so a config sees the effective
+        variables (own + inherited) of every config it depends on. A name defined
+        twice with different values is an error: a version must have a single
+        source of truth. Same name with the same value is allowed.
+        """
+        effective_by_rel = {}
+
+        def _resolve(rel, pending):
+            if rel in effective_by_rel:
+                return effective_by_rel[rel]
+            if rel in pending:
+                cycle = " -> ".join(pending + [rel])
+                raise RuntimeError(f"Cyclic dependency while resolving variables: {cycle}")
+
+            inherited = {}
+            for dep_rel in records[rel]['dep_rels']:
+                for name, value in _resolve(dep_rel, pending + [rel]).items():
+                    if name in inherited and inherited[name] != value:
+                        raise RuntimeError(
+                            f"Conflicting values for variable '{name}' among dependencies of "
+                            f"{records[rel]['path']}: '{dep_rel}' provides {value!r}, "
+                            f"another dependency provides {inherited[name]!r}"
+                        )
+                    inherited[name] = value
+
+            own = records[rel]['variables']
+            for name, value in own.items():
+                if name in inherited and inherited[name] != value:
+                    raise RuntimeError(
+                        f"Variable '{name}' in {records[rel]['path']} ({value!r}) conflicts with the "
+                        f"value inherited from its dependencies ({inherited[name]!r}); "
+                        f"remove the local override or align the values"
+                    )
+
+            effective_by_rel[rel] = {**inherited, **own}
+            return effective_by_rel[rel]
+
+        for rel in records:
+            _resolve(rel, [])
+        return effective_by_rel
+
+    def _extract_sdk_root(self, config_file_path, config):
+        """Read optional top-level sdk_root path from config."""
+        sdk_root = config.get('sdk_root', '')
+        if sdk_root is None:
+            return ''
+        if not isinstance(sdk_root, str):
+            raise TypeError(f"'sdk_root' must be a string in {config_file_path}")
+        return sdk_root.strip()
+
+    def _calculate_file_md5(self, file_path):
+        """Calculate the MD5 checksum of a file."""
+        md5 = hashlib.md5()
+        with open(file_path, 'rb') as fh:
+            for chunk in iter(lambda: fh.read(8192), b''):
+                md5.update(chunk)
+        return md5.hexdigest()
+
+    def _resolve_sdk_root(self, config_file_path, sdk_root_raw):
+        """Formalize and validate the sdk_root declared by a config."""
+        sdk_root = os.path.abspath(self._formalize_path(sdk_root_raw))
+        protected_paths = {
+            os.path.abspath(self.m_dev_env_root_path),
+            os.path.abspath(self.m_workspace_root_path),
+            os.path.abspath(self.m_configs_root_path),
+            os.path.abspath(self.m_download_root_path),
+        }
+        if sdk_root in protected_paths:
+            raise RuntimeError(
+                f"Invalid sdk_root '{sdk_root}' in {config_file_path}: "
+                "it must be a dedicated folder, not a DevCraft/workspace root"
+            )
+        return sdk_root
+
+    def _installed_config_marker_path(self, sdk_root, config_file_path):
+        """Path of the config copy stored inside an installed sdk root."""
+        return os.path.join(sdk_root, os.path.basename(config_file_path))
+
+    @staticmethod
+    def _rmtree_force(path):
+        """shutil.rmtree that clears read-only flags before retrying.
+
+        Archives for Unix targets (e.g. LLVM's Linux tarballs) contain files
+        with 0444/0555 permissions; on Windows these map to read-only files
+        that plain shutil.rmtree cannot delete (WinError 5).
+        """
+        def _clear_readonly(func, target, _exc):
+            os.chmod(target, stat.S_IWRITE)
+            func(target)
+
+        if sys.version_info >= (3, 12):
+            shutil.rmtree(path, onexc=_clear_readonly)
+        else:
+            shutil.rmtree(path, onerror=_clear_readonly)
+
+    def _validate_installed_config_state(self, config_file_path, sdk_root):
+        """Wipe the sdk root when the stored config copy is missing or changed.
+
+        The stored copy is compared with the current config file by MD5; any
+        difference (or a missing copy) means the sdk was installed from a
+        different config and must be reinstalled from scratch.
+        """
+        if not sdk_root or not os.path.exists(sdk_root):
+            return
+
+        marker_path = self._installed_config_marker_path(sdk_root, config_file_path)
+        if not os.path.exists(marker_path):
+            reason = f"no installed config copy found at '{marker_path}'"
+        elif self._calculate_file_md5(marker_path) != self._calculate_file_md5(config_file_path):
+            reason = f"installed config copy '{marker_path}' differs from '{config_file_path}' (MD5 mismatch)"
+        else:
+            return
+
+        print(f"\nConfig change detected: {reason}.")
+        print(f"Removing sdk root for a clean reinstall: {sdk_root}")
+        self._rmtree_force(sdk_root)
+
+    def _remove_failed_sdk_root(self, sdk_root, config_display_name):
+        """Remove the sdk root after a failed install so no broken state remains."""
+        if not sdk_root or not os.path.exists(sdk_root):
+            return
+
+        print(f"\nInstall failed for '{config_display_name}'; removing sdk root: {sdk_root}")
+        try:
+            self._rmtree_force(sdk_root)
+        except Exception as e:
+            print(f"Warning: could not remove sdk root '{sdk_root}': {e}")
+
+    def _store_installed_config_marker(self, config_file_path, sdk_root):
+        """Copy the current config file into the sdk root as install-state marker."""
+        marker_path = self._installed_config_marker_path(sdk_root, config_file_path)
+        os.makedirs(sdk_root, exist_ok=True)
+        shutil.copyfile(config_file_path, marker_path)
+        print(f"Stored installed config copy: {marker_path}")
+
+    def _get_install_status(self, config_file_path, sdk_root):
+        """Return the install status tag for a config without touching the sdk root.
+
+        installed          sdk root exists and its stored config copy matches
+        missing            sdk root does not exist yet
+        reinstall-needed   sdk root exists but the stored copy is missing/changed
+        no sdk_root        config does not take part in the marker mechanism
+        """
+        if not sdk_root:
+            return "no sdk_root"
+        if not os.path.exists(sdk_root):
+            return "missing"
+        marker_path = self._installed_config_marker_path(sdk_root, config_file_path)
+        if not os.path.exists(marker_path):
+            return "reinstall-needed"
+        if self._calculate_file_md5(marker_path) != self._calculate_file_md5(config_file_path):
+            return "reinstall-needed"
+        return "installed"
+
+    def _confirm_proceed(self):
+        """Ask the user to confirm the install plan before proceeding."""
+        try:
+            answer = input("\nProceed with installation? [y/N]: ").strip().lower()
+        except EOFError:
+            print("\nNo interactive input available; aborting.")
+            return False
+        return answer in ("y", "yes")
+
+    def _colorize(self, text, status):
+        """Wrap text in the ANSI color assigned to an install status."""
+        if not self.m_use_colors:
+            return text
+        palette = {
+            "installed": "\033[32m",         # green
+            "missing": "\033[33m",           # yellow
+            "reinstall-needed": "\033[31m",  # red
+            "no sdk_root": "\033[90m",       # gray
+        }
+        ansi = palette.get(status)
+        return f"{ansi}{text}\033[0m" if ansi else text
+
     def _resolve_dependency(self, dep_text, records_by_rel, records_by_basename, records_by_folder):
         """Resolve a dependency reference to a record key."""
         dep_norm = dep_text.strip().replace('\\', '/')
@@ -1184,10 +1445,12 @@ class WorkspaceInstaller:
 
         raise RuntimeError(f"Unknown dependency '{dep_text}'")
 
-    def install_from_config(self, config_file_path):
+    def install_from_config(self, config_file_path, variables=None):
         """Generic installation function that handles downloading and extracting from configured URLs.
         Args:
-            config_file_path (str): Path to the configuration JSON file
+            config_file_path: Path to the configuration YAML/JSON file
+            variables: Effective variable values (own + inherited from dependencies)
+                used to interpolate $var{name} tokens in this config
         """
         try:
             config = self._load_config_data(config_file_path)
@@ -1195,6 +1458,11 @@ class WorkspaceInstaller:
             raise RuntimeError(f"Invalid JSON in configuration file: {config_file_path}")
         except Exception as e:
             raise RuntimeError(f"Unexpected error reading configuration '{config_file_path}': {e}") from e
+
+        # Interpolate $var{} tokens with the effective variables, then drop the
+        # 'variables' block so install handlers never see it.
+        config.pop('variables', None)
+        config = self._interpolate_config_variables(config, variables or {}, config_file_path)
 
         context = {
             'config': config
@@ -1319,8 +1587,10 @@ class WorkspaceInstaller:
             try:
                 config_data = self._load_config_data(config_path)
                 dependencies = self._extract_dependencies(config_path, config_data)
+                sdk_root_raw = self._extract_sdk_root(config_path, config_data)
+                variables = self._extract_variables(config_path, config_data)
             except Exception as e:
-                raise RuntimeError(f"Error parsing dependencies in {config_path}: {e}") from e
+                raise RuntimeError(f"Error parsing config '{config_path}': {e}") from e
 
             records[rel] = {
                 'path': config_path,
@@ -1328,6 +1598,8 @@ class WorkspaceInstaller:
                 'folder': folder_key,
                 'base': base_name,
                 'deps': dependencies,
+                'sdk_root': sdk_root_raw,
+                'variables': variables,
             }
 
             records_by_basename.setdefault(base_name, []).append(rel)
@@ -1338,6 +1610,7 @@ class WorkspaceInstaller:
         adjacency = {k: set() for k in records}
 
         for rel, record in records.items():
+            record['dep_rels'] = []
             for dep_text in record['deps']:
                 try:
                     dep_rel = self._resolve_dependency(
@@ -1355,6 +1628,33 @@ class WorkspaceInstaller:
                 if rel not in adjacency[dep_rel]:
                     adjacency[dep_rel].add(rel)
                     indegree[rel] += 1
+                if dep_rel not in record['dep_rels']:
+                    record['dep_rels'].append(dep_rel)
+
+        # Resolve each config's effective variables (own + inherited through the
+        # dependency closure), then interpolate $var{} tokens in sdk_root so the
+        # duplicate check and status pass below see real paths.
+        effective_variables_by_rel = self._compute_effective_variables(records)
+        for rel, record in records.items():
+            record['effective_variables'] = effective_variables_by_rel[rel]
+            if record['sdk_root']:
+                record['sdk_root'] = self._interpolate_config_text(
+                    record['sdk_root'], record['effective_variables'], record['path'])
+
+        # Detect multiple configs declaring the same sdk root: a config-change
+        # wipe from one config would silently destroy the other's install.
+        sdk_root_owners = {}
+        for rel, record in records.items():
+            sdk_root_raw = record.get('sdk_root', '')
+            if not sdk_root_raw:
+                continue
+            sdk_root_key = os.path.normcase(os.path.abspath(self._formalize_path(sdk_root_raw)))
+            if sdk_root_key in sdk_root_owners and sdk_root_owners[sdk_root_key] != rel:
+                raise RuntimeError(
+                    f"Multiple configs declare the same sdk_root '{sdk_root_key}': "
+                    f"{sdk_root_owners[sdk_root_key]} and {rel}"
+                )
+            sdk_root_owners[sdk_root_key] = rel
 
         # Topological sort with deterministic ordering.
         heap = []
@@ -1377,8 +1677,31 @@ class WorkspaceInstaller:
             raise RuntimeError(f"Cyclic dependency detected among config files:\n{cycle_text}")
 
         print("\nResolved config execution order:")
+        name_width = max(len(rel) for rel in ordered)
+        status_counts = {}
         for index, rel in enumerate(ordered, 1):
-            print(f"  {index}. {rel}")
+            config_path = records[rel]['path']
+            sdk_root_raw = records[rel].get('sdk_root', '')
+            sdk_root = self._resolve_sdk_root(config_path, sdk_root_raw) if sdk_root_raw else ''
+            status = self._get_install_status(config_path, sdk_root)
+            status_counts[status] = status_counts.get(status, 0) + 1
+            print(f"  {index:>2}. {rel.ljust(name_width)}  [{self._colorize(status, status)}]")
+            for name, value in records[rel]['variables'].items():
+                print(f"        - {name}={value}")
+
+        def _summary_line(status, note):
+            tag = f"[{status}]".ljust(len("[reinstall-needed]"))
+            print(f"  {self._colorize(tag, status)}  {status_counts.get(status, 0)} ({note})")
+
+        print("\nInstall plan:")
+        _summary_line("installed", "up to date, no reinstall")
+        _summary_line("missing", "fresh install")
+        _summary_line("reinstall-needed", "sdk root will be removed and reinstalled")
+
+        if not self._confirm_proceed():
+            self.m_user_aborted = True
+            print("Aborted by user. No changes were made.")
+            return
 
         # Process each config file in dependency order.
         for rel in ordered:
@@ -1395,12 +1718,26 @@ class WorkspaceInstaller:
             self.m_current_config = display_name
             self.m_current_node = None
             self.m_current_install_step = None
+
+            sdk_root = ""
             try:
-                self.install_from_config(config_path)
-                self._record_config_summary(display_name, "SUCCESS")
+                sdk_root_raw = records[rel].get('sdk_root', '')
+                if sdk_root_raw:
+                    sdk_root = self._resolve_sdk_root(config_path, sdk_root_raw)
+                    self._validate_installed_config_state(config_path, sdk_root)
+                    if self._get_install_status(config_path, sdk_root) == "installed":
+                        print(self._colorize("Already installed and up to date, skipping install.", "installed"))
+                        self._record_config_summary(display_name, "SKIPPED", "already installed (config unchanged)", records[rel]['variables'])
+                        continue
+                self.install_from_config(config_path, records[rel]['effective_variables'])
             except Exception as e:
-                self._record_config_summary(display_name, "FAILED", str(e))
+                self._remove_failed_sdk_root(sdk_root, display_name)
+                self._record_config_summary(display_name, "FAILED", str(e), records[rel]['variables'])
                 raise
+
+            if sdk_root:
+                self._store_installed_config_marker(config_path, sdk_root)
+            self._record_config_summary(display_name, "SUCCESS", variables=records[rel]['variables'])
 
 def main():
     dev_env_installer = WorkspaceInstaller()
@@ -1409,6 +1746,10 @@ def main():
         dev_env_installer.install_all()
     except Exception as e:
         run_error = e
+
+    if dev_env_installer.m_user_aborted:
+        print("\nInstall aborted by user (confirmation declined).")
+        sys.exit(1)
 
     summary_text = dev_env_installer.build_run_summary(run_error)
     summary_path = dev_env_installer.write_run_summary(summary_text)

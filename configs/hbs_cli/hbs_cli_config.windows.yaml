@@ -1,10 +1,13 @@
+sdk_root: ${workspace}/hbs_cli
+
 dependencies:
   - nodejs
+  - mustache
 
 install:
   - execute:
       command:
-        - ${workspace}/nodejs/node-v26.8.1/npm.cmd
+        - ${workspace}/nodejs/node-v$var{node_version}/npm.cmd
         - install
         - -g
         - hbs-cli
@@ -14,4 +17,4 @@ generator_active_batch:
   file_path: ${workspace}/hbs_cli/active.bat
   environments:
     prepend:
-      - PATH: ${workspace}/nodejs/node-v26.8.1;${workspace}/mustache/mustache_1.4.0_win_x86_64
+      - PATH: ${workspace}/nodejs/node-v$var{node_version};${workspace}/mustache/mustache_$var{mustache_version}_windows_amd64

@@ -1,3 +1,10 @@
+sdk_root: ${workspace}/visual_studio
+
+variables:
+  msvc_version: "14.52.36815"
+  windows_sdk_package_version: "10.0.26100.7705"
+  windows_sdk_version: "10.0.26100.0"
+
 install:
   # Install a repo-local portable MSVC + Windows SDK toolchain.
   # --msvc-version accepts a full toolset version (14.52.36815) or a major.minor prefix (14.52).
@@ -18,10 +25,10 @@ install:
 
         - --vs=2026
         - --insiders
-        - --msvc-version=14.52.36815
+        - --msvc-version=$var{msvc_version}
         - --msvc-output=${workspace}/visual_studio
 
-        - --windows-sdk-version=10.0.26100.7705
+        - --windows-sdk-version=$var{windows_sdk_package_version}
         - --windows-sdk-output=${workspace}/visual_studio
 
         - --skip-if-output-folder-exists=true
@@ -29,14 +36,14 @@ install:
       dest: ${workspace}/visual_studio/msvc
   - environments:
       set:
-        VCToolsInstallDir: ${workspace}/visual_studio/VC/Tools/MSVC/14.52.36815
-        WindowsSDKVersion: 10.0.26100.0\
-        INCLUDE: ${workspace}/visual_studio/VC/Tools/MSVC/14.52.36815/include;${workspace}/visual_studio/WindowsKits/10/Include/10.0.26100.0/ucrt;${workspace}/visual_studio/WindowsKits/10/Include/10.0.26100.0/shared;${workspace}/visual_studio/WindowsKits/10/Include/10.0.26100.0/um;${workspace}/visual_studio/WindowsKits/10/Include/10.0.26100.0/winrt;${workspace}/visual_studio/WindowsKits/10/Include/10.0.26100.0/cppwinrt
-        LIB: ${workspace}/visual_studio/VC/Tools/MSVC/14.52.36815/lib/x64;${workspace}/visual_studio/WindowsKits/10/Lib/10.0.26100.0/ucrt/x64;${workspace}/visual_studio/WindowsKits/10/Lib/10.0.26100.0/um/x64
+        VCToolsInstallDir: ${workspace}/visual_studio/VC/Tools/MSVC/$var{msvc_version}
+        WindowsSDKVersion: $var{windows_sdk_version}\
+        INCLUDE: ${workspace}/visual_studio/VC/Tools/MSVC/$var{msvc_version}/include;${workspace}/visual_studio/WindowsKits/10/Include/$var{windows_sdk_version}/ucrt;${workspace}/visual_studio/WindowsKits/10/Include/$var{windows_sdk_version}/shared;${workspace}/visual_studio/WindowsKits/10/Include/$var{windows_sdk_version}/um;${workspace}/visual_studio/WindowsKits/10/Include/$var{windows_sdk_version}/winrt;${workspace}/visual_studio/WindowsKits/10/Include/$var{windows_sdk_version}/cppwinrt
+        LIB: ${workspace}/visual_studio/VC/Tools/MSVC/$var{msvc_version}/lib/x64;${workspace}/visual_studio/WindowsKits/10/Lib/$var{windows_sdk_version}/ucrt/x64;${workspace}/visual_studio/WindowsKits/10/Lib/$var{windows_sdk_version}/um/x64
       prepend:
-        - PATH: ${workspace}/visual_studio/VC/Tools/MSVC/14.52.36815/bin/Hostx64/x64
-        - PATH: ${workspace}/visual_studio/WindowsKits/10/bin/10.0.26100.0/x64
-        - PATH: ${workspace}/visual_studio/WindowsKits/10/bin/10.0.26100.0/x64/ucrt
+        - PATH: ${workspace}/visual_studio/VC/Tools/MSVC/$var{msvc_version}/bin/Hostx64/x64
+        - PATH: ${workspace}/visual_studio/WindowsKits/10/bin/$var{windows_sdk_version}/x64
+        - PATH: ${workspace}/visual_studio/WindowsKits/10/bin/$var{windows_sdk_version}/x64/ucrt
 
 generator_active_batch:
   file_path: ${workspace}/visual_studio/active.bat
@@ -46,6 +53,6 @@ generator_active_batch:
       DEVCRAFT_PORTABLE_MSVC_ROOT: ${workspace}/visual_studio
       DEVCRAFT_PORTABLE_MSVC_SETUP_X64: ${workspace}/visual_studio/setup_x64.bat
     prepend:
-      - PATH: ${workspace}/visual_studio/VC/Tools/MSVC/14.52.36815/bin/Hostx64/x64
-      - PATH: ${workspace}/visual_studio/WindowsKits/10/bin/10.0.26100.0/x64
-      - PATH: ${workspace}/visual_studio/WindowsKits/10/bin/10.0.26100.0/x64/ucrt
+      - PATH: ${workspace}/visual_studio/VC/Tools/MSVC/$var{msvc_version}/bin/Hostx64/x64
+      - PATH: ${workspace}/visual_studio/WindowsKits/10/bin/$var{windows_sdk_version}/x64
+      - PATH: ${workspace}/visual_studio/WindowsKits/10/bin/$var{windows_sdk_version}/x64/ucrt

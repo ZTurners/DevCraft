@@ -1,3 +1,5 @@
+sdk_root: ${workspace}/conan
+
 install:
   # conan_install:
   - execute:

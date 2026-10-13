@@ -1,3 +1,5 @@
+sdk_root: ${workspace}/vscode
+
 install:
   # conan_boostrap:
   - copy:

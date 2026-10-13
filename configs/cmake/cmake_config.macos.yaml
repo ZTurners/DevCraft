@@ -1,21 +1,26 @@
+sdk_root: ${workspace}/cmake
+
+variables:
+  cmake_version: "4.2.3"
+
 install:
   # cmake-4.2.3:
   - download:
       src:
-        url: https://github.com/Kitware/CMake/releases/download/v4.2.3/cmake-4.2.3-macos10.10-universal.tar.gz
+        url: https://github.com/Kitware/CMake/releases/download/v$var{cmake_version}/cmake-$var{cmake_version}-macos10.10-universal.tar.gz
         SHA-256: 910b965a6fc72928412dd369c957643ff17a0990cc2435a2573b04c1352d9ff3
-      dest: ${download}/cmake-4.2.3-macos-universal.tar.gz
+      dest: ${download}/cmake-$var{cmake_version}-macos-universal.tar.gz
   - unzip:
-      src: ${download}/cmake-4.2.3-macos-universal.tar.gz
-      src_sub_folder: cmake-4.2.3-macos10.10-universal
-      dest: ${workspace}/cmake/cmake-4.2.3-macos-universal
+      src: ${download}/cmake-$var{cmake_version}-macos-universal.tar.gz
+      src_sub_folder: cmake-$var{cmake_version}-macos10.10-universal
+      dest: ${workspace}/cmake/cmake-$var{cmake_version}-macos-universal
   - make_execute_permission:
       files:
-        - ${workspace}/cmake/cmake-4.2.3-macos-universal/CMake.app/Contents/bin/cmake
+        - ${workspace}/cmake/cmake-$var{cmake_version}-macos-universal/CMake.app/Contents/bin/cmake
 
 generator_active_batch:
   file_path: ${workspace}/cmake/active.sh
   environments:
     set: {}
     prepend:
-      - PATH: ${workspace}/cmake/cmake-4.2.3-macos-universal/CMake.app/Contents/bin
+      - PATH: ${workspace}/cmake/cmake-$var{cmake_version}-macos-universal/CMake.app/Contents/bin

@@ -1,21 +1,26 @@
+sdk_root: ${workspace}/typescript
+
 dependencies:
   - nodejs
+
+variables:
+  typescript_version: "7.0.2"
 
 install:
   # TypeScript 7.0.2 (latest npm release at configuration time)
   - execute:
       skip_if_exists: ${workspace}/typescript/tsc.cmd
       command:
-        - ${workspace}/nodejs/node-v26.8.1/npm.cmd
+        - ${workspace}/nodejs/node-v$var{node_version}/npm.cmd
         - install
         - --global
         - --prefix
         - ${workspace}/typescript
-        - typescript@7.0.2
+        - typescript@$var{typescript_version}
 
 generator_active_batch:
   file_path: ${workspace}/typescript/active.bat
   environments:
     prepend:
-      - PATH: ${workspace}/nodejs/node-v26.8.1
+      - PATH: ${workspace}/nodejs/node-v$var{node_version}
       - PATH: ${workspace}/typescript

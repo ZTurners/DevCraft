@@ -1,57 +1,64 @@
+sdk_root: ${workspace}/llvm
+
+variables:
+  llvm_version: "23.1.1"
+  llvm_major: "23"
+  llvm_python_version: "3.10.10"
+
 install:
   # llvm for windows
   - download:
       src:
-        url: https://github.com/llvm/llvm-project/releases/download/llvmorg-23.1.1/clang+llvm-23.1.1-x86_64-pc-windows-msvc.tar.xz
+        url: https://github.com/llvm/llvm-project/releases/download/llvmorg-$var{llvm_version}/clang+llvm-$var{llvm_version}-x86_64-pc-windows-msvc.tar.xz
         SHA-256: c54ac8146b420fe72e11e6fdd56498d6818011ad23267196b6ab37b5ac9264c3
-      dest: ${download}/clang+llvm-23.1.1-x86_64-pc-windows-msvc.tar.xz
+      dest: ${download}/clang+llvm-$var{llvm_version}-x86_64-pc-windows-msvc.tar.xz
   - unzip:
-      src: ${download}/clang+llvm-23.1.1-x86_64-pc-windows-msvc.tar.xz
-      src_sub_folder: clang+llvm-23.1.1-x86_64-pc-windows-msvc
-      dest: ${workspace}/llvm/llvm-23/x86_64-windows-msvc
-  
+      src: ${download}/clang+llvm-$var{llvm_version}-x86_64-pc-windows-msvc.tar.xz
+      src_sub_folder: clang+llvm-$var{llvm_version}-x86_64-pc-windows-msvc
+      dest: ${workspace}/llvm/llvm-$var{llvm_major}/x86_64-windows-msvc
+
   # install python 310 for llvm on windows
   - download:
       src:
-        url: https://www.python.org/ftp/python/3.10.10/python-3.10.10-embed-amd64.zip
-      dest: ${download}/python-3.10.10-embed-amd64.zip
+        url: https://www.python.org/ftp/python/$var{llvm_python_version}/python-$var{llvm_python_version}-embed-amd64.zip
+      dest: ${download}/python-$var{llvm_python_version}-embed-amd64.zip
   - unzip:
-      src: ${download}/python-3.10.10-embed-amd64.zip
-      dest: ${workspace}/python/versions/3.10.10
+      src: ${download}/python-$var{llvm_python_version}-embed-amd64.zip
+      dest: ${workspace}/python/versions/$var{llvm_python_version}
   - copy:
-      src: ${workspace}/python/versions/3.10.10
-      dest: ${workspace}/llvm/llvm-23/x86_64-windows-msvc/bin
+      src: ${workspace}/python/versions/$var{llvm_python_version}
+      dest: ${workspace}/llvm/llvm-$var{llvm_major}/x86_64-windows-msvc/bin
       force_update: true
 
   # llvm for linux arm64
   - download:
       src:
-        url: https://github.com/llvm/llvm-project/releases/download/llvmorg-23.1.1/LLVM-23.1.1-Linux-ARM64.tar.xz
+        url: https://github.com/llvm/llvm-project/releases/download/llvmorg-$var{llvm_version}/LLVM-$var{llvm_version}-Linux-ARM64.tar.xz
         SHA-256: 3fbaaa6a1f147557a4095b9911f8dc2d4c745a11863982f76ee20e248c190a80
-      dest: ${download}/LLVM-23.1.1-Linux-ARM64.tar.xz
+      dest: ${download}/LLVM-$var{llvm_version}-Linux-ARM64.tar.xz
   - unzip:
-      src: ${download}/LLVM-23.1.1-Linux-ARM64.tar.xz
-      src_sub_folder: LLVM-23.1.1-Linux-ARM64
-      dest: ${workspace}/llvm/llvm-23/aarch64-linux-gnu
-      output_symbol_list: ${workspace}/llvm/llvm-23/aarch64-linux-gnu/.symbol_links.json
+      src: ${download}/LLVM-$var{llvm_version}-Linux-ARM64.tar.xz
+      src_sub_folder: LLVM-$var{llvm_version}-Linux-ARM64
+      dest: ${workspace}/llvm/llvm-$var{llvm_major}/aarch64-linux-gnu
+      output_symbol_list: ${workspace}/llvm/llvm-$var{llvm_major}/aarch64-linux-gnu/.symbol_links.json
   - resolve_symlinks:
-      src: ${workspace}/llvm/llvm-23/aarch64-linux-gnu
-      symbol_list: ${workspace}/llvm/llvm-23/aarch64-linux-gnu/.symbol_links.json
+      src: ${workspace}/llvm/llvm-$var{llvm_major}/aarch64-linux-gnu
+      symbol_list: ${workspace}/llvm/llvm-$var{llvm_major}/aarch64-linux-gnu/.symbol_links.json
 
   # llvm for linux x86_64
   - download:
       src:
-        url: https://github.com/llvm/llvm-project/releases/download/llvmorg-23.1.1/LLVM-23.1.1-Linux-X64.tar.xz
+        url: https://github.com/llvm/llvm-project/releases/download/llvmorg-$var{llvm_version}/LLVM-$var{llvm_version}-Linux-X64.tar.xz
         SHA-256: 832aeb58d105de1cabc7b982dd2c65de0610f7377df48ae8fc2dd8e97420a15c
-      dest: ${download}/LLVM-23.1.1-Linux-X64.tar.xz
+      dest: ${download}/LLVM-$var{llvm_version}-Linux-X64.tar.xz
   - unzip:
-      src: ${download}/LLVM-23.1.1-Linux-X64.tar.xz
-      src_sub_folder: LLVM-23.1.1-Linux-X64
-      dest: ${workspace}/llvm/llvm-23/x86_64-linux-gnu
-      output_symbol_list: ${workspace}/llvm/llvm-23/x86_64-linux-gnu/.symbol_links.json
+      src: ${download}/LLVM-$var{llvm_version}-Linux-X64.tar.xz
+      src_sub_folder: LLVM-$var{llvm_version}-Linux-X64
+      dest: ${workspace}/llvm/llvm-$var{llvm_major}/x86_64-linux-gnu
+      output_symbol_list: ${workspace}/llvm/llvm-$var{llvm_major}/x86_64-linux-gnu/.symbol_links.json
   - resolve_symlinks:
-      src: ${workspace}/llvm/llvm-23/x86_64-linux-gnu
-      symbol_list: ${workspace}/llvm/llvm-23/x86_64-linux-gnu/.symbol_links.json
+      src: ${workspace}/llvm/llvm-$var{llvm_major}/x86_64-linux-gnu
+      symbol_list: ${workspace}/llvm/llvm-$var{llvm_major}/x86_64-linux-gnu/.symbol_links.json
 
 generator_active_batch:
   file_path: ${workspace}/llvm/active.bat
@@ -59,4 +66,4 @@ generator_active_batch:
     # set:
     #   HOST_LLVM_BIN: ${workspace}/llvm/llvm-23/x86_64-windows-msvc/bin
     prepend:
-      - PATH: ${workspace}/llvm/llvm-23/x86_64-windows-msvc/bin
+      - PATH: ${workspace}/llvm/llvm-$var{llvm_major}/x86_64-windows-msvc/bin

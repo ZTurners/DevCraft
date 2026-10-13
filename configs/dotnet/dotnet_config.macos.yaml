@@ -1,30 +1,36 @@
+sdk_root: ${workspace}/dotnet
+
+variables:
+  dotnet_version: "10.0.401"
+
 install:
   - download:
       src:
-        url: https://builds.dotnet.microsoft.com/dotnet/Sdk/10.0.401/dotnet-sdk-10.0.401-osx-arm64.tar.gz
+        url: https://builds.dotnet.microsoft.com/dotnet/Sdk/$var{dotnet_version}/dotnet-sdk-$var{dotnet_version}-osx-arm64.tar.gz
         SHA-512: 69f64eb00dc045398755c440b152225d544301a345a146a16e86a56a0c52b7c94b2c331520e976dbb821f18d31930aafbd25bb85961e3517e0665414ce0cbcff
-      dest: ${download}/dotnet-sdk-10.0.401-osx-arm64.tar.gz
+      dest: ${download}/dotnet-sdk-$var{dotnet_version}-osx-arm64.tar.gz
   - unzip:
-      src: ${download}/dotnet-sdk-10.0.401-osx-arm64.tar.gz
+      src: ${download}/dotnet-sdk-$var{dotnet_version}-osx-arm64.tar.gz
       src_sub_folder: ""
-      dest: ${workspace}/dotnet/dotnet-sdk-10.0.401-osx-arm64
+      dest: ${workspace}/dotnet/dotnet-sdk-$var{dotnet_version}-osx-arm64
 
   - environments:
       set:
         NUGET_PACKAGES: ${workspace}/nuget
 
   - execute:
+      terminal: true
       command:
-        - ${workspace}/dotnet/dotnet-sdk-10.0.401-osx-arm64/dotnet workload install wasi-experimental wasm-tools
+        - ${workspace}/dotnet/dotnet-sdk-$var{dotnet_version}-osx-arm64/dotnet workload install wasi-experimental wasm-tools
 
 generator_active_batch:
   file_path: ${workspace}/dotnet/active.sh
   environments:
     set:
-      DOTNET_ROOT: ${workspace}/dotnet/dotnet-sdk-10.0.401-osx-arm64
+      DOTNET_ROOT: ${workspace}/dotnet/dotnet-sdk-$var{dotnet_version}-osx-arm64
       DOTNET_CLI_TELEMETRY_OPTOUT: 1
       DOTNET_CLI_UI_LANGUAGE: en-US
       NUGET_PACKAGES: ${workspace}/nuget
     prepend:
-      - PATH: ${workspace}/dotnet/dotnet-sdk-10.0.401-osx-arm64/bin
-      - PATH: ${workspace}/dotnet/dotnet-sdk-10.0.401-osx-arm64
+      - PATH: ${workspace}/dotnet/dotnet-sdk-$var{dotnet_version}-osx-arm64/bin
+      - PATH: ${workspace}/dotnet/dotnet-sdk-$var{dotnet_version}-osx-arm64

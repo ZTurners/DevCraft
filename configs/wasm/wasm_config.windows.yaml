@@ -1,45 +1,51 @@
+sdk_root: ${workspace}/wasm
+
+variables:
+  wasmtime_version: "40.0.1"
+  wabt_version: "1.0.39"
+  wasi_sdk_version: "29.0"
+  wasi_sdk_major: "29"
+
 install:
   # wasmtime
   - download:
       src:
-        url: https://github.com/bytecodealliance/wasmtime/releases/download/v40.0.1/wasmtime-v40.0.1-x86_64-windows.zip
+        url: https://github.com/bytecodealliance/wasmtime/releases/download/v$var{wasmtime_version}/wasmtime-v$var{wasmtime_version}-x86_64-windows.zip
         SHA-256: 434451fc2abaeacc3dc312a92bd73da54ef8a29644f386070a86c0f43e3b4ad6
-      dest: ${download}/wasmtime-v40.0.1-x86_64-windows.zip
+      dest: ${download}/wasmtime-v$var{wasmtime_version}-x86_64-windows.zip
   - unzip:
-      src: ${download}/wasmtime-v40.0.1-x86_64-windows.zip
-      src_sub_folder: 'wasmtime-v40.0.1-x86_64-windows'
-      dest: ${workspace}/wasm/wasmtime-v40.0.1-x86_64-windows
+      src: ${download}/wasmtime-v$var{wasmtime_version}-x86_64-windows.zip
+      src_sub_folder: 'wasmtime-v$var{wasmtime_version}-x86_64-windows'
+      dest: ${workspace}/wasm/wasmtime-v$var{wasmtime_version}-x86_64-windows
 
   # wabt wasm assemble binaires tools
   - download:
       src:
-        url: https://github.com/WebAssembly/wabt/releases/download/1.0.39/wabt-1.0.39-windows-x64.tar.gz
+        url: https://github.com/WebAssembly/wabt/releases/download/$var{wabt_version}/wabt-$var{wabt_version}-windows-x64.tar.gz
         SHA-256: c2215e52d3beff6cc0b6496aaef652399327084b9709ac5ec037b910c311a6c9
-      dest: ${download}/wabt-1.0.39-windows-x64.tar.gz
+      dest: ${download}/wabt-$var{wabt_version}-windows-x64.tar.gz
   - unzip:
-      src: ${download}/wabt-1.0.39-windows-x64.tar.gz
-      src_sub_folder: wabt-1.0.39
-      dest: ${workspace}/wasm/wabt-1.0.39-windows-x64
+      src: ${download}/wabt-$var{wabt_version}-windows-x64.tar.gz
+      src_sub_folder: wabt-$var{wabt_version}
+      dest: ${workspace}/wasm/wabt-$var{wabt_version}-windows-x64
 
   # wasi sdk
   - download:
       src:
-        url: https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-29/wasi-sdk-29.0-x86_64-windows.tar.gz
+        url: https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-$var{wasi_sdk_major}/wasi-sdk-$var{wasi_sdk_version}-x86_64-windows.tar.gz
         SHA-256: 6c19b820577486f00332ad8d04ac506da67b0892316b8d485371a58cbf216dee
-      dest: ${download}/wasi-sdk-29.0-x86_64-windows.tar.gz
+      dest: ${download}/wasi-sdk-$var{wasi_sdk_version}-x86_64-windows.tar.gz
   - unzip:
-      src: ${download}/wasi-sdk-29.0-x86_64-windows.tar.gz
-      src_sub_folder: wasi-sdk-29.0-x86_64-windows
-      dest: ${workspace}/wasm/wasi-sdk-29.0-x86_64-windows
+      src: ${download}/wasi-sdk-$var{wasi_sdk_version}-x86_64-windows.tar.gz
+      src_sub_folder: wasi-sdk-$var{wasi_sdk_version}-x86_64-windows
+      dest: ${workspace}/wasm/wasi-sdk-$var{wasi_sdk_version}-x86_64-windows
 
 generator_active_batch:
   file_path: ${workspace}/wasm/active.bat
   environments:
     prepend:
-      - PATH: ${workspace}/wasm/wasmtime-v40.0.1-x86_64-windows
-      - PATH: ${workspace}/wasm/wabt-1.0.39-windows-x64/bin
+      - PATH: ${workspace}/wasm/wasmtime-v$var{wasmtime_version}-x86_64-windows
+      - PATH: ${workspace}/wasm/wabt-$var{wabt_version}-windows-x64/bin
     set:
-      WASI_SDK_PATH: ${workspace}/wasm/wasi-sdk-29.0-x86_64-windows
-      WASI_SYSROOT: ${workspace}/wasm/wasi-sdk-29.0-x86_64-windows/share/wasi-sysroot
-
-
+      WASI_SDK_PATH: ${workspace}/wasm/wasi-sdk-$var{wasi_sdk_version}-x86_64-windows
+      WASI_SYSROOT: ${workspace}/wasm/wasi-sdk-$var{wasi_sdk_version}-x86_64-windows/share/wasi-sysroot

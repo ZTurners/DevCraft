@@ -1,36 +1,65 @@
+sdk_root: ${workspace}/emscripten
+
+dependencies:
+  - nodejs
+
+variables:
+  emscripten_version: "5.0.5"
+  emscripten_python_version: "3.13.3"
+  emscripten_node_version: "22.16.0"
+  emscripten_typescript_version: "5.9.3"
+
 install:
   # emscripten sdk
   - download:
       src:
-        url: https://github.com/emscripten-core/emsdk/archive/refs/tags/5.0.5.zip
-      dest: ${download}/emsdk-5.0.5.zip
+        url: https://github.com/emscripten-core/emsdk/archive/refs/tags/$var{emscripten_version}.zip
+      dest: ${download}/emsdk-$var{emscripten_version}.zip
   - unzip:
-      src: ${download}/emsdk-5.0.5.zip
-      src_sub_folder: emsdk-5.0.5
-      dest: ${workspace}/emscripten/emsdk-5.0.5
+      src: ${download}/emsdk-$var{emscripten_version}.zip
+      src_sub_folder: emsdk-$var{emscripten_version}
+      dest: ${workspace}/emscripten/emsdk-$var{emscripten_version}
 
   # install and activate the pinned emscripten toolchain
   - execute:
+      terminal: true
       command:
-        - ${workspace}/emscripten/emsdk-5.0.5/emsdk.bat
+        - ${workspace}/emscripten/emsdk-$var{emscripten_version}/emsdk.bat
         - install
-        - 5.0.5
+        - $var{emscripten_version}
   - execute:
       command:
-        - ${workspace}/emscripten/emsdk-5.0.5/emsdk.bat
+        - ${workspace}/emscripten/emsdk-$var{emscripten_version}/emsdk.bat
         - activate
-        - 5.0.5
+        - $var{emscripten_version}
+
+  # install emscripten's pinned typescript into its node_modules so --emit-tsd
+  # uses tsc 5.x; the shipped node_modules has no tsc, and the PATH fallback
+  # picks DevCraft's global typescript 7, which removed the --outFile option
+  - environments:
+      set: {}
+      prepend:
+        - PATH: ${workspace}/nodejs/node-v$var{node_version}
+  - execute:
+      skip_if_exists: ${workspace}/emscripten/emsdk-$var{emscripten_version}/upstream/emscripten/node_modules/typescript/package.json
+      command:
+        - ${workspace}/nodejs/node-v$var{node_version}/npm.cmd
+        - install
+        - --no-save
+        - --prefix
+        - ${workspace}/emscripten/emsdk-$var{emscripten_version}/upstream/emscripten
+        - typescript@$var{emscripten_typescript_version}
 
 generator_active_batch:
   file_path: ${workspace}/emscripten/active.bat
   environments:
     set:
-      EMSDK: ${workspace}/emscripten/emsdk-5.0.5
-      EM_CONFIG: ${workspace}/emscripten/emsdk-5.0.5/.emscripten
-      EMSDK_PYTHON: ${workspace}/emscripten/emsdk-5.0.5/python/3.13.3_64bit/python.exe
-      EMSDK_NODE: ${workspace}/emscripten/emsdk-5.0.5/node/22.16.0_64bit/bin/node.exe
+      EMSDK: ${workspace}/emscripten/emsdk-$var{emscripten_version}
+      EM_CONFIG: ${workspace}/emscripten/emsdk-$var{emscripten_version}/.emscripten
+      EMSDK_PYTHON: ${workspace}/emscripten/emsdk-$var{emscripten_version}/python/$var{emscripten_python_version}_64bit/python.exe
+      EMSDK_NODE: ${workspace}/emscripten/emsdk-$var{emscripten_version}/node/$var{emscripten_node_version}_64bit/bin/node.exe
     prepend:
-      - PATH: ${workspace}/emscripten/emsdk-5.0.5
-      - PATH: ${workspace}/emscripten/emsdk-5.0.5/upstream/emscripten
-      - PATH: ${workspace}/emscripten/emsdk-5.0.5/python/3.13.3_64bit
-      - PATH: ${workspace}/emscripten/emsdk-5.0.5/node/22.16.0_64bit/bin
+      - PATH: ${workspace}/emscripten/emsdk-$var{emscripten_version}
+      - PATH: ${workspace}/emscripten/emsdk-$var{emscripten_version}/upstream/emscripten
+      - PATH: ${workspace}/emscripten/emsdk-$var{emscripten_version}/python/$var{emscripten_python_version}_64bit
+      - PATH: ${workspace}/emscripten/emsdk-$var{emscripten_version}/node/$var{emscripten_node_version}_64bit/bin

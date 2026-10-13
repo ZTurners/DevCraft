@@ -1,3 +1,5 @@
+sdk_root: ${workspace}/pnpm
+
 dependencies:
   - nodejs
 
@@ -5,12 +7,12 @@ install:
   # put node.exe on PATH so pnpm's postinstall (cmd /c node install.js) can find it
   - environments:
       prepend:
-        - PATH: ${workspace}/nodejs/node-v26.8.1
+        - PATH: ${workspace}/nodejs/node-v$var{node_version}
 
   - execute:
       # skip_if_exists: ${workspace}/pnpm/pnpm.cmd
       command:
-        - ${workspace}/nodejs/node-v26.8.1/npm.cmd
+        - ${workspace}/nodejs/node-v$var{node_version}/npm.cmd
         - install
         - --global
         - --prefix

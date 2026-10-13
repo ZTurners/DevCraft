@@ -1,35 +1,41 @@
+sdk_root: ${workspace}/tracy
+
 dependencies:
   - cmake
   - xcode
+
+variables:
+  tracy_version: "0.13.1"
 
 install:
   # Tracy does not publish a prebuilt macOS client for v0.13.1, so build the
   # profiler client from the official tagged source archive.
   - download:
       src:
-        url: https://github.com/wolfpld/tracy/archive/refs/tags/v0.13.1.tar.gz
+        url: https://github.com/wolfpld/tracy/archive/refs/tags/v$var{tracy_version}.tar.gz
         SHA-256: d4efc50ebcb0bfcfdbba148995aeb75044c0d80f5d91223aebfaa8fa9e563d2b
-      dest: ${download}/tracy-0.13.1-source.tar.gz
+      dest: ${download}/tracy-$var{tracy_version}-source.tar.gz
   - unzip:
-      src: ${download}/tracy-0.13.1-source.tar.gz
-      src_sub_folder: tracy-0.13.1
-      dest: ${workspace}/tracy/tracy-0.13.1-source
+      src: ${download}/tracy-$var{tracy_version}-source.tar.gz
+      src_sub_folder: tracy-$var{tracy_version}
+      dest: ${workspace}/tracy/tracy-$var{tracy_version}-source
   - execute:
-      skip_if_exists: ${workspace}/tracy/tracy-client-0.13.1/bin/tracy-profiler
+      skip_if_exists: ${workspace}/tracy/tracy-client-$var{tracy_version}/bin/tracy-profiler
+      terminal: true
       command:
-        - ${workspace}/cmake/cmake-4.2.3-macos-universal/CMake.app/Contents/bin/cmake
-        - -S ${workspace}/tracy/tracy-0.13.1-source/profiler
-        - -B ${workspace}/tracy/tracy-0.13.1-source/profiler/build
+        - ${workspace}/cmake/cmake-$var{cmake_version}-macos-universal/CMake.app/Contents/bin/cmake
+        - -S ${workspace}/tracy/tracy-$var{tracy_version}-source/profiler
+        - -B ${workspace}/tracy/tracy-$var{tracy_version}-source/profiler/build
         - -DCMAKE_BUILD_TYPE=Release
-        - -DCMAKE_INSTALL_PREFIX=${workspace}/tracy/tracy-client-0.13.1
+        - -DCMAKE_INSTALL_PREFIX=${workspace}/tracy/tracy-client-$var{tracy_version}
         - '&&'
-        - ${workspace}/cmake/cmake-4.2.3-macos-universal/CMake.app/Contents/bin/cmake
-        - --build ${workspace}/tracy/tracy-0.13.1-source/profiler/build
+        - ${workspace}/cmake/cmake-$var{cmake_version}-macos-universal/CMake.app/Contents/bin/cmake
+        - --build ${workspace}/tracy/tracy-$var{tracy_version}-source/profiler/build
         - --config Release
         - --parallel
         - '&&'
-        - ${workspace}/cmake/cmake-4.2.3-macos-universal/CMake.app/Contents/bin/cmake
-        - --install ${workspace}/tracy/tracy-0.13.1-source/profiler/build
+        - ${workspace}/cmake/cmake-$var{cmake_version}-macos-universal/CMake.app/Contents/bin/cmake
+        - --install ${workspace}/tracy/tracy-$var{tracy_version}-source/profiler/build
         - --config Release
 
 generator_active_batch:
@@ -37,4 +43,4 @@ generator_active_batch:
   environments:
     set: {}
     prepend:
-      - PATH: ${workspace}/tracy/tracy-client-0.13.1/bin
+      - PATH: ${workspace}/tracy/tracy-client-$var{tracy_version}/bin

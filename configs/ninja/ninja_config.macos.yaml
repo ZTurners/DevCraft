@@ -1,19 +1,24 @@
+sdk_root: ${workspace}/ninja
+
+variables:
+  ninja_version: "1.13.1"
+
 install:
   # ninja-1.13.1:
   - download:
       src:
-        url: https://github.com/ninja-build/ninja/releases/download/v1.13.1/ninja-mac.zip
+        url: https://github.com/ninja-build/ninja/releases/download/v$var{ninja_version}/ninja-mac.zip
         SHA-256: da7797794153629aca5570ef7c813342d0be214ba84632af886856e8f0063dd9
-      dest: ${download}/ninja-1.13.1-macos-universal.zip
+      dest: ${download}/ninja-$var{ninja_version}-macos-universal.zip
   - unzip:
-      src: ${download}/ninja-1.13.1-macos-universal.zip
-      dest: ${workspace}/ninja/ninja-1.13.1
+      src: ${download}/ninja-$var{ninja_version}-macos-universal.zip
+      dest: ${workspace}/ninja/ninja-$var{ninja_version}
   - make_execute_permission:
       files:
-        - ${workspace}/ninja/ninja-1.13.1/ninja
+        - ${workspace}/ninja/ninja-$var{ninja_version}/ninja
 generator_active_batch:
   file_path: ${workspace}/ninja/active.sh
   environments:
     set: {}
     prepend:
-      - PATH: ${workspace}/ninja/ninja-1.13.1
+      - PATH: ${workspace}/ninja/ninja-$var{ninja_version}

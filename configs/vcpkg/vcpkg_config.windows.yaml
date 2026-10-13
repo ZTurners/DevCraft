@@ -1,12 +1,17 @@
+sdk_root: ${workspace}/vcpkg
+
+variables:
+  vcpkg_version: "2026.04.27"
+
 install:
   # vcpkg source from GitHub Releases tag archive
   - download:
       src:
-        url: https://github.com/microsoft/vcpkg/archive/refs/tags/2026.04.27.zip
-      dest: ${download}/vcpkg-2026.04.27.zip
+        url: https://github.com/microsoft/vcpkg/archive/refs/tags/$var{vcpkg_version}.zip
+      dest: ${download}/vcpkg-$var{vcpkg_version}.zip
   - unzip:
-      src: ${download}/vcpkg-2026.04.27.zip
-      src_sub_folder: vcpkg-2026.04.27
+      src: ${download}/vcpkg-$var{vcpkg_version}.zip
+      src_sub_folder: vcpkg-$var{vcpkg_version}
       dest: ${workspace}/vcpkg
 
   # bootstrap vcpkg.exe

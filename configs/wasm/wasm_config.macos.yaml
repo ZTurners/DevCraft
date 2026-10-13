@@ -1,42 +1,50 @@
+sdk_root: ${workspace}/wasm
+
+variables:
+  wasmtime_version: "40.0.2"
+  wabt_version: "1.0.39"
+  wasi_sdk_version: "29.0"
+  wasi_sdk_major: "29"
+
 install:
   # wasmtime
   - download:
       src:
-        url: https://github.com/bytecodealliance/wasmtime/releases/download/v40.0.2/wasmtime-v40.0.2-aarch64-macos.tar.xz
+        url: https://github.com/bytecodealliance/wasmtime/releases/download/v$var{wasmtime_version}/wasmtime-v$var{wasmtime_version}-aarch64-macos.tar.xz
         SHA-256: ab36e438a519eb95da7b7a857979bf8d7758dcee04a28dcd03fdfe52bf817cd6
-      dest: ${download}/wasmtime-v40.0.2-aarch64-macos.tar.xz
+      dest: ${download}/wasmtime-v$var{wasmtime_version}-aarch64-macos.tar.xz
   - unzip:
-      src: ${download}/wasmtime-v40.0.2-aarch64-macos.tar.xz
-      src_sub_folder: 'wasmtime-v40.0.2-aarch64-macos'
-      dest: ${workspace}/wasm/wasmtime-v40.0.2-aarch64-macos
+      src: ${download}/wasmtime-v$var{wasmtime_version}-aarch64-macos.tar.xz
+      src_sub_folder: 'wasmtime-v$var{wasmtime_version}-aarch64-macos'
+      dest: ${workspace}/wasm/wasmtime-v$var{wasmtime_version}-aarch64-macos
 
   # wabt wasm assemble binaires tools
   - download:
       src:
-        url: https://github.com/WebAssembly/wabt/releases/download/1.0.39/wabt-1.0.39-macos-arm64.tar.gz
+        url: https://github.com/WebAssembly/wabt/releases/download/$var{wabt_version}/wabt-$var{wabt_version}-macos-arm64.tar.gz
         SHA-256: 168a83f22125a77d96ecb230341ed0e2b06b970aadb57eb89d2ed06f9b7f8aca
-      dest: ${download}/wabt-1.0.39-macos-arm64.tar.gz
+      dest: ${download}/wabt-$var{wabt_version}-macos-arm64.tar.gz
   - unzip:
-      src: ${download}/wabt-1.0.39-macos-arm64.tar.gz
-      src_sub_folder: wabt-1.0.39
-      dest: ${workspace}/wasm/wabt-1.0.39-macos-arm64
+      src: ${download}/wabt-$var{wabt_version}-macos-arm64.tar.gz
+      src_sub_folder: wabt-$var{wabt_version}
+      dest: ${workspace}/wasm/wabt-$var{wabt_version}-macos-arm64
 
   # wasi sdk
   - download:
       src:
-        url: https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-29/wasi-sdk-29.0-arm64-macos.tar.gz
+        url: https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-$var{wasi_sdk_major}/wasi-sdk-$var{wasi_sdk_version}-arm64-macos.tar.gz
         SHA-256: e11552913e3f99e834d7fe7da1bd081abaf764759ed76b6097a34c63fc83665e
-      dest: ${download}/wasi-sdk-29.0-arm64-macos.tar.gz
+      dest: ${download}/wasi-sdk-$var{wasi_sdk_version}-arm64-macos.tar.gz
   - unzip:
-      src: ${download}/wasi-sdk-29.0-arm64-macos.tar.gz
-      src_sub_folder: wasi-sdk-29.0-arm64-macos
-      dest: ${workspace}/wasm/wasi-sdk-29.0-arm64-macos
+      src: ${download}/wasi-sdk-$var{wasi_sdk_version}-arm64-macos.tar.gz
+      src_sub_folder: wasi-sdk-$var{wasi_sdk_version}-arm64-macos
+      dest: ${workspace}/wasm/wasi-sdk-$var{wasi_sdk_version}-arm64-macos
 
 generator_active_batch:
   file_path: ${workspace}/wasm/active.sh
   environments:
     prepend:
-      - PATH: ${workspace}/wasm/wasmtime-v40.0.2-aarch64-macos
+      - PATH: ${workspace}/wasm/wasmtime-v$var{wasmtime_version}-aarch64-macos
     set:
-      WASI_SDK_PATH: ${workspace}/wasm/wasi-sdk-29.0-arm64-macos
-      WASI_SYSROOT: ${workspace}/wasm/wasi-sdk-29.0-arm64-macos/share/wasi-sysroot
+      WASI_SDK_PATH: ${workspace}/wasm/wasi-sdk-$var{wasi_sdk_version}-arm64-macos
+      WASI_SYSROOT: ${workspace}/wasm/wasi-sdk-$var{wasi_sdk_version}-arm64-macos/share/wasi-sysroot

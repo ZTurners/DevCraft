@@ -1,12 +1,17 @@
+sdk_root: ${workspace}/rust
+
 install:
   # downloading-rustup-macos:
   - download:
       src:
-        url: https://static.rust-lang.org/rustup/dist/aarch64-apple-darwin/rustup-init
+        url: https://rsproxy.cn/rustup/dist/aarch64-apple-darwin/rustup-init
       dest: ${download}/rustup-init
   - copy:
       src: ${configs}/rustup/home/settings.toml
       dest: ${workspace}/rust/.rustup/settings.toml
+  - copy:
+      src: ${configs}/rustup/cargo/config.toml
+      dest: ${workspace}/rust/.cargo/config.toml
   # install-rustup-macos:
   - copy:
       src: ${download}/rustup-init
@@ -15,10 +20,13 @@ install:
       set:
         RUSTUP_HOME: ${workspace}/rust/.rustup
         CARGO_HOME: ${workspace}/rust/.cargo
+        RUSTUP_DIST_SERVER: https://rsproxy.cn
+        RUSTUP_UPDATE_ROOT: https://rsproxy.cn/rustup
   - make_execute_permission:
       files:
         - ${workspace}/rust/rustup-init
   - execute:
+      terminal: true
       command:
       - ${workspace}/rust/rustup-init
       - -y
@@ -29,6 +37,7 @@ install:
       - add
       - wasm32-wasip2
   - execute:
+      terminal: true
       command:
       - ${workspace}/rust/.cargo/bin/cargo
       - install

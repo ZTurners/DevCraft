@@ -1,3 +1,5 @@
+sdk_root: ${workspace}/tools
+
 install:
   # Texcov
   - download:

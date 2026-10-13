@@ -1,43 +1,48 @@
+sdk_root: ${workspace}/vulkan
+
+variables:
+  vulkan_version: "1.4.328.1"
+
 install:
   # vulkansdk-macos-x64-1.4.328:
   - download:
       src:
-        url: https://sdk.lunarg.com/sdk/download/1.4.328.1/mac/vulkansdk-macos-1.4.328.1.zip
+        url: https://sdk.lunarg.com/sdk/download/$var{vulkan_version}/mac/vulkansdk-macos-$var{vulkan_version}.zip
         SHA-256: 571db867d8736e402f6f674f26f17b339495d016f3b2afdbac23a3650475023f
-      dest: ${download}/vulkansdk-macos-1.4.328.1.zip
+      dest: ${download}/vulkansdk-macos-$var{vulkan_version}.zip
   - unzip:
-      src: ${download}/vulkansdk-macos-1.4.328.1.zip
+      src: ${download}/vulkansdk-macos-$var{vulkan_version}.zip
       dest: ${workspace}/.tmp/vulkan
   - make_execute_permission:
       files:
-        - ${workspace}/.tmp/vulkan/vulkansdk-macos-1.4.328.1.app/Contents/MacOS/vulkansdk-macos-1.4.328.1
+        - ${workspace}/.tmp/vulkan/vulkansdk-macos-$var{vulkan_version}.app/Contents/MacOS/vulkansdk-macos-$var{vulkan_version}
   - execute:
       command:
-        - ${workspace}/.tmp/vulkan/vulkansdk-macos-1.4.328.1.app/Contents/MacOS/vulkansdk-macos-1.4.328.1
+        - ${workspace}/.tmp/vulkan/vulkansdk-macos-$var{vulkan_version}.app/Contents/MacOS/vulkansdk-macos-$var{vulkan_version}
         - install
         - --accept-licenses
         - --confirm-command
         - copy_only=1
-        - --root=${workspace}/.tmp/vulkan/vulkansdk_macos_x86_64_1.4.328.1
-      dest: ${workspace}/vulkan/vulkansdk_macos_x86_64_1.4.328.1
+        - --root=${workspace}/.tmp/vulkan/vulkansdk_macos_x86_64_$var{vulkan_version}
+      dest: ${workspace}/vulkan/vulkansdk_macos_x86_64_$var{vulkan_version}
   - copy:
-      src: ${workspace}/.tmp/vulkan/vulkansdk_macos_x86_64_1.4.328.1/macOS
-      dest: ${workspace}/vulkan/vulkansdk_macos_x86_64_1.4.328.1
+      src: ${workspace}/.tmp/vulkan/vulkansdk_macos_x86_64_$var{vulkan_version}/macOS
+      dest: ${workspace}/vulkan/vulkansdk_macos_x86_64_$var{vulkan_version}
   # vulkansdk-linux-x86_64-1.4.328.1:
   - download:
       src:
-        url: https://sdk.lunarg.com/sdk/download/1.4.328.1/linux/vulkansdk-linux-x86_64-1.4.328.1.tar.xz
-      dest: ${download}/vulkansdk-linux-x86_64-1.4.328.1.tar.xz
+        url: https://sdk.lunarg.com/sdk/download/$var{vulkan_version}/linux/vulkansdk-linux-x86_64-$var{vulkan_version}.tar.xz
+      dest: ${download}/vulkansdk-linux-x86_64_$var{vulkan_version}.tar.xz
   - unzip:
-      src: ${download}/vulkansdk-linux-x86_64-1.4.328.1.tar.xz
-      src_sub_folder: 1.4.328.1/x86_64
-      dest: ${workspace}/vulkan/vulkansdk_linux_x86_64_1.4.328.1
+      src: ${download}/vulkansdk-linux-x86_64-$var{vulkan_version}.tar.xz
+      src_sub_folder: $var{vulkan_version}/x86_64
+      dest: ${workspace}/vulkan/vulkansdk_linux_x86_64_$var{vulkan_version}
 generator_active_batch:
   file_path: ${workspace}/vulkan/active.sh
   environments:
     set:
-      VK_ICD_FILENAMES: ${workspace}/vulkan/vulkansdk_macos_x86_64_1.4.328.1/share/vulkan/icd.d/MoltenVK_icd.json
-      VK_LAYER_PATH: ${workspace}/vulkan/vulkansdk_macos_x86_64_1.4.328.1/bin
-      VK_BIN_PATH: ${workspace}/vulkan/vulkansdk_macos_x86_64_1.4.328.1/bin
+      VK_ICD_FILENAMES: ${workspace}/vulkan/vulkansdk_macos_x86_64_$var{vulkan_version}/share/vulkan/icd.d/MoltenVK_icd.json
+      VK_LAYER_PATH: ${workspace}/vulkan/vulkansdk_macos_x86_64_$var{vulkan_version}/bin
+      VK_BIN_PATH: ${workspace}/vulkan/vulkansdk_macos_x86_64_$var{vulkan_version}/bin
     prepend:
-      - PATH: ${workspace}/vulkan/vulkansdk_macos_x86_64_1.4.328.1/bin
+      - PATH: ${workspace}/vulkan/vulkansdk_macos_x86_64_$var{vulkan_version}/bin

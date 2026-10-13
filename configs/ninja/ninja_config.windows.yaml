@@ -1,16 +1,21 @@
+sdk_root: ${workspace}/ninja
+
+variables:
+  ninja_version: "1.13.1"
+
 install:
   # ninja-1.13.1:
   - download:
       src:
-        url: https://github.com/ninja-build/ninja/releases/download/v1.13.1/ninja-win.zip
+        url: https://github.com/ninja-build/ninja/releases/download/v$var{ninja_version}/ninja-win.zip
         SHA-256: 26a40fa8595694dec2fad4911e62d29e10525d2133c9a4230b66397774ae25bf
-      dest: ${download}/ninja-1.13.1-windows-x86_64.zip
+      dest: ${download}/ninja-$var{ninja_version}-windows-x86_64.zip
   - unzip:
-      src: ${download}/ninja-1.13.1-windows-x86_64.zip
-      dest: ${workspace}/ninja/ninja-1.13.1
+      src: ${download}/ninja-$var{ninja_version}-windows-x86_64.zip
+      dest: ${workspace}/ninja/ninja-$var{ninja_version}
 generator_active_batch:
   file_path: ${workspace}/ninja/active.bat
   environments:
     set: {}
     prepend:
-    - PATH: ${workspace}/ninja/ninja-1.13.1
+    - PATH: ${workspace}/ninja/ninja-$var{ninja_version}

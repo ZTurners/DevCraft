@@ -1,19 +1,35 @@
+sdk_root: ${workspace}/android
+
 dependencies:
   - ${configs}/jdk/jdk_config.windows.yaml
+
+variables:
+  android_cmdline_tools_bootstrap_build: "13114758"
+  android_ndk_version: "29.0.13599879"
+  android_build_tools_version: "36.0.0-rc5"
+  android_cmdline_tools_version: "19.0"
+
 install:
   # android_sdk_bootstrap:
   - download:
       src:
-        url: https://dl.google.com/android/repository/commandlinetools-win-13114758_latest.zip
+        url: https://dl.google.com/android/repository/commandlinetools-win-$var{android_cmdline_tools_bootstrap_build}_latest.zip
         SHA-256: 98b565cb657b012dae6794cefc0f66ae1efb4690c699b78a614b4a6a3505b003
-      dest: ${download}/commandlinetools-win-13114758_latest.zip
+      dest: ${download}/commandlinetools-win-$var{android_cmdline_tools_bootstrap_build}_latest.zip
   - unzip:
-      src: ${download}/commandlinetools-win-13114758_latest.zip
+      src: ${download}/commandlinetools-win-$var{android_cmdline_tools_bootstrap_build}_latest.zip
       src_sub_folder: cmdline-tools
       dest: ${workspace}/android/android_sdk/cmdline-tools/bootstrap
   - make_execute_permission:
       files:
         - ${workspace}/android/android_sdk/cmdline-tools/bootstrap/bin
+  # sdkmanager requires java from the jdk dependency
+  - environments:
+      set:
+        JAVA_HOME: ${workspace}/jdk/jdk-$var{jdk_major}
+        JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
+      prepend:
+        - PATH: ${workspace}/jdk/jdk-$var{jdk_major}/bin
 # android_sdk_license:
   - execute:
       command:
@@ -24,15 +40,16 @@ install:
         - ''
 # android_sdk:
   - execute:
+      terminal: true
       command:
         - ${workspace}/android/android_sdk/cmdline-tools/bootstrap/bin/sdkmanager.bat
         - --sdk_root=${workspace}/android/android_sdk
         - --install
-        - '"ndk;29.0.13599879"'
-        - '"build-tools;36.0.0-rc5"'
+        - '"ndk;$var{android_ndk_version}"'
+        - '"build-tools;$var{android_build_tools_version}"'
         - '"ndk-bundle"'
         - '"platform-tools"'
-        - '"cmdline-tools;19.0"'
+        - '"cmdline-tools;$var{android_cmdline_tools_version}"'
 generator_active_batch:
   file_path: ${workspace}/android/active.bat
   environments:

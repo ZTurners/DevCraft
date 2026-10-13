@@ -1,3 +1,5 @@
+sdk_root: ${workspace}/hbs_cli
+
 dependencies:
   - nodejs
 
@@ -5,16 +7,16 @@ install:
   - execute:
       command:
         - env
-        - PATH=${workspace}/nodejs/node-v26.8.1/bin:/usr/bin:/bin
-        - ${workspace}/nodejs/node-v26.8.1/bin/node
-        - ${workspace}/nodejs/node-v26.8.1/lib/node_modules/npm/bin/npm-cli.js
+        - PATH=${workspace}/nodejs/node-v$var{node_version}/bin:/usr/bin:/bin
+        - ${workspace}/nodejs/node-v$var{node_version}/bin/node
+        - ${workspace}/nodejs/node-v$var{node_version}/lib/node_modules/npm/bin/npm-cli.js
         - install
         - -g
         - hbs-cli
         - handlebars
-        
+
 generator_active_batch:
   file_path: ${workspace}/hbs_cli/active.sh
   environments:
     prepend:
-      - PATH: ${workspace}/nodejs/node-v26.8.1/bin
+      - PATH: ${workspace}/nodejs/node-v$var{node_version}/bin

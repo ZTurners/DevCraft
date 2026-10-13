@@ -34,21 +34,15 @@ install:
         - --skip-if-output-folder-exists=true
 
       dest: ${workspace}/visual_studio/msvc
-  - environments:
-      set:
-        VCToolsInstallDir: ${workspace}/visual_studio/VC/Tools/MSVC/$var{msvc_version}
-        WindowsSDKVersion: $var{windows_sdk_version}\
-        INCLUDE: ${workspace}/visual_studio/VC/Tools/MSVC/$var{msvc_version}/include;${workspace}/visual_studio/WindowsKits/10/Include/$var{windows_sdk_version}/ucrt;${workspace}/visual_studio/WindowsKits/10/Include/$var{windows_sdk_version}/shared;${workspace}/visual_studio/WindowsKits/10/Include/$var{windows_sdk_version}/um;${workspace}/visual_studio/WindowsKits/10/Include/$var{windows_sdk_version}/winrt;${workspace}/visual_studio/WindowsKits/10/Include/$var{windows_sdk_version}/cppwinrt
-        LIB: ${workspace}/visual_studio/VC/Tools/MSVC/$var{msvc_version}/lib/x64;${workspace}/visual_studio/WindowsKits/10/Lib/$var{windows_sdk_version}/ucrt/x64;${workspace}/visual_studio/WindowsKits/10/Lib/$var{windows_sdk_version}/um/x64
-      prepend:
-        - PATH: ${workspace}/visual_studio/VC/Tools/MSVC/$var{msvc_version}/bin/Hostx64/x64
-        - PATH: ${workspace}/visual_studio/WindowsKits/10/bin/$var{windows_sdk_version}/x64
-        - PATH: ${workspace}/visual_studio/WindowsKits/10/bin/$var{windows_sdk_version}/x64/ucrt
 
 generator_active_batch:
   file_path: ${workspace}/visual_studio/active.bat
   environments:
     set:
+      VCToolsInstallDir: ${workspace}/visual_studio/VC/Tools/MSVC/$var{msvc_version}
+      WindowsSDKVersion: $var{windows_sdk_version}\
+      INCLUDE: ${workspace}/visual_studio/VC/Tools/MSVC/$var{msvc_version}/include;${workspace}/visual_studio/WindowsKits/10/Include/$var{windows_sdk_version}/ucrt;${workspace}/visual_studio/WindowsKits/10/Include/$var{windows_sdk_version}/shared;${workspace}/visual_studio/WindowsKits/10/Include/$var{windows_sdk_version}/um;${workspace}/visual_studio/WindowsKits/10/Include/$var{windows_sdk_version}/winrt;${workspace}/visual_studio/WindowsKits/10/Include/$var{windows_sdk_version}/cppwinrt
+      LIB: ${workspace}/visual_studio/VC/Tools/MSVC/$var{msvc_version}/lib/x64;${workspace}/visual_studio/WindowsKits/10/Lib/$var{windows_sdk_version}/ucrt/x64;${workspace}/visual_studio/WindowsKits/10/Lib/$var{windows_sdk_version}/um/x64
       DEVCRAFT_VISUAL_STUDIO_MAJOR_VERSION: 18
       DEVCRAFT_PORTABLE_MSVC_ROOT: ${workspace}/visual_studio
       DEVCRAFT_PORTABLE_MSVC_SETUP_X64: ${workspace}/visual_studio/setup_x64.bat

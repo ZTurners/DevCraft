@@ -6,8 +6,6 @@ dependencies:
 install:
   - execute:
       command:
-        - env
-        - PATH=${workspace}/nodejs/node-v$var{node_version}/bin:/usr/bin:/bin
         - ${workspace}/nodejs/node-v$var{node_version}/bin/node
         - ${workspace}/nodejs/node-v$var{node_version}/lib/node_modules/npm/bin/npm-cli.js
         - install

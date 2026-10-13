@@ -23,13 +23,6 @@ install:
   - make_execute_permission:
       files:
         - ${workspace}/android/android_sdk/cmdline-tools/bootstrap/bin
-  # sdkmanager requires java from the jdk dependency
-  - environments:
-      set:
-        JAVA_HOME: ${workspace}/jdk/jdk-$var{jdk_major}
-        JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
-      prepend:
-        - PATH: ${workspace}/jdk/jdk-$var{jdk_major}/bin
 # android_sdk_license:
   - execute:
       command:

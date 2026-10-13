@@ -42,10 +42,6 @@ install:
   # install emscripten's pinned typescript into its node_modules so --emit-tsd
   # uses tsc 5.x; the shipped node_modules has no tsc, and the PATH fallback
   # picks DevCraft's global typescript 7, which removed the --outFile option
-  - environments:
-      set: {}
-      prepend:
-        - PATH: ${workspace}/nodejs/node-v$var{node_version}/bin
   - execute:
       skip_if_exists: ${workspace}/emscripten/emsdk-$var{emscripten_version}/upstream/emscripten/node_modules/typescript/package.json
       command:

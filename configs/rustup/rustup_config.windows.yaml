@@ -45,12 +45,12 @@ install:
   - execute:
       terminal: true
       command:
-      - ${workspace}/rust/.cargo/bin/cargo.exe
-      - install
-      - --locked
-      - wasm-tools
-      - wit-bindgen-cli
-      - cargo-component
+        - ${workspace}/rust/.cargo/bin/cargo.exe
+        - install
+        - --locked
+        - wasm-tools
+        - wit-bindgen-cli
+        - cargo-component
 generator_active_batch:
   file_path: ${workspace}/rust/active.bat
   environments:

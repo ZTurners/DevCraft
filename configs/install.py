@@ -1589,6 +1589,7 @@ class WorkspaceInstaller:
                 dependencies = self._extract_dependencies(config_path, config_data)
                 sdk_root_raw = self._extract_sdk_root(config_path, config_data)
                 variables = self._extract_variables(config_path, config_data)
+                batch_environments = (config_data.get('generator_active_batch') or {}).get('environments') or {}
             except Exception as e:
                 raise RuntimeError(f"Error parsing config '{config_path}': {e}") from e
 
@@ -1600,6 +1601,7 @@ class WorkspaceInstaller:
                 'deps': dependencies,
                 'sdk_root': sdk_root_raw,
                 'variables': variables,
+                'batch_environments': batch_environments,
             }
 
             records_by_basename.setdefault(base_name, []).append(rel)
@@ -1637,6 +1639,8 @@ class WorkspaceInstaller:
         effective_variables_by_rel = self._compute_effective_variables(records)
         for rel, record in records.items():
             record['effective_variables'] = effective_variables_by_rel[rel]
+            record['batch_environments'] = self._interpolate_config_variables(
+                record['batch_environments'], record['effective_variables'], record['path'])
             if record['sdk_root']:
                 record['sdk_root'] = self._interpolate_config_text(
                     record['sdk_root'], record['effective_variables'], record['path'])
@@ -1676,6 +1680,16 @@ class WorkspaceInstaller:
             cycle_text = "\n".join([f"  - {node}" for node in cycle_nodes])
             raise RuntimeError(f"Cyclic dependency detected among config files:\n{cycle_text}")
 
+        # Dependency closure per config (own deps + their transitive deps),
+        # built in topological order so each dep's closure is already final.
+        dep_closure = {}
+        for rel in ordered:
+            closure = set()
+            for dep_rel in records[rel]['dep_rels']:
+                closure.add(dep_rel)
+                closure |= dep_closure[dep_rel]
+            dep_closure[rel] = closure
+
         print("\nResolved config execution order:")
         name_width = max(len(rel) for rel in ordered)
         status_counts = {}
@@ -1704,6 +1718,7 @@ class WorkspaceInstaller:
             return
 
         # Process each config file in dependency order.
+        applied_env_rels = set()
         for rel in ordered:
             config_path = records[rel]['path']
             # Friendly display: show path relative to configs folder
@@ -1718,6 +1733,19 @@ class WorkspaceInstaller:
             self.m_current_config = display_name
             self.m_current_node = None
             self.m_current_install_step = None
+
+            # Apply the environments exported by this config's dependencies
+            # (from their generator_active_batch declarations, whether or not
+            # they are being reinstalled) so install steps below can use the
+            # tools those dependencies provide.
+            for dep_rel in ordered:
+                if dep_rel not in dep_closure[rel] or dep_rel in applied_env_rels:
+                    continue
+                applied_env_rels.add(dep_rel)
+                if not records[dep_rel]['batch_environments']:
+                    continue
+                print(f"\nApplying environments from dependency: {records[dep_rel]['base']}")
+                self._process_environments(records[dep_rel]['batch_environments'], None)
 
             sdk_root = ""
             try:

@@ -18,6 +18,8 @@ import tarfile
 import copy
 import heapq
 import re
+import threading
+import time
 
 # The workspace python is an embeddable build governed by python313._pth,
 # which pins sys.path and never adds the script's own directory; insert it
@@ -32,6 +34,146 @@ import download
 # _formalize_path, so the two mechanisms never interact.
 _CONFIG_VARIABLE_PATTERN = re.compile(r"\$var\{([A-Za-z0-9_]+)\}")
 _CONFIG_VARIABLE_NAME_PATTERN = re.compile(r"[A-Za-z0-9_]+")
+
+class _InstallProgressBar:
+    """Sticky status line pinned to the terminal's bottom row during installs.
+
+    The last terminal row is reserved via a DECSTBM scroll region, so normal
+    output (including passthrough child processes) scrolls above it while the
+    line is redrawn once per second and on every state change. Entirely
+    disabled when stdout is not a terminal.
+    """
+
+    _REFRESH_INTERVAL_SECONDS = 1.0
+
+    def __init__(self, use_colors):
+        self.m_use_colors = use_colors
+        self.m_enabled = sys.stdout.isatty()
+        self.m_active = False
+        self.m_total = 0
+        self.m_done = 0
+        self.m_skipped = 0
+        self.m_current = ""
+        self.m_step = ""
+        self.m_started_at = 0.0
+        self.m_lock = threading.Lock()
+        self.m_refresh_thread = None
+
+    def start(self, total):
+        if not self.m_enabled:
+            return
+        columns, lines = shutil.get_terminal_size()
+        if lines < 4:
+            self.m_enabled = False
+            return
+        self.m_total = total
+        self.m_started_at = time.monotonic()
+        self.m_active = True
+        # Reserve the bottom row. The screen is scrolled up two rows first so
+        # the cursor provably stays inside the region; DECSTBM homes the
+        # cursor, hence the save/restore around it.
+        sys.stdout.write(f"\033[2S\033[2A\0337\033[1;{lines - 1}r\0338")
+        sys.stdout.flush()
+        self._render()
+        self.m_refresh_thread = threading.Thread(target=self._refresh_loop, daemon=True)
+        self.m_refresh_thread.start()
+
+    def _refresh_loop(self):
+        while self.m_active:
+            time.sleep(self._REFRESH_INTERVAL_SECONDS)
+            if self.m_active:
+                self._render()
+
+    def begin_config(self, name):
+        if not self.m_active:
+            return
+        with self.m_lock:
+            self.m_current = name
+            self.m_step = ""
+        self._render()
+
+    def set_step(self, step):
+        if not self.m_active:
+            return
+        with self.m_lock:
+            self.m_step = step
+        self._render()
+
+    def finish_config(self, skipped=False):
+        if not self.m_active:
+            return
+        with self.m_lock:
+            self.m_done += 1
+            self.m_skipped += 1 if skipped else 0
+            self.m_current = ""
+            self.m_step = ""
+        self._render()
+
+    def stop(self):
+        if not self.m_active:
+            return
+        self.m_active = False
+        if self.m_refresh_thread is not None:
+            self.m_refresh_thread.join(timeout=self._REFRESH_INTERVAL_SECONDS * 2)
+            self.m_refresh_thread = None
+        columns, lines = shutil.get_terminal_size()
+        # Clear the reserved row and restore full-screen scrolling; the run
+        # summary continues from the cleared bottom row.
+        sys.stdout.write(f"\033[{lines};1H\033[2K\033[r\033[{lines};1H")
+        sys.stdout.flush()
+
+    def _render(self):
+        columns, lines = shutil.get_terminal_size()
+        with self.m_lock:
+            text = self._format_line(columns)
+        # Re-assert the region (keeps working across terminal resizes), then
+        # redraw the reserved row and put the cursor back where it was.
+        sys.stdout.write(f"\0337\033[1;{lines - 1}r\0338\0337\033[{lines};1H\033[2K{text}\0338")
+        sys.stdout.flush()
+
+    def _format_line(self, columns):
+        elapsed_seconds = int(time.monotonic() - self.m_started_at)
+        elapsed_text = time.strftime("%H:%M:%S", time.gmtime(elapsed_seconds))
+        in_progress = bool(self.m_current)
+        index = self.m_done + (1 if in_progress else 0)
+        remaining = max(0, self.m_total - index)
+        skipped_note = f" ({self.m_skipped} skipped)" if self.m_skipped else ""
+        head = f"[{index}/{self.m_total}] "
+        tail = f" | Installed: {self.m_done}{skipped_note} | Remaining: {remaining} | {elapsed_text}"
+        if self.m_current:
+            middle = f"Installing: {self.m_current}"
+            if self.m_step:
+                middle += f" ({self.m_step})"
+        else:
+            middle = ""
+
+        # Shrink the current-config section to fit one row, dropping it only
+        # for very narrow terminals.
+        budget = columns - 1 - len(head) - len(tail)
+        if middle and budget < len(middle):
+            if budget >= 12:
+                middle = middle[: budget - 3] + "..."
+            else:
+                middle = ""
+
+        if middle:
+            line = head + middle + tail
+        else:
+            line = head + tail.lstrip(" |")
+
+        # Degrade the tail itself on narrow terminals: drop the skipped note,
+        # then the elapsed time, then hard-truncate what is left.
+        if len(line) > columns - 1 and self.m_skipped:
+            tail = f" | Installed: {self.m_done} | Remaining: {remaining} | {elapsed_text}"
+            line = head + middle + tail if middle else head + tail.lstrip(" |")
+        if len(line) > columns - 1:
+            tail = f" | Installed: {self.m_done} | Remaining: {remaining}"
+            line = head + middle + tail if middle else head + tail.lstrip(" |")
+        if len(line) > columns - 1:
+            line = line[: columns - 1]
+        if self.m_use_colors:
+            line = "\033[36m" + line + "\033[0m"
+        return line
 
 class WorkspaceInstaller:
     def __init__(self):
@@ -48,11 +190,14 @@ class WorkspaceInstaller:
         self.m_current_install_step = None
         self.m_user_aborted = False
         # Colored console output: only when writing to a terminal and NO_COLOR
-        # is unset. "os.system('')" enables ANSI processing in legacy Windows
-        # consoles (Windows Terminal supports it natively).
+        # is unset. ANSI processing is enabled for any terminal on Windows
+        # (not just colored runs) because the bottom progress bar also emits
+        # escape sequences; "os.system('')" turns them on in legacy Windows
+        # consoles (Windows Terminal supports them natively).
         self.m_use_colors = (not os.environ.get("NO_COLOR")) and sys.stdout.isatty()
-        if self.m_use_colors and self.m_system_name == "Windows":
+        if sys.stdout.isatty() and self.m_system_name == "Windows":
             os.system("")
+        self.m_progress_bar = _InstallProgressBar(self.m_use_colors)
 
     def build_failure_summary(self, error):
         """Build a compact failure summary for console output."""
@@ -967,6 +1112,7 @@ class WorkspaceInstaller:
             print(f"Processing install item: '{install_step_name}'")
             # print(f"{'='*60}")
             self.m_current_install_step = install_step_name
+            self.m_progress_bar.set_step(install_step_name)
 
             # Ensure install_item is a mapping
             if not isinstance(install_step, dict):
@@ -1594,6 +1740,8 @@ class WorkspaceInstaller:
             print("Aborted by user. No changes were made.")
             return
 
+        self.m_progress_bar.start(len(ordered))
+
         # Process each config file in dependency order.
         applied_env_rels = set()
         for rel in ordered:
@@ -1610,6 +1758,7 @@ class WorkspaceInstaller:
             self.m_current_config = display_name
             self.m_current_node = None
             self.m_current_install_step = None
+            self.m_progress_bar.begin_config(display_name)
 
             # Apply the environments exported by this config's dependencies
             # (from their generator_active_batch declarations, whether or not
@@ -1633,6 +1782,7 @@ class WorkspaceInstaller:
                     if self._get_install_status(config_path, sdk_root) == "installed":
                         print(self._colorize("Already installed and up to date, skipping install.", "installed"))
                         self._record_config_summary(display_name, "SKIPPED", "already installed (config unchanged)", records[rel]['variables'])
+                        self.m_progress_bar.finish_config(skipped=True)
                         continue
                 self.install_from_config(config_path, records[rel]['effective_variables'])
             except Exception as e:
@@ -1643,12 +1793,18 @@ class WorkspaceInstaller:
             if sdk_root:
                 self._store_installed_config_marker(config_path, sdk_root)
             self._record_config_summary(display_name, "SUCCESS", variables=records[rel]['variables'])
+            self.m_progress_bar.finish_config()
 
 def main():
     dev_env_installer = WorkspaceInstaller()
     run_error = None
     try:
-        dev_env_installer.install_all()
+        try:
+            dev_env_installer.install_all()
+        finally:
+            # Always release the terminal's reserved status row, even when the
+            # install aborts with an exception or KeyboardInterrupt.
+            dev_env_installer.m_progress_bar.stop()
     except Exception as e:
         run_error = e
 

@@ -22,7 +22,7 @@ install:
   - execute:
       terminal: true
       command:
-        - ${workspace}/dotnet/dotnet-sdk-$var{dotnet_version}-win-x64/dotnet.exe workload install wasi-experimental wasm-tools
+        - ${workspace}/dotnet/dotnet-sdk-$var{dotnet_version}-win-x64/dotnet.exe workload install wasi-experimental wasm-tools --verbosity detailed
 
 generator_active_batch:
   file_path: ${workspace}/dotnet/active.bat

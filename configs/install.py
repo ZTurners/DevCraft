@@ -1508,25 +1508,31 @@ class WorkspaceInstaller:
             os.chmod(path, stat.S_IWRITE)
             os.rmdir(path)
 
-    def _validate_installed_config_state(self, config_file_path, sdk_root):
+    def _validate_installed_config_state(self, config_file_path, sdk_root, reinstall_reason=None):
         """Wipe the sdk root when the stored config copy is missing or changed.
 
         The stored copy is compared with the current config file by MD5; any
         difference (or a missing copy) means the sdk was installed from a
-        different config and must be reinstalled from scratch.
+        different config and must be reinstalled from scratch. When
+        reinstall_reason is set (a dependency is missing or being
+        reinstalled), the sdk root is wiped even though its own copy matches,
+        so the dependent is regenerated against the new dependency state.
         """
         if not sdk_root or not os.path.exists(sdk_root):
             return
 
-        marker_path = self._installed_config_marker_path(sdk_root, config_file_path)
-        if not os.path.exists(marker_path):
-            reason = f"no installed config copy found at '{marker_path}'"
-        elif self._calculate_file_md5(marker_path) != self._calculate_file_md5(config_file_path):
-            reason = f"installed config copy '{marker_path}' differs from '{config_file_path}' (MD5 mismatch)"
+        if reinstall_reason is None:
+            marker_path = self._installed_config_marker_path(sdk_root, config_file_path)
+            if not os.path.exists(marker_path):
+                reason = f"no installed config copy found at '{marker_path}'"
+            elif self._calculate_file_md5(marker_path) != self._calculate_file_md5(config_file_path):
+                reason = f"installed config copy '{marker_path}' differs from '{config_file_path}' (MD5 mismatch)"
+            else:
+                return
         else:
-            return
+            reason = reinstall_reason
 
-        print(f"\nConfig change detected: {reason}.")
+        print(f"\nReinstall required: {reason}.")
         print(f"Removing sdk root for a clean reinstall: {sdk_root}")
         self.m_progress_bar.set_step("removing old install")
         self._rmtree_force(sdk_root, progress_label="Removing old install")
@@ -1786,6 +1792,7 @@ class WorkspaceInstaller:
                 'sdk_root': sdk_root_raw,
                 'variables': variables,
                 'batch_environments': batch_environments,
+                'reinstall_reason': None,
             }
 
             records_by_basename.setdefault(base_name, []).append(rel)
@@ -1882,9 +1889,30 @@ class WorkspaceInstaller:
             sdk_root_raw = records[rel].get('sdk_root', '')
             sdk_root = self._resolve_sdk_root(config_path, sdk_root_raw) if sdk_root_raw else ''
             status = self._get_install_status(config_path, sdk_root)
+            # Propagate reinstalls through the dependency graph: an installed
+            # sdk embeds its dependencies' state (paths, versions, exported
+            # environments), so a dependent must be regenerated whenever a
+            # dependency is installed fresh or reinstalled. `ordered` is a
+            # topological order, so every dependency's status — including its
+            # own propagated upgrade — is already final here, which makes the
+            # propagation transitive. Dependencies without an sdk_root are
+            # excluded on purpose: their install steps run on every install
+            # anyway and they carry no marker, so they would otherwise force
+            # a reinstall of every dependent on every run.
+            if status == "installed":
+                triggered_dep = next(
+                    (dep_rel for dep_rel in records[rel]['dep_rels']
+                     if records[dep_rel]['install_status'] in ("missing", "reinstall-needed")),
+                    None)
+                if triggered_dep is not None:
+                    status = "reinstall-needed"
+                    records[rel]['reinstall_reason'] = (
+                        f"dependency '{triggered_dep}' is missing or being reinstalled")
             status_counts[status] = status_counts.get(status, 0) + 1
             records[rel]['install_status'] = status
             print(f"  {index:>2}. {rel.ljust(name_width)}  [{self._colorize(status, status)}]")
+            if records[rel]['reinstall_reason']:
+                print(f"        - {records[rel]['reinstall_reason']}")
             for name, value in records[rel]['variables'].items():
                 print(f"        - {name}={value}")
 
@@ -1895,7 +1923,7 @@ class WorkspaceInstaller:
         print("\nInstall plan:")
         _summary_line("installed", "up to date, no reinstall")
         _summary_line("missing", "fresh install")
-        _summary_line("reinstall-needed", "sdk root will be removed and reinstalled")
+        _summary_line("reinstall-needed", "sdk root will be removed and reinstalled (own config or a dependency changed)")
         _summary_line("no sdk_root", "no marker mechanism; install steps run every time")
 
         # Nothing missing and nothing to reinstall: skip the confirmation
@@ -1954,7 +1982,13 @@ class WorkspaceInstaller:
                 sdk_root_raw = records[rel].get('sdk_root', '')
                 if sdk_root_raw:
                     sdk_root = self._resolve_sdk_root(config_path, sdk_root_raw)
-                    self._validate_installed_config_state(config_path, sdk_root)
+                    # Wipes the sdk root when its own config copy changed, or
+                    # when a dependency forced a reinstall through the
+                    # propagated reinstall_reason. After a wipe the status
+                    # check below reports "missing", so everything that must
+                    # install falls through to install_from_config.
+                    self._validate_installed_config_state(
+                        config_path, sdk_root, records[rel].get('reinstall_reason'))
                     if self._get_install_status(config_path, sdk_root) == "installed":
                         print(self._colorize("Already installed and up to date, skipping install.", "installed"))
                         self._record_config_summary(display_name, "SKIPPED", "already installed (config unchanged)", records[rel]['variables'])

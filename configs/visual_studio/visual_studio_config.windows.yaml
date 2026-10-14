@@ -57,6 +57,7 @@ generator_active_batch:
       MSVC_VERSION: $var{msvc_version}
       MSVC_MAJOR_VERSION: $var{msvc_major_version}
       MSVC_MINOR_VERSION: $var{msvc_minor_version}
+      MSVC_14_52_MINOR_VERSION: $var{msvc_minor_version}
       VCToolsVersion: $var{msvc_version}
       VCToolsInstallDir: ${workspace}/visual_studio/VC/Tools/MSVC/$var{msvc_version}
       WindowsSDKVersion: $var{windows_sdk_version}\

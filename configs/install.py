@@ -158,7 +158,7 @@ class _InstallProgressBar:
         # Installed/Remaining count real installs only (fresh + reinstall);
         # Remaining includes the one currently in progress
         remaining = max(0, self.m_work_total - self.m_work_done)
-        skipped_note = f" ({self.m_skipped} skipped)" if self.m_skipped else ""
+        skipped_note = f" ({self.m_skipped} up-to-date)" if self.m_skipped else ""
         tail = f" | Installed: {self.m_work_done}{skipped_note} | Remaining: {remaining} | {elapsed_text}"
 
         budget = columns - 1 - len(head) - len(tail)
@@ -196,11 +196,12 @@ class _InstallProgressBar:
             return line
 
         # Colored rebuild of the identical visible text: head + current config
-        # cyan, installed count green, skipped note gray, remaining count red.
+        # cyan, installed count blue (SUCCESS-INSTALLED), skipped note green
+        # (up-to-date), remaining count red — matching the summary palette.
         if include_stats:
-            tail_colored = f"\033[32mInstalled: {self.m_work_done}\033[0m"
+            tail_colored = f"\033[38;5;117mInstalled: {self.m_work_done}\033[0m"
             if include_note:
-                tail_colored += f" \033[90m({self.m_skipped} skipped)\033[0m"
+                tail_colored += f" \033[92m({self.m_skipped} up-to-date)\033[0m"
             tail_colored += f" | \033[31mRemaining: {remaining}\033[0m | \033[36m{elapsed_text}\033[0m"
         else:
             tail_colored = f"\033[36m{elapsed_text}\033[0m"
@@ -242,6 +243,27 @@ class WorkspaceInstaller:
         lines.append(f"  Error: {error}")
         return "\n".join(lines)
 
+    def _record_unprocessed_configs(self, ordered, records):
+        """After an aborted run, record the configs the processing loop never reached.
+
+        Planned installs that never started become red SKIPPED entries; configs the
+        plan already considered installed become UP-TO-DATE. Without this the
+        summary would silently omit everything after the failure point.
+        """
+        recorded = {item["config"] for item in self.m_summary_data}
+        for rel in ordered:
+            config_path = records[rel]['path']
+            try:
+                display_name = os.path.relpath(config_path, self.m_configs_root_path)
+            except Exception:
+                display_name = os.path.basename(config_path)
+            if display_name in recorded:
+                continue
+            if records[rel].get('install_status') == "up to date":
+                self._record_config_summary(display_name, "SKIPPED", "already installed (config unchanged)", records[rel]['variables'])
+            else:
+                self._record_config_summary(display_name, "NOT STARTED", "planned this run but not started (run aborted)", records[rel]['variables'])
+
     def _record_config_summary(self, config_name, status, message="", variables=None, duration_seconds=None):
         """Record per-config install result for final summary output."""
         sdk_name = config_name.replace('\\', '/').split('/', 1)[0] if isinstance(config_name, str) and config_name else "N/A"
@@ -274,6 +296,8 @@ class WorkspaceInstaller:
         success_items = [item for item in self.m_summary_data if item.get("status") == "SUCCESS"]
         failed_items = [item for item in self.m_summary_data if item.get("status") == "FAILED"]
         skipped_items = [item for item in self.m_summary_data if item.get("status") == "SKIPPED"]
+        nosdkroot_items = [item for item in self.m_summary_data if item.get("status") == "no sdk_root"]
+        notstarted_items = [item for item in self.m_summary_data if item.get("status") == "NOT STARTED"]
 
         lines = []
         lines.append("DevCraft Install Summary")
@@ -289,39 +313,37 @@ class WorkspaceInstaller:
             lines.append(self._colorize(f"Failed SDK installs: {len(failed_items)}", "FAILED", light=True))
         else:
             lines.append(f"Failed SDK installs: {len(failed_items)}")
-        lines.append(self._colorize(f"Skipped SDK installs (already up to date): {len(skipped_items)}", "SKIPPED", light=True))
+        lines.append(self._colorize(f"Up-to-date SDK installs (config unchanged): {len(skipped_items)}", "SKIPPED", light=True))
+        if nosdkroot_items:
+            lines.append(self._colorize(f"No sdk_root configs (install steps run every time): {len(nosdkroot_items)}", "no sdk_root", light=True))
+        if notstarted_items:
+            lines.append(self._colorize(f"Planned but not started (run aborted): {len(notstarted_items)}", "NOT STARTED", light=True))
 
+        # Single per-config listing covering ALL configs, mirroring the install
+        # plan: name first (padded, tag column aligned at the end). SUCCESS
+        # entries carry the elapsed-time suffix; FAILED / NOT STARTED entries
+        # print their message; variables print as sub-lines.
         lines.append("")
-        lines.append(self._colorize("New installs (fresh or reinstalled this run):", "SUCCESS", light=True))
-        if success_items:
-            for item in success_items:
-                duration = item.get("duration_seconds")
-                duration_text = f" | {self._format_duration(duration)}" if duration is not None else ""
-                lines.append(self._colorize(
-                    f"  - {item['sdk']} | {item['config']} | {item['timestamp']}{duration_text}", "SUCCESS", light=True))
-                for name, value in item["variables"].items():
-                    lines.append(self._colorize(f"      - {name}={value}", "SUCCESS"))
-        else:
-            lines.append("  - None")
-
-        lines.append("")
-        lines.append(self._colorize("Failed installs:", "FAILED", light=True))
-        if failed_items:
-            for item in failed_items:
-                fail_message = item.get("message") or "Unknown error"
-                lines.append(self._colorize(f"  - {item['sdk']} | {item['config']} | {item['timestamp']} | {fail_message}", "FAILED", light=True))
-        else:
-            lines.append("  - None")
-
-        lines.append("")
-        lines.append(self._colorize("Skipped installs (already up to date):", "SKIPPED", light=True))
-        if skipped_items:
-            for item in skipped_items:
-                lines.append(self._colorize(f"  - {item['sdk']} | {item['config']} | {item['timestamp']}", "SKIPPED", light=True))
-                for name, value in item["variables"].items():
-                    lines.append(self._colorize(f"      - {name}={value}", "SKIPPED"))
-        else:
-            lines.append("  - None")
+        lines.append("Config statuses (this run):")
+        shown_items = list(self.m_summary_data)
+        name_width = max((len(str(item["config"])) for item in shown_items), default=0)
+        tag_width = len("[SUCCESS-INSTALLED]")
+        for index, item in enumerate(shown_items, start=1):
+            status = item.get("status", "UNKNOWN")
+            config_name = self._colorize(str(item["config"]).ljust(name_width), status, light=True)
+            tag_text = f"[{self._status_tag(status)}]"
+            tag = self._colorize(tag_text, status, light=True)
+            tag_pad = " " * (tag_width - len(tag_text))
+            duration_text = ""
+            duration = item.get("duration_seconds")
+            if duration is not None:
+                duration_text = f" | elapsed time: {self._format_duration(duration)}"
+            lines.append(f"  {index:>2}. {config_name}  {tag}{tag_pad}{duration_text}".rstrip())
+            if status in ("FAILED", "NOT STARTED"):
+                message = item.get("message") or "Unknown error"
+                lines.append(self._colorize(f"        - {message}", status))
+            for name, value in item["variables"].items():
+                lines.append(self._colorize(f"        - {name}={value}", status))
 
         if run_error:
             lines.append("")
@@ -1014,11 +1036,97 @@ class WorkspaceInstaller:
                 print(f"Error executing command: {error_message}")
                 raise RuntimeError(error_message) from e
 
+    def _extract_set_variables_nodes(self, install_node):
+        """Collect (name, source) declarations from all 'set_variables' install steps."""
+        decls = []
+        if not isinstance(install_node, list):
+            return decls
+        for entry in install_node:
+            if not isinstance(entry, dict):
+                continue
+            for step_name, step_data in entry.items():
+                if step_name != 'set_variables' or not isinstance(step_data, dict):
+                    continue
+                for name, source in step_data.items():
+                    decls.append((name, source))
+        return decls
+
+    def _set_variables_source_path(self, name, source, config_file_path, variables):
+        """Interpolate and formalize the 'json_file' of one set_variables declaration."""
+        if not isinstance(source, dict) or 'json_file' not in source or 'json_key' not in source:
+            raise RuntimeError(
+                f"'set_variables' entry '{name}' must provide 'json_file' and 'json_key' "
+                f"in {config_file_path}")
+        return self._formalize_path(
+            self._interpolate_config_text(str(source['json_file']), variables, config_file_path))
+
+    def _read_set_variables_value(self, name, source, config_file_path, variables):
+        """Resolve one set_variables declaration from its JSON source; fail loud on problems."""
+        json_file = self._set_variables_source_path(name, source, config_file_path, variables)
+        try:
+            with open(json_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+        except Exception as e:
+            raise RuntimeError(f"'set_variables' cannot read '{json_file}' for '{name}': {e}") from e
+        key = source['json_key']
+        if key not in data or not isinstance(data[key], str) or not data[key].strip():
+            raise RuntimeError(f"'set_variables': '{json_file}' has no non-empty string value at key '{key}'")
+        return data[key].strip(), json_file
+
+    def _apply_set_variables_from_disk(self, record):
+        """Pre-resolve set_variables sources that already exist on disk.
+
+        A skipped config never runs its install steps, so without this its derived
+        variables would stay unresolved when dependents apply its exported
+        environments. Sources that do not exist yet (fresh install) are left to
+        the install-time 'set_variables' step.
+        """
+        for name, source in record['set_variables_decls']:
+            json_file = self._set_variables_source_path(name, source, record['path'], record['effective_variables'])
+            if not os.path.exists(json_file):
+                continue
+            value, json_file = self._read_set_variables_value(name, source, record['path'], record['effective_variables'])
+            print(f"set_variables (from disk): {name}={value} (from {json_file})")
+            record['effective_variables'][name] = value
+
+    def _process_set_variables(self, set_variables_config, context):
+        """Handle set_variables node: derive variables from install-produced files.
+
+        Shape:
+            - set_variables:
+                <name>:
+                  json_file: <path to a JSON file produced by earlier install steps>
+                  json_key: <top-level key whose string value becomes $var{<name>}
+
+        Values land in the live effective-variables mapping, so this config's
+        generator_active_batch (interpolated after the install steps) and
+        dependents applying this config's exported environments see them. Install
+        steps are interpolated before any step runs, so they can only reference
+        statically defined variables.
+        """
+        variables = context.get('variables')
+        if not isinstance(variables, dict):
+            raise RuntimeError("'set_variables' requires an install-time variables context")
+        config_file_path = context.get('config_file_path', '')
+        if not isinstance(set_variables_config, dict) or not set_variables_config:
+            raise RuntimeError(f"'set_variables' must be a non-empty mapping in {config_file_path}")
+        for name, source in set_variables_config.items():
+            value, json_file = self._read_set_variables_value(name, source, config_file_path, variables)
+            variables[name] = value
+            print(f"set_variables: {name}={value} (from {json_file})")
+
     def _process_generator_active_batch(self, generator_active_batch, context):
         """Handle generator_active_batch node."""
         # generator_active_batch is the child node data: { file_path, environments }
         if "file_path" not in generator_active_batch or "environments" not in generator_active_batch:
             return
+
+        # Interpolate at processing time (after the install steps ran) so values
+        # derived by 'set_variables' steps are visible in the generated file.
+        generator_active_batch = self._interpolate_config_variables(
+            generator_active_batch,
+            context.get('variables') or {},
+            context.get('config_file_path', ''))
         
         # Process file path, replacing {workspace} with actual path
         file_path = self._formalize_path(generator_active_batch["file_path"])
@@ -1170,6 +1278,7 @@ class WorkspaceInstaller:
             'make_execute_permission': self._process_make_execute_permission,
             'change_file_content': self._process_change_file_content,
             'environments': self._process_environments,
+            'set_variables': self._process_set_variables,
             'execute': self._process_execute,
         }
 
@@ -1568,24 +1677,32 @@ class WorkspaceInstaller:
         shutil.copyfile(config_file_path, marker_path)
         print(f"Stored installed config copy: {marker_path}")
 
+    def _get_install_status_detail(self, config_file_path, sdk_root):
+        """Return (status, short reason) for a config without touching the sdk root.
+
+        The reason is set for the own-config reinstall-needed cases so the plan
+        can show why; None when the tag speaks for itself.
+        """
+        if not sdk_root:
+            return "no sdk_root", None
+        if not os.path.exists(sdk_root):
+            return "missing", None
+        marker_path = self._installed_config_marker_path(sdk_root, config_file_path)
+        if not os.path.exists(marker_path):
+            return "reinstall-needed", "no installed config copy found"
+        if self._calculate_file_md5(marker_path) != self._calculate_file_md5(config_file_path):
+            return "reinstall-needed", "installed config copy differs (MD5 mismatch)"
+        return "up to date", None
+
     def _get_install_status(self, config_file_path, sdk_root):
         """Return the install status tag for a config without touching the sdk root.
 
-        installed          sdk root exists and its stored config copy matches
+        up to date         sdk root exists and its stored config copy matches
         missing            sdk root does not exist yet
         reinstall-needed   sdk root exists but the stored copy is missing/changed
         no sdk_root        config does not take part in the marker mechanism
         """
-        if not sdk_root:
-            return "no sdk_root"
-        if not os.path.exists(sdk_root):
-            return "missing"
-        marker_path = self._installed_config_marker_path(sdk_root, config_file_path)
-        if not os.path.exists(marker_path):
-            return "reinstall-needed"
-        if self._calculate_file_md5(marker_path) != self._calculate_file_md5(config_file_path):
-            return "reinstall-needed"
-        return "installed"
+        return self._get_install_status_detail(config_file_path, sdk_root)[0]
 
     def _confirm_proceed(self):
         """Ask the user to confirm the install plan before proceeding."""
@@ -1595,6 +1712,15 @@ class WorkspaceInstaller:
             print("\nNo interactive input available; aborting.")
             return False
         return answer in ("y", "yes")
+
+    @staticmethod
+    def _status_tag(status):
+        """Display form of a status for [TAG] labels: uppercase, hyphen-joined."""
+        if status == "SUCCESS":
+            return "SUCCESS-INSTALLED"
+        if status == "SKIPPED":
+            return "UP-TO-DATE"
+        return status.upper().replace(" ", "-").replace("_", "-")
 
     def _colorize(self, text, status, light=False):
         """Wrap text in the ANSI color assigned to an install status.
@@ -1606,22 +1732,24 @@ class WorkspaceInstaller:
         if not self.m_use_colors:
             return text
         palette = {
-            "installed": "\033[32m",         # green
+            "up to date": "\033[32m",        # green (sub-line tier)
             "missing": "\033[31m",           # red
             "reinstall-needed": "\033[31m",  # red
-            "no sdk_root": "\033[38;5;240m", # dark gray
-            "SUCCESS": "\033[32m",           # green
+            "no sdk_root": "\033[38;5;240m", # gray (sub-line tier)
+            "SUCCESS": "\033[38;5;75m",      # blue (sub-line tier)
             "FAILED": "\033[31m",            # red
-            "SKIPPED": "\033[38;5;240m",     # dark gray
+            "SKIPPED": "\033[32m",           # green (sub-line tier)
+            "NOT STARTED": "\033[31m",       # red: planned this run, never started
         }
         light_palette = {
-            "installed": "\033[92m",         # bright green
+            "up to date": "\033[92m",       # green (entry tier)
             "missing": "\033[91m",           # bright red
             "reinstall-needed": "\033[91m",  # bright red
-            "no sdk_root": "\033[90m",       # bright gray
-            "SUCCESS": "\033[92m",           # bright green
+            "no sdk_root": "\033[90m",       # bright gray (entry tier)
+            "SUCCESS": "\033[38;5;117m",    # blue (entry tier)
             "FAILED": "\033[91m",            # bright red
-            "SKIPPED": "\033[90m",           # bright gray
+            "SKIPPED": "\033[92m",          # green (entry tier)
+            "NOT STARTED": "\033[91m",       # bright red
         }
         ansi = (light_palette if light else palette).get(status)
         return f"{ansi}{text}\033[0m" if ansi else text
@@ -1676,12 +1804,21 @@ class WorkspaceInstaller:
             raise RuntimeError(f"Unexpected error reading configuration '{config_file_path}': {e}") from e
 
         # Interpolate $var{} tokens with the effective variables, then drop the
-        # 'variables' block so install handlers never see it.
+        # 'variables' block so install handlers never see it. Install steps are
+        # interpolated up front and can only reference statically defined
+        # variables; generator_active_batch is excluded here and interpolated at
+        # processing time instead, so 'set_variables' steps (which run during
+        # install) can feed derived values into the generated batch file.
+        raw_config = dict(config)
         config.pop('variables', None)
-        config = self._interpolate_config_variables(config, variables or {}, config_file_path)
+        config.pop('generator_active_batch', None)
+        live_variables = variables if isinstance(variables, dict) else {}
+        config = self._interpolate_config_variables(config, live_variables, config_file_path)
 
         context = {
-            'config': config
+            'config': config,
+            'variables': live_variables,
+            'config_file_path': config_file_path,
         }
 
         # Define config-level node handlers mapping
@@ -1689,14 +1826,17 @@ class WorkspaceInstaller:
             'install': self._process_install,
             'generator_active_batch': self._process_generator_active_batch,
         }
-        
-        # Process config nodes in order
+
+        # Process config nodes in order. generator_active_batch reads the raw
+        # (not yet interpolated) node so its late interpolation sees any
+        # install-time 'set_variables' values.
         for node_name, handler in config_handlers.items():
-            if node_name in config:
+            source = raw_config if node_name == 'generator_active_batch' else config
+            if node_name in source:
                 self.m_current_node = node_name
                 try:
                     print(f"\nProcessing '{node_name}' configuration...")
-                    handler(config[node_name], context)
+                    handler(source[node_name], context)
                 except Exception as e:
                     raise RuntimeError(f"Error processing '{node_name}' configuration: {e}") from e
 
@@ -1805,6 +1945,7 @@ class WorkspaceInstaller:
                 dependencies = self._extract_dependencies(config_path, config_data)
                 sdk_root_raw = self._extract_sdk_root(config_path, config_data)
                 variables = self._extract_variables(config_path, config_data)
+                set_variables_decls = self._extract_set_variables_nodes(config_data.get('install'))
                 batch_environments = (config_data.get('generator_active_batch') or {}).get('environments') or {}
             except Exception as e:
                 raise RuntimeError(f"Error parsing config '{config_path}': {e}") from e
@@ -1817,6 +1958,7 @@ class WorkspaceInstaller:
                 'deps': dependencies,
                 'sdk_root': sdk_root_raw,
                 'variables': variables,
+                'set_variables_decls': set_variables_decls,
                 'batch_environments': batch_environments,
                 'reinstall_reason': None,
             }
@@ -1856,8 +1998,11 @@ class WorkspaceInstaller:
         effective_variables_by_rel = self._compute_effective_variables(records)
         for rel, record in records.items():
             record['effective_variables'] = effective_variables_by_rel[rel]
-            record['batch_environments'] = self._interpolate_config_variables(
-                record['batch_environments'], record['effective_variables'], record['path'])
+            # Resolve 'set_variables' sources already on disk (a skipped config
+            # never runs its install steps). batch_environments stay raw here and
+            # are interpolated when applied to a dependent, after any dependency
+            # (re)installed earlier in the run has derived its variables.
+            self._apply_set_variables_from_disk(record)
             if record['sdk_root']:
                 record['sdk_root'] = self._interpolate_config_text(
                     record['sdk_root'], record['effective_variables'], record['path'])
@@ -1914,7 +2059,8 @@ class WorkspaceInstaller:
             config_path = records[rel]['path']
             sdk_root_raw = records[rel].get('sdk_root', '')
             sdk_root = self._resolve_sdk_root(config_path, sdk_root_raw) if sdk_root_raw else ''
-            status = self._get_install_status(config_path, sdk_root)
+            status, own_reason = self._get_install_status_detail(config_path, sdk_root)
+            records[rel]['reinstall_reason'] = own_reason
             # Propagate reinstalls through the dependency graph: an installed
             # sdk embeds its dependencies' state (paths, versions, exported
             # environments), so a dependent must be regenerated whenever a
@@ -1925,7 +2071,7 @@ class WorkspaceInstaller:
             # excluded on purpose: their install steps run on every install
             # anyway and they carry no marker, so they would otherwise force
             # a reinstall of every dependent on every run.
-            if status == "installed":
+            if status == "up to date":
                 triggered_dep = next(
                     (dep_rel for dep_rel in records[rel]['dep_rels']
                      if records[dep_rel]['install_status'] in ("missing", "reinstall-needed")),
@@ -1936,18 +2082,19 @@ class WorkspaceInstaller:
                         f"dependency '{triggered_dep}' is missing or being reinstalled")
             status_counts[status] = status_counts.get(status, 0) + 1
             records[rel]['install_status'] = status
-            print(f"  {index:>2}. {self._colorize(rel.ljust(name_width), status, light=True)}  [{self._colorize(status, status, light=True)}]")
+            line = f"  {index:>2}. {self._colorize(rel.ljust(name_width), status, light=True)}  [{self._colorize(self._status_tag(status), status, light=True)}]"
             if records[rel]['reinstall_reason']:
-                print(self._colorize(f"        - {records[rel]['reinstall_reason']}", status))
+                line += " " + self._colorize(records[rel]['reinstall_reason'], status)
+            print(line)
             for name, value in records[rel]['variables'].items():
                 print(self._colorize(f"        - {name}={value}", status))
 
         def _summary_line(status, note):
-            tag = f"[{status}]".ljust(len("[reinstall-needed]"))
+            tag = f"[{self._status_tag(status)}]".ljust(len("[REINSTALL-NEEDED]"))
             print(f"  {self._colorize(tag, status, light=True)}  {status_counts.get(status, 0)} ({note})")
 
         print("\nInstall plan:")
-        _summary_line("installed", "up to date, no reinstall")
+        _summary_line("up to date", "no reinstall needed")
         _summary_line("missing", "fresh install")
         _summary_line("reinstall-needed", "sdk root will be removed and reinstalled (own config or a dependency changed)")
         _summary_line("no sdk_root", "no marker mechanism; install steps run every time")
@@ -2003,7 +2150,14 @@ class WorkspaceInstaller:
                     if not records[dep_rel]['batch_environments']:
                         continue
                     print(f"\nApplying environments from dependency: {records[dep_rel]['base']}")
-                    self._process_environments(records[dep_rel]['batch_environments'], None)
+                    # Interpolate at apply time: dependencies processed earlier in
+                    # this run may carry 'set_variables' values that did not exist
+                    # at plan time (fresh installs).
+                    batch_env = self._interpolate_config_variables(
+                        records[dep_rel]['batch_environments'],
+                        records[dep_rel]['effective_variables'],
+                        records[dep_rel]['path'])
+                    self._process_environments(batch_env, None)
 
                 sdk_root_raw = records[rel].get('sdk_root', '')
                 if sdk_root_raw:
@@ -2015,8 +2169,8 @@ class WorkspaceInstaller:
                     # install falls through to install_from_config.
                     self._validate_installed_config_state(
                         config_path, sdk_root, records[rel].get('reinstall_reason'))
-                    if self._get_install_status(config_path, sdk_root) == "installed":
-                        print(self._colorize("Already installed and up to date, skipping install.", "installed"))
+                    if self._get_install_status(config_path, sdk_root) == "up to date":
+                        print(self._colorize("Already installed and up to date, skipping install.", "up to date"))
                         self._record_config_summary(display_name, "SKIPPED", "already installed (config unchanged)", records[rel]['variables'])
                         self.m_progress_bar.finish_config(skipped=True)
                         continue
@@ -2024,12 +2178,16 @@ class WorkspaceInstaller:
             except Exception as e:
                 self._remove_failed_sdk_root(sdk_root, display_name)
                 self._record_config_summary(display_name, "FAILED", str(e), records[rel]['variables'])
+                self._record_unprocessed_configs(ordered, records)
                 raise
 
             if sdk_root:
                 self._store_installed_config_marker(config_path, sdk_root)
+            # A config without sdk_root installs no SDK: its steps just ran (as
+            # they do on every run), so record it as 'no sdk_root' — it must not
+            # count as a new SDK install.
             self._record_config_summary(
-                display_name, "SUCCESS",
+                display_name, "SUCCESS" if sdk_root else "no sdk_root",
                 variables=records[rel]['variables'],
                 duration_seconds=time.monotonic() - config_started)
             self.m_progress_bar.finish_config(

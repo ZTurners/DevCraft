@@ -344,6 +344,7 @@ set LIB=%~dp0VC\Tools\MSVC\{msvcv}\lib\{target};{sdk_dir}\WindowsKits\10\Lib\{sd
             "host": host,
             "targets": targets,
             "msvc_version": msvcv,
+            "msvc_minor_version": msvcv[len(toolset_prefix) + 1:],
             "sdk_version": sdkv,
             "msvc_root": str(self.msvc_output.resolve()),
             "sdk_root": str(self.sdk_output.resolve()),
@@ -365,6 +366,16 @@ def _parse_msvc_version_prefix(value):
     if len(parts) < 2:
         sys.exit(f"Invalid --msvc-version: {value!r}. Expected at least 'major.minor', e.g. 14.51 or 14.51.36014.")
     return f"{parts[0]}.{parts[1]}"
+
+
+def _manifest_toolset_version(packages, pkg_id):
+    """Full version the manifest serves for a toolset package id ('' if unknown).
+
+    Patchless-id manifests (current Insiders feeds) carry the version in the
+    package entry's 'version' field; older manifests embed it in the id itself.
+    """
+    entry = first(packages.get(pkg_id, []), lambda p: p.get("language") in (None, "en-US"))
+    return (entry or {}).get("version") or ""
 
 
 def _parse_sdk_build_number(value):
@@ -488,17 +499,23 @@ def main():
     installer = PortableMsvcInstaller(msvc_output_dir=msvc_output, sdk_output_dir=sdk_output, downloads_dir=downloads)
 
     print("Fetching Visual Studio manifests...")
-    manifest = installer.get_main_manifest(args.vs, args.insiders)
+    channel_manifest = installer.get_main_manifest(args.vs, args.insiders)
 
     item_name = "Microsoft.VisualStudio.Manifests.VisualStudioPreview" if args.insiders else "Microsoft.VisualStudio.Manifests.VisualStudio"
-    vs = first(manifest["channelItems"], lambda x: x["id"] == item_name)
+    vs = first(channel_manifest["channelItems"], lambda x: x["id"] == item_name)
+    if vs is None:
+        sys.exit(f"No '{item_name}' item found in the channel manifest")
     payload = vs["payloads"][0]["url"]
     vsmanifest = json.loads(installer.download(payload))
 
     packages, msvc_versions, sdk_versions = installer.parse_versions(vsmanifest)
 
     if args.show_versions:
-        print("MSVC versions:", " ".join(sorted(msvc_versions.keys())))
+        parts = []
+        for ver in sorted(msvc_versions):
+            served = _manifest_toolset_version(packages, msvc_versions[ver])
+            parts.append(f"{ver}={served}" if served else ver)
+        print("MSVC versions:", " ".join(parts))
         print("Windows SDK versions:", " ".join(sorted(sdk_versions.keys())))
         return 0
 
@@ -514,21 +531,32 @@ def main():
                 f"(prefix {toolset_prefix!r}). "
                 f"Available: {' '.join(sorted(msvc_versions))}"
             )
-        msvc_ver = installer._latest_numeric_version(candidates)
-        print(f"--msvc-version {args.msvc_version} -> prefix {toolset_prefix} -> selected toolset {msvc_ver}")
+        selected = installer._latest_numeric_version(candidates)
+        msvc_pid = msvc_versions[selected]
+        msvc_ver = msvc_pid.removeprefix("microsoft.vc.").removesuffix(".tools.hostx64.targetx64.base")
+        served = _manifest_toolset_version(packages, msvc_pid)
+        requested_full = args.msvc_version.strip() if len(args.msvc_version.strip().split(".")) >= 3 else None
+        if requested_full and served and served != requested_full and not served.startswith(requested_full + "."):
+            # Exact pin: fail loud when the manifest serves a different patch, so a
+            # rolling feed can never silently install a newer toolset.
+                sys.exit(
+                    f"--msvc-version is pinned to {requested_full} but the manifest serves "
+                    f"{served} for toolset {toolset_prefix}. Update the pin to the served "
+                    f"version, or pass a major.minor prefix to track the feed."
+                )
+        note = f" (manifest serves {served})" if served else ""
+        print(f"--msvc-version {args.msvc_version} -> prefix {toolset_prefix} -> selected toolset {msvc_ver}{note}")
     else:
-        msvc_ver = installer._latest_numeric_version(msvc_versions.keys())
+        selected = installer._latest_numeric_version(msvc_versions.keys())
+        msvc_pid = msvc_versions[selected]
+        msvc_ver = msvc_pid.removeprefix("microsoft.vc.").removesuffix(".tools.hostx64.targetx64.base")
 
     sdk_build = _parse_sdk_build_number(args.windows_sdk_version) if args.windows_sdk_version else None
     sdk_ver = sdk_build or installer._latest_numeric_version(sdk_versions.keys())
 
-    if msvc_ver not in msvc_versions:
-        sys.exit(f"Unknown MSVC toolset version: {msvc_ver}. Available: {' '.join(sorted(msvc_versions))}")
     if sdk_ver not in sdk_versions:
         sys.exit(f"Unknown Windows SDK version: {args.windows_sdk_version!r} (resolved build: {sdk_ver}). Available: {' '.join(sorted(sdk_versions))}")
 
-    msvc_pid = msvc_versions[msvc_ver]
-    msvc_ver = msvc_pid.removeprefix("microsoft.vc.").removesuffix(".tools.hostx64.targetx64.base")
     sdk_pid = sdk_versions[sdk_ver]
 
     if skip_if_output_folder_exists:
@@ -542,7 +570,9 @@ def main():
 
     print(f"Preparing portable toolchain: MSVC v{msvc_ver}, Windows SDK v{sdk_ver}")
 
-    tools = first(manifest["channelItems"], lambda x: x["id"] == "Microsoft.VisualStudio.Product.BuildTools")
+    tools = first(channel_manifest["channelItems"], lambda x: x["id"] == "Microsoft.VisualStudio.Product.BuildTools")
+    if tools is None:
+        sys.exit("No 'Microsoft.VisualStudio.Product.BuildTools' item found in the channel manifest")
     resource = first(tools["localizedResources"], lambda x: x["language"] == "en-us")
     license_url = resource["license"]
 

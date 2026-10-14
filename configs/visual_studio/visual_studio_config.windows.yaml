@@ -1,15 +1,18 @@
 sdk_root: ${workspace}/visual_studio
 
 variables:
-  msvc_version: "14.52.36815"
+  msvc_major_version: "14.52"
   windows_sdk_package_version: "10.0.26100.7705"
   windows_sdk_version: "10.0.26100.0"
 
 install:
   # Install a repo-local portable MSVC + Windows SDK toolchain.
-  # --msvc-version accepts a full toolset version (14.52.36815) or a major.minor prefix (14.52).
-  # To list available toolset and SDK versions run:
-  #   python configs/visual_studio/scripts/portable_msvc_install.py --show-versions
+  # --msvc-version takes a major.minor prefix only: the patch version is decided
+  # by the feed, and the actually installed full version is read back from
+  # portable_msvc.json by the set_variables step below, so every generated path
+  # matches disk by construction (no hardcoded patch version to drift).
+  # To list what the feed currently serves (prefix=fullversion pairs):
+  #   python configs/visual_studio/scripts/portable_msvc_install.py --show-versions --vs=2026 --insiders
   # NOTE: 14.52 currently ships only in the VS 2026 Insiders feed; the '_mm_fmsub_sd'
   # constexpr fix (microsoft/STL PR #6137) needs it for clang-cl >= 22. Drop --insiders
   # once 14.52 (or newer) reaches the stable channel.
@@ -26,7 +29,7 @@ install:
 
         - --vs=2026
         - --insiders
-        - --msvc-version=$var{msvc_version}
+        - --msvc-version=$var{msvc_major_version}
         - --msvc-output=${workspace}/visual_studio
 
         - --windows-sdk-version=$var{windows_sdk_package_version}
@@ -35,11 +38,26 @@ install:
         - --skip-if-output-folder-exists=true
 
       dest: ${workspace}/visual_studio/msvc
+  # The install script writes the actually installed toolset version to
+  # portable_msvc.json (full version as msvc_version, patch part as
+  # msvc_minor_version); read both back so generator_active_batch (interpolated
+  # after install steps) and dependent configs use the real on-disk version.
+  - set_variables:
+      msvc_version:
+        json_file: ${workspace}/visual_studio/portable_msvc.json
+        json_key: msvc_version
+      msvc_minor_version:
+        json_file: ${workspace}/visual_studio/portable_msvc.json
+        json_key: msvc_minor_version
 
 generator_active_batch:
   file_path: ${workspace}/visual_studio/active.bat
   environments:
     set:
+      MSVC_VERSION: $var{msvc_version}
+      MSVC_MAJOR_VERSION: $var{msvc_major_version}
+      MSVC_MINOR_VERSION: $var{msvc_minor_version}
+      VCToolsVersion: $var{msvc_version}
       VCToolsInstallDir: ${workspace}/visual_studio/VC/Tools/MSVC/$var{msvc_version}
       WindowsSDKVersion: $var{windows_sdk_version}\
       INCLUDE: ${workspace}/visual_studio/VC/Tools/MSVC/$var{msvc_version}/include;${workspace}/visual_studio/WindowsKits/10/Include/$var{windows_sdk_version}/ucrt;${workspace}/visual_studio/WindowsKits/10/Include/$var{windows_sdk_version}/shared;${workspace}/visual_studio/WindowsKits/10/Include/$var{windows_sdk_version}/um;${workspace}/visual_studio/WindowsKits/10/Include/$var{windows_sdk_version}/winrt;${workspace}/visual_studio/WindowsKits/10/Include/$var{windows_sdk_version}/cppwinrt
@@ -51,3 +69,4 @@ generator_active_batch:
       - PATH: ${workspace}/visual_studio/VC/Tools/MSVC/$var{msvc_version}/bin/Hostx64/x64
       - PATH: ${workspace}/visual_studio/WindowsKits/10/bin/$var{windows_sdk_version}/x64
       - PATH: ${workspace}/visual_studio/WindowsKits/10/bin/$var{windows_sdk_version}/x64/ucrt
+

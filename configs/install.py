@@ -281,18 +281,18 @@ class WorkspaceInstaller:
         lines.append(f"Finished (UTC): {run_finished_at.isoformat()}")
         lines.append(f"Duration (seconds): {total_seconds}")
         overall = "FAILED" if run_error else "SUCCESS"
-        lines.append(self._colorize(f"Overall result: {overall}", overall))
+        lines.append(self._colorize(f"Overall result: {overall}", overall, light=True))
         lines.append(f"Configs processed: {total_count}")
-        lines.append(self._colorize(f"New SDK installs (this run): {len(success_items)}", "SUCCESS"))
+        lines.append(self._colorize(f"New SDK installs (this run): {len(success_items)}", "SUCCESS", light=True))
         # keep a zero-failure count uncolored; red is reserved for real failures
         if failed_items:
-            lines.append(self._colorize(f"Failed SDK installs: {len(failed_items)}", "FAILED"))
+            lines.append(self._colorize(f"Failed SDK installs: {len(failed_items)}", "FAILED", light=True))
         else:
             lines.append(f"Failed SDK installs: {len(failed_items)}")
-        lines.append(self._colorize(f"Skipped SDK installs (already up to date): {len(skipped_items)}", "SKIPPED"))
+        lines.append(self._colorize(f"Skipped SDK installs (already up to date): {len(skipped_items)}", "SKIPPED", light=True))
 
         lines.append("")
-        lines.append(self._colorize("New installs (fresh or reinstalled this run):", "SUCCESS"))
+        lines.append(self._colorize("New installs (fresh or reinstalled this run):", "SUCCESS", light=True))
         if success_items:
             for item in success_items:
                 duration = item.get("duration_seconds")
@@ -305,7 +305,7 @@ class WorkspaceInstaller:
             lines.append("  - None")
 
         lines.append("")
-        lines.append(self._colorize("Failed installs:", "FAILED"))
+        lines.append(self._colorize("Failed installs:", "FAILED", light=True))
         if failed_items:
             for item in failed_items:
                 fail_message = item.get("message") or "Unknown error"
@@ -314,7 +314,7 @@ class WorkspaceInstaller:
             lines.append("  - None")
 
         lines.append("")
-        lines.append(self._colorize("Skipped installs (already up to date):", "SKIPPED"))
+        lines.append(self._colorize("Skipped installs (already up to date):", "SKIPPED", light=True))
         if skipped_items:
             for item in skipped_items:
                 lines.append(self._colorize(f"  - {item['sdk']} | {item['config']} | {item['timestamp']}", "SKIPPED", light=True))
@@ -325,7 +325,7 @@ class WorkspaceInstaller:
 
         if run_error:
             lines.append("")
-            lines.append(self._colorize(self.build_failure_summary(run_error), "FAILED"))
+            lines.append(self._colorize(self.build_failure_summary(run_error), "FAILED", light=True))
 
         return "\n".join(lines)
 
@@ -1599,9 +1599,9 @@ class WorkspaceInstaller:
     def _colorize(self, text, status, light=False):
         """Wrap text in the ANSI color assigned to an install status.
 
-        light=True picks the brighter variant of the status color (entry /
-        package name lines); the base palette is used for the parameter and
-        other detail lines nested under them.
+        light=True picks the brighter variant of the status color (summary
+        titles, stat lines and entry / package name lines); the base palette
+        is kept only for the var (parameter) lines nested under them.
         """
         if not self.m_use_colors:
             return text
@@ -1618,10 +1618,10 @@ class WorkspaceInstaller:
             "installed": "\033[92m",         # bright green
             "missing": "\033[91m",           # bright red
             "reinstall-needed": "\033[91m",  # bright red
-            "no sdk_root": "\033[38;5;240m", # dark gray
+            "no sdk_root": "\033[90m",       # bright gray
             "SUCCESS": "\033[92m",           # bright green
             "FAILED": "\033[91m",            # bright red
-            "SKIPPED": "\033[38;5;240m",     # dark gray
+            "SKIPPED": "\033[90m",           # bright gray
         }
         ansi = (light_palette if light else palette).get(status)
         return f"{ansi}{text}\033[0m" if ansi else text
@@ -1944,7 +1944,7 @@ class WorkspaceInstaller:
 
         def _summary_line(status, note):
             tag = f"[{status}]".ljust(len("[reinstall-needed]"))
-            print(f"  {self._colorize(tag, status)}  {status_counts.get(status, 0)} ({note})")
+            print(f"  {self._colorize(tag, status, light=True)}  {status_counts.get(status, 0)} ({note})")
 
         print("\nInstall plan:")
         _summary_line("installed", "up to date, no reinstall")

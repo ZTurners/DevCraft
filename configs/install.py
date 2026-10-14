@@ -367,8 +367,20 @@ class WorkspaceInstaller:
         path = path.replace("${settings}", self.m_configs_root_path)
         path = path.replace("${download}", self.m_download_root_path)
         path = os.path.normpath(path)
-        
+
         return path
+
+    def _formalize_path_in_active_file(self, path):
+        """Formalize a path for generated active files: ${workspace} is rendered
+        as a runtime DEVCRAFT_WORKSPACE reference so the file stays relocatable
+        after the workspace is copied. Install-time path resolution keeps using
+        _formalize_path (absolute paths)."""
+        if not isinstance(path, str) or path == "":
+            return path
+        if "${workspace}" in path:
+            var = "%DEVCRAFT_WORKSPACE%" if self.m_system_name == "Windows" else "${DEVCRAFT_WORKSPACE}"
+            return path.replace("${workspace}", var)
+        return self._formalize_path(path)
 
     def _process_download(self, download_config, context):
         """Handle download node."""
@@ -1022,7 +1034,7 @@ class WorkspaceInstaller:
         if "set" in generator_active_batch["environments"]:
             for var, value in generator_active_batch["environments"]["set"].items():
                 # Replace workspace variable
-                value = self._formalize_path(value)
+                value = self._formalize_path_in_active_file(value)
                 set_env_list.append((var, value))
         
         # Process prepend
@@ -1031,7 +1043,7 @@ class WorkspaceInstaller:
                 # Each item is a dictionary with a single key-value pair
                 for var, value in item.items():
                     # Replace workspace variable
-                    value = self._formalize_path(value)
+                    value = self._formalize_path_in_active_file(value)
                     prepend_env_list.append((var, value))
         
         # Generate the batch file
@@ -1595,7 +1607,7 @@ class WorkspaceInstaller:
             return text
         palette = {
             "installed": "\033[32m",         # green
-            "missing": "\033[33m",           # yellow
+            "missing": "\033[31m",           # red
             "reinstall-needed": "\033[31m",  # red
             "no sdk_root": "\033[38;5;240m", # dark gray
             "SUCCESS": "\033[32m",           # green
@@ -1604,7 +1616,7 @@ class WorkspaceInstaller:
         }
         light_palette = {
             "installed": "\033[92m",         # bright green
-            "missing": "\033[93m",           # bright yellow
+            "missing": "\033[91m",           # bright red
             "reinstall-needed": "\033[91m",  # bright red
             "no sdk_root": "\033[38;5;240m", # dark gray
             "SUCCESS": "\033[92m",           # bright green

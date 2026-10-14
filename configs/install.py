@@ -1073,21 +1073,34 @@ class WorkspaceInstaller:
             raise RuntimeError(f"'set_variables': '{json_file}' has no non-empty string value at key '{key}'")
         return data[key].strip(), json_file
 
-    def _apply_set_variables_from_disk(self, record):
-        """Pre-resolve set_variables sources that already exist on disk.
+    def _resolve_set_variables_from_disk(self, record):
+        """Read a config's set_variables sources from disk before applying its
+        exported environments.
 
-        A skipped config never runs its install steps, so without this its derived
-        variables would stay unresolved when dependents apply its exported
-        environments. Sources that do not exist yet (fresh install) are left to
-        the install-time 'set_variables' step.
+        Only called for configs whose install steps do not run this time
+        (already installed): the JSON files were written by the producers the
+        install-time 'set_variables' step read when those steps last ran, so
+        this is the only place their derived values can come from. Fails loud
+        when an installed config no longer owns the artifacts it derives from.
         """
         for name, source in record['set_variables_decls']:
             json_file = self._set_variables_source_path(name, source, record['path'], record['effective_variables'])
             if not os.path.exists(json_file):
-                continue
+                raise RuntimeError(
+                    f"'set_variables' source '{json_file}' for '{name}' does not exist, "
+                    f"but {record['base']} is marked installed")
             value, json_file = self._read_set_variables_value(name, source, record['path'], record['effective_variables'])
             print(f"set_variables (from disk): {name}={value} (from {json_file})")
             record['effective_variables'][name] = value
+
+    def _apply_config_environments(self, record):
+        """Interpolate one config's exported generator_active_batch environments
+        with its current effective variables and apply them."""
+        batch_env = self._interpolate_config_variables(
+            record['batch_environments'],
+            record['effective_variables'],
+            record['path'])
+        self._process_environments(batch_env, None)
 
     def _process_set_variables(self, set_variables_config, context):
         """Handle set_variables node: derive variables from install-produced files.
@@ -2050,11 +2063,6 @@ class WorkspaceInstaller:
         effective_variables_by_rel = self._compute_effective_variables(records)
         for rel, record in records.items():
             record['effective_variables'] = effective_variables_by_rel[rel]
-            # Resolve 'set_variables' sources already on disk (a skipped config
-            # never runs its install steps). batch_environments stay raw here and
-            # are interpolated when applied to a dependent, after any dependency
-            # (re)installed earlier in the run has derived its variables.
-            self._apply_set_variables_from_disk(record)
             if record['sdk_root']:
                 record['sdk_root'] = self._interpolate_config_text(
                     record['sdk_root'], record['effective_variables'], record['path'])
@@ -2093,16 +2101,6 @@ class WorkspaceInstaller:
             cycle_nodes = sorted([k for k, deg in indegree.items() if deg > 0])
             cycle_text = "\n".join([f"  - {node}" for node in cycle_nodes])
             raise RuntimeError(f"Cyclic dependency detected among config files:\n{cycle_text}")
-
-        # Dependency closure per config (own deps + their transitive deps),
-        # built in topological order so each dep's closure is already final.
-        dep_closure = {}
-        for rel in ordered:
-            closure = set()
-            for dep_rel in records[rel]['dep_rels']:
-                closure.add(dep_rel)
-                closure |= dep_closure[dep_rel]
-            dep_closure[rel] = closure
 
         print("\nResolved config execution order:")
         name_width = max(len(rel) for rel in ordered)
@@ -2163,12 +2161,31 @@ class WorkspaceInstaller:
             print("Aborted by user. No changes were made.")
             return
 
+        # Apply the generator_active_batch environments exported by the configs
+        # that are already installed (up to date) before the install pass, in
+        # dependency order, so install steps below can use the tools they
+        # provide. Their install steps never run again this run, so their
+        # 'set_variables' values are read back now from the JSON files those
+        # steps produced when they installed. Configs being (re)installed get
+        # their environments applied right after their own install succeeds
+        # (see the loop below); topological order guarantees every dependency's
+        # environments are active before a dependent is processed.
+        applied_env_rels = set()
+        for rel in ordered:
+            if records[rel].get('install_status') != 'up to date':
+                continue
+            self._resolve_set_variables_from_disk(records[rel])
+            applied_env_rels.add(rel)
+            if not records[rel]['batch_environments']:
+                continue
+            print(f"\nApplying environments from installed config: {records[rel]['base']}")
+            self._apply_config_environments(records[rel])
+
         self.m_progress_bar.start(
             len(ordered),
             status_counts.get("missing", 0) + status_counts.get("reinstall-needed", 0))
 
         # Process each config file in dependency order.
-        applied_env_rels = set()
         for rel in ordered:
             config_path = records[rel]['path']
             # Friendly display: show path relative to configs folder
@@ -2189,28 +2206,6 @@ class WorkspaceInstaller:
 
             sdk_root = ""
             try:
-                # Apply the environments exported by this config's dependencies
-                # (from their generator_active_batch declarations, whether or not
-                # they are being reinstalled) so install steps below can use the
-                # tools those dependencies provide. Kept inside the try so a
-                # failure here records this config as FAILED in the run summary
-                # instead of aborting the run without any summary entry.
-                for dep_rel in ordered:
-                    if dep_rel not in dep_closure[rel] or dep_rel in applied_env_rels:
-                        continue
-                    applied_env_rels.add(dep_rel)
-                    if not records[dep_rel]['batch_environments']:
-                        continue
-                    print(f"\nApplying environments from dependency: {records[dep_rel]['base']}")
-                    # Interpolate at apply time: dependencies processed earlier in
-                    # this run may carry 'set_variables' values that did not exist
-                    # at plan time (fresh installs).
-                    batch_env = self._interpolate_config_variables(
-                        records[dep_rel]['batch_environments'],
-                        records[dep_rel]['effective_variables'],
-                        records[dep_rel]['path'])
-                    self._process_environments(batch_env, None)
-
                 sdk_root_raw = records[rel].get('sdk_root', '')
                 if sdk_root_raw:
                     sdk_root = self._resolve_sdk_root(config_path, sdk_root_raw)
@@ -2228,6 +2223,13 @@ class WorkspaceInstaller:
                         self.m_progress_bar.finish_config(skipped=True)
                         continue
                 self.install_from_config(config_path, records[rel]['effective_variables'])
+                # Freshly (re)installed: apply its exported environments now —
+                # the install-time 'set_variables' steps already populated the
+                # live effective variables with the values just derived.
+                applied_env_rels.add(rel)
+                if records[rel]['batch_environments']:
+                    print(f"\nApplying environments from freshly installed config: {records[rel]['base']}")
+                    self._apply_config_environments(records[rel])
             except Exception as e:
                 self._remove_failed_sdk_root(
                     sdk_root, display_name,

@@ -298,9 +298,9 @@ class WorkspaceInstaller:
                 duration = item.get("duration_seconds")
                 duration_text = f" | {self._format_duration(duration)}" if duration is not None else ""
                 lines.append(self._colorize(
-                    f"  - {item['sdk']} | {item['config']} | {item['timestamp']}{duration_text}", "SUCCESS"))
+                    f"  - {item['sdk']} | {item['config']} | {item['timestamp']}{duration_text}", "SUCCESS", light=True))
                 for name, value in item["variables"].items():
-                    lines.append(f"      - {name}={value}")
+                    lines.append(self._colorize(f"      - {name}={value}", "SUCCESS"))
         else:
             lines.append("  - None")
 
@@ -309,7 +309,7 @@ class WorkspaceInstaller:
         if failed_items:
             for item in failed_items:
                 fail_message = item.get("message") or "Unknown error"
-                lines.append(self._colorize(f"  - {item['sdk']} | {item['config']} | {item['timestamp']} | {fail_message}", "FAILED"))
+                lines.append(self._colorize(f"  - {item['sdk']} | {item['config']} | {item['timestamp']} | {fail_message}", "FAILED", light=True))
         else:
             lines.append("  - None")
 
@@ -317,9 +317,9 @@ class WorkspaceInstaller:
         lines.append("Skipped installs (already up to date):")
         if skipped_items:
             for item in skipped_items:
-                lines.append(self._colorize(f"  - {item['sdk']} | {item['config']} | {item['timestamp']}", "SKIPPED"))
+                lines.append(self._colorize(f"  - {item['sdk']} | {item['config']} | {item['timestamp']}", "SKIPPED", light=True))
                 for name, value in item["variables"].items():
-                    lines.append(f"      - {name}={value}")
+                    lines.append(self._colorize(f"      - {name}={value}", "SKIPPED"))
         else:
             lines.append("  - None")
 
@@ -1584,20 +1584,34 @@ class WorkspaceInstaller:
             return False
         return answer in ("y", "yes")
 
-    def _colorize(self, text, status):
-        """Wrap text in the ANSI color assigned to an install status."""
+    def _colorize(self, text, status, light=False):
+        """Wrap text in the ANSI color assigned to an install status.
+
+        light=True picks the brighter variant of the status color (entry /
+        package name lines); the base palette is used for the parameter and
+        other detail lines nested under them.
+        """
         if not self.m_use_colors:
             return text
         palette = {
             "installed": "\033[32m",         # green
             "missing": "\033[33m",           # yellow
             "reinstall-needed": "\033[31m",  # red
-            "no sdk_root": "\033[90m",       # gray
+            "no sdk_root": "\033[38;5;240m", # dark gray
             "SUCCESS": "\033[32m",           # green
             "FAILED": "\033[31m",            # red
-            "SKIPPED": "\033[90m",           # gray
+            "SKIPPED": "\033[38;5;240m",     # dark gray
         }
-        ansi = palette.get(status)
+        light_palette = {
+            "installed": "\033[92m",         # bright green
+            "missing": "\033[93m",           # bright yellow
+            "reinstall-needed": "\033[91m",  # bright red
+            "no sdk_root": "\033[38;5;240m", # dark gray
+            "SUCCESS": "\033[92m",           # bright green
+            "FAILED": "\033[91m",            # bright red
+            "SKIPPED": "\033[38;5;240m",     # dark gray
+        }
+        ansi = (light_palette if light else palette).get(status)
         return f"{ansi}{text}\033[0m" if ansi else text
 
     def _resolve_dependency(self, dep_text, records_by_rel, records_by_basename, records_by_folder):
@@ -1910,11 +1924,11 @@ class WorkspaceInstaller:
                         f"dependency '{triggered_dep}' is missing or being reinstalled")
             status_counts[status] = status_counts.get(status, 0) + 1
             records[rel]['install_status'] = status
-            print(f"  {index:>2}. {rel.ljust(name_width)}  [{self._colorize(status, status)}]")
+            print(f"  {index:>2}. {self._colorize(rel.ljust(name_width), status, light=True)}  [{self._colorize(status, status, light=True)}]")
             if records[rel]['reinstall_reason']:
-                print(f"        - {records[rel]['reinstall_reason']}")
+                print(self._colorize(f"        - {records[rel]['reinstall_reason']}", status))
             for name, value in records[rel]['variables'].items():
-                print(f"        - {name}={value}")
+                print(self._colorize(f"        - {name}={value}", status))
 
         def _summary_line(status, note):
             tag = f"[{status}]".ljust(len("[reinstall-needed]"))

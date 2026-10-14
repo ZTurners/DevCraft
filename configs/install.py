@@ -292,7 +292,7 @@ class WorkspaceInstaller:
         lines.append(self._colorize(f"Skipped SDK installs (already up to date): {len(skipped_items)}", "SKIPPED"))
 
         lines.append("")
-        lines.append("New installs (fresh or reinstalled this run):")
+        lines.append(self._colorize("New installs (fresh or reinstalled this run):", "SUCCESS"))
         if success_items:
             for item in success_items:
                 duration = item.get("duration_seconds")
@@ -305,7 +305,7 @@ class WorkspaceInstaller:
             lines.append("  - None")
 
         lines.append("")
-        lines.append("Failed installs:")
+        lines.append(self._colorize("Failed installs:", "FAILED"))
         if failed_items:
             for item in failed_items:
                 fail_message = item.get("message") or "Unknown error"
@@ -314,7 +314,7 @@ class WorkspaceInstaller:
             lines.append("  - None")
 
         lines.append("")
-        lines.append("Skipped installs (already up to date):")
+        lines.append(self._colorize("Skipped installs (already up to date):", "SKIPPED"))
         if skipped_items:
             for item in skipped_items:
                 lines.append(self._colorize(f"  - {item['sdk']} | {item['config']} | {item['timestamp']}", "SKIPPED", light=True))

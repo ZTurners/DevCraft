@@ -1,10 +1,25 @@
 sdk_root: ${workspace}/conan
 
+# the wipe on reinstalls skips these paths, so .conan (profiles,
+# remotes, login) survives config changes and version bumps while old
+# conan-<version> dirs are still cleaned up
+preserve_on_reinstall:
+  - ${workspace}/conan/.conan
+
+variables:
+  conan_version: "2.33.0"
+
 install:
-  # conan_install:
-  - execute:
-      command:
-        - python -m pip install conan
+  # standalone self-contained conan (PyInstaller bundle with its own python
+  # runtime) — fully decoupled from the workspace python config
+  - download:
+      src:
+        url: https://github.com/conan-io/conan/releases/download/$var{conan_version}/conan-$var{conan_version}-macos-arm64.tgz
+        SHA-256: f93092efecd504108b5b9571387663c9149367eb0f52f324206d4f7105cc919a
+      dest: ${download}/conan-$var{conan_version}-macos-arm64.tgz
+  - unzip:
+      src: ${download}/conan-$var{conan_version}-macos-arm64.tgz
+      dest: ${workspace}/conan/conan-$var{conan_version}
   # conan_boostrap:
   - copy:
       src: ${configs}/conan/home
@@ -18,7 +33,7 @@ install:
       prepend: []
   - execute:
       command:
-        - conan profile detect --force
+        - ${workspace}/conan/conan-$var{conan_version}/conan profile detect --force
   # install conanfile:
   # - execute:
   #     command:
@@ -42,3 +57,5 @@ generator_active_batch:
     set:
       CONAN_HOME: ${workspace}/conan/.conan
       CONAN_USE_ALWAYS_SHORT_PATHS: '1'
+    prepend:
+      - PATH: ${workspace}/conan/conan-$var{conan_version}

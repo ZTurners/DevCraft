@@ -1,22 +1,38 @@
-# No sdk_root on purpose: the install only pip-installs into the bootstrap
-# python under ${workspace}/python, which is the interpreter install.py itself
-# runs on. A sdk_root here would make a config change wipe the running
-# interpreter (WinError 5 on the loaded exe/.pyd files).
+# Bootstrap stands up a private pyenv-built interpreter under
+# ${workspace}/bootstrap/python that install.py itself runs on; this config
+# owns the user-facing ${workspace}/python tree and builds its python
+# independently with pyenv straight into this sdk_root (pyenv, brew and xz are
+# guaranteed by the bootstrap script). Versions here are free to diverge from
+# configs/boostrap_python_version.txt. install.py never runs from this tree,
+# so the sdk_root below can be wiped and reinstalled freely.
+sdk_root: ${workspace}/python
+
 variables:
-  python_version: "3.13.5"
+  python_313_version: "3.13.5"
 
 install:
-  # install lib clang for python
+  # build the user python directly into this sdk_root; the xz dev flags
+  # mirror the bootstrap build so the interpreter keeps lzma support
+  - execute:
+      terminal: true
+      command:
+        - if ! brew list --versions xz >/dev/null 2>&1; then brew install xz; fi &&
+        - XZ_PREFIX=$(brew --prefix xz) &&
+        - PYENV_ROOT=${workspace}/python CPPFLAGS="-I$XZ_PREFIX/include" LDFLAGS="-L$XZ_PREFIX/lib" PKG_CONFIG_PATH="$XZ_PREFIX/lib/pkgconfig" pyenv install --force $var{python_313_version}
+  # pyenv builds may ship without pip: ensure it, then the toolchain package
   - execute:
       command:
-        - ${workspace}/python/versions/$var{python_version}/bin/python -m pip install clang
+        - ${workspace}/python/versions/$var{python_313_version}/bin/python -m ensurepip --upgrade
+  - execute:
+      command:
+        - ${workspace}/python/versions/$var{python_313_version}/bin/python -m pip install clang
 
 generator_active_batch:
   file_path: ${workspace}/python/active.sh
   environments:
     set:
-      PYTHON_HOME: ${workspace}/python/versions/$var{python_version}
+      PYTHON_HOME: ${workspace}/python/versions/$var{python_313_version}
     prepend:
-      - PATH: ${workspace}/python/versions/$var{python_version}
-      - PATH: ${workspace}/python/versions/$var{python_version}/bin
-      - PATH: ${workspace}/python/versions/$var{python_version}/scripts
+      - PATH: ${workspace}/python/versions/$var{python_313_version}
+      - PATH: ${workspace}/python/versions/$var{python_313_version}/bin
+      - PATH: ${workspace}/python/versions/$var{python_313_version}/scripts

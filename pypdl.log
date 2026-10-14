@@ -2605,3 +2605,219 @@ Exception: Incorrect segment size: expected 4269 bytes, received 10751 bytes
 13-10-26 19:25:56 - DEBUG: Producer exited
 13-10-26 19:25:56 - DEBUG: Consumer 0 exited
 13-10-26 19:25:56 - DEBUG: exiting progress monitor
+14-10-26 21:22:25 - ERROR: Cannot connect to host github.com:443 ssl:default [The semaphore timeout period has expired]
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\aiohttp\connector.py", line 1322, in _wrap_create_connection
+    sock = await aiohappyeyeballs.start_connection(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+    )
+    ^
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\aiohappyeyeballs\impl.py", line 124, in start_connection
+    raise first_exception
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\aiohappyeyeballs\impl.py", line 75, in start_connection
+    sock = await _connect_sock(
+           ^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+    )
+    ^
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\aiohappyeyeballs\impl.py", line 210, in _connect_sock
+    await loop.sock_connect(sock, address)
+  File "asyncio\proactor_events.py", line 726, in sock_connect
+  File "asyncio\windows_events.py", line 804, in _poll
+  File "asyncio\windows_events.py", line 600, in finish_connect
+OSError: [WinError 121] The semaphore timeout period has expired
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\pypdl\producer.py", line 66, in enqueue_tasks
+    ) = await self._fetch_task_info(
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        task.url, task.file_path, task.multisegment, **task.kwargs
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\pypdl\producer.py", line 135, in _fetch_task_info
+    metadata = await self._fetch_metadata(url, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\pypdl\producer.py", line 172, in _fetch_metadata
+    metadata.update(await extract_metadata(url, self._session, "get", **kwargs))
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\pypdl\utils.py", line 353, in extract_metadata
+    async with getattr(session, method)(url, **kwargs) as resp:
+               ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\aiohttp\client.py", line 1756, in __aenter__
+    self._resp: _RetType_co = await self._coro
+                              ^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\aiohttp\client.py", line 900, in _request
+    resp = await handler(req)
+           ^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\aiohttp\client.py", line 854, in _connect_and_send_request
+    conn = await self._connector.connect(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        req, traces=traces, timeout=real_timeout
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\aiohttp\connector.py", line 665, in connect
+    proto = await self._create_connection(req, traces, timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\aiohttp\connector.py", line 1263, in _create_connection
+    _, proto = await self._create_direct_connection(req, traces, timeout)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\aiohttp\connector.py", line 1641, in _create_direct_connection
+    raise last_exc
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\aiohttp\connector.py", line 1610, in _create_direct_connection
+    transp, proto = await self._wrap_create_connection(
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<7 lines>...
+    )
+    ^
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\aiohttp\connector.py", line 1345, in _wrap_create_connection
+    raise client_error(req.connection_key, exc) from exc
+aiohttp.client_exceptions.ClientConnectorError: Cannot connect to host github.com:443 ssl:default [The semaphore timeout period has expired]
+14-10-26 21:23:41 - ERROR: Cannot connect to host github.com:443 ssl:default [The semaphore timeout period has expired]
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\aiohttp\connector.py", line 1322, in _wrap_create_connection
+    sock = await aiohappyeyeballs.start_connection(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+    )
+    ^
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\aiohappyeyeballs\impl.py", line 124, in start_connection
+    raise first_exception
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\aiohappyeyeballs\impl.py", line 75, in start_connection
+    sock = await _connect_sock(
+           ^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+    )
+    ^
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\aiohappyeyeballs\impl.py", line 210, in _connect_sock
+    await loop.sock_connect(sock, address)
+  File "asyncio\proactor_events.py", line 726, in sock_connect
+  File "asyncio\windows_events.py", line 804, in _poll
+  File "asyncio\windows_events.py", line 600, in finish_connect
+OSError: [WinError 121] The semaphore timeout period has expired
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\pypdl\producer.py", line 66, in enqueue_tasks
+    ) = await self._fetch_task_info(
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        task.url, task.file_path, task.multisegment, **task.kwargs
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\pypdl\producer.py", line 135, in _fetch_task_info
+    metadata = await self._fetch_metadata(url, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\pypdl\producer.py", line 161, in _fetch_metadata
+    metadata = await extract_metadata(url, self._session, "head", **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\pypdl\utils.py", line 353, in extract_metadata
+    async with getattr(session, method)(url, **kwargs) as resp:
+               ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\aiohttp\client.py", line 1756, in __aenter__
+    self._resp: _RetType_co = await self._coro
+                              ^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\aiohttp\client.py", line 900, in _request
+    resp = await handler(req)
+           ^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\aiohttp\client.py", line 854, in _connect_and_send_request
+    conn = await self._connector.connect(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        req, traces=traces, timeout=real_timeout
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\aiohttp\connector.py", line 665, in connect
+    proto = await self._create_connection(req, traces, timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\aiohttp\connector.py", line 1263, in _create_connection
+    _, proto = await self._create_direct_connection(req, traces, timeout)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\aiohttp\connector.py", line 1641, in _create_direct_connection
+    raise last_exc
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\aiohttp\connector.py", line 1610, in _create_direct_connection
+    transp, proto = await self._wrap_create_connection(
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<7 lines>...
+    )
+    ^
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\aiohttp\connector.py", line 1345, in _wrap_create_connection
+    raise client_error(req.connection_key, exc) from exc
+aiohttp.client_exceptions.ClientConnectorError: Cannot connect to host github.com:443 ssl:default [The semaphore timeout period has expired]
+14-10-26 21:24:41 - ERROR: Cannot connect to host github.com:443 ssl:default [The semaphore timeout period has expired]
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\aiohttp\connector.py", line 1322, in _wrap_create_connection
+    sock = await aiohappyeyeballs.start_connection(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+    )
+    ^
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\aiohappyeyeballs\impl.py", line 124, in start_connection
+    raise first_exception
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\aiohappyeyeballs\impl.py", line 75, in start_connection
+    sock = await _connect_sock(
+           ^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+    )
+    ^
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\aiohappyeyeballs\impl.py", line 210, in _connect_sock
+    await loop.sock_connect(sock, address)
+  File "asyncio\proactor_events.py", line 726, in sock_connect
+  File "asyncio\windows_events.py", line 804, in _poll
+  File "asyncio\windows_events.py", line 600, in finish_connect
+OSError: [WinError 121] The semaphore timeout period has expired
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\pypdl\producer.py", line 66, in enqueue_tasks
+    ) = await self._fetch_task_info(
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        task.url, task.file_path, task.multisegment, **task.kwargs
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\pypdl\producer.py", line 135, in _fetch_task_info
+    metadata = await self._fetch_metadata(url, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\pypdl\producer.py", line 161, in _fetch_metadata
+    metadata = await extract_metadata(url, self._session, "head", **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\pypdl\utils.py", line 353, in extract_metadata
+    async with getattr(session, method)(url, **kwargs) as resp:
+               ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\aiohttp\client.py", line 1756, in __aenter__
+    self._resp: _RetType_co = await self._coro
+                              ^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\aiohttp\client.py", line 900, in _request
+    resp = await handler(req)
+           ^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\aiohttp\client.py", line 854, in _connect_and_send_request
+    conn = await self._connector.connect(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        req, traces=traces, timeout=real_timeout
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\aiohttp\connector.py", line 665, in connect
+    proto = await self._create_connection(req, traces, timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\aiohttp\connector.py", line 1263, in _create_connection
+    _, proto = await self._create_direct_connection(req, traces, timeout)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\aiohttp\connector.py", line 1641, in _create_direct_connection
+    raise last_exc
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\aiohttp\connector.py", line 1610, in _create_direct_connection
+    transp, proto = await self._wrap_create_connection(
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<7 lines>...
+    )
+    ^
+  File "D:\ZTurners\DevCraft\workspace\bootstrap\python\Lib\site-packages\aiohttp\connector.py", line 1345, in _wrap_create_connection
+    raise client_error(req.connection_key, exc) from exc
+aiohttp.client_exceptions.ClientConnectorError: Cannot connect to host github.com:443 ssl:default [The semaphore timeout period has expired]

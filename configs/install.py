@@ -465,11 +465,11 @@ class WorkspaceInstaller:
         
         # Check file extension to determine archive type
         is_zip = src_zip_file.lower().endswith('.zip')
-        is_tar_gz = src_zip_file.lower().endswith('.tar.gz')
+        is_tar_gz = src_zip_file.lower().endswith(('.tar.gz', '.tgz'))
         is_tar_xz = src_zip_file.lower().endswith('.tar.xz')
 
         if not (is_zip or is_tar_gz or is_tar_xz):
-            raise Exception("Unsupported archive format. Only .zip, .tar.gz, and .tar.xz are supported")
+            raise Exception("Unsupported archive format. Only .zip, .tar.gz, .tgz, and .tar.xz are supported")
 
         # Verify archive integrity
         try:
@@ -1629,7 +1629,7 @@ class WorkspaceInstaller:
             os.chmod(path, stat.S_IWRITE)
             os.rmdir(path)
 
-    def _validate_installed_config_state(self, config_file_path, sdk_root, reinstall_reason=None):
+    def _validate_installed_config_state(self, config_file_path, sdk_root, reinstall_reason=None, preserve_rel_paths=None):
         """Wipe the sdk root when the stored config copy is missing or changed.
 
         The stored copy is compared with the current config file by MD5; any
@@ -1638,6 +1638,8 @@ class WorkspaceInstaller:
         reinstall_reason is set (a dependency is missing or being
         reinstalled), the sdk root is wiped even though its own copy matches,
         so the dependent is regenerated against the new dependency state.
+        Paths listed in the config's preserve_on_reinstall (relative or
+        ${workspace}-style absolute, always inside the sdk root) survive the wipe.
         """
         if not sdk_root or not os.path.exists(sdk_root):
             return
@@ -1654,19 +1656,59 @@ class WorkspaceInstaller:
             reason = reinstall_reason
 
         print(f"\nReinstall required: {reason}.")
-        print(f"Removing sdk root for a clean reinstall: {sdk_root}")
+        if preserve_rel_paths:
+            print(f"Removing sdk root except preserve_on_reinstall paths "
+                  f"({', '.join(preserve_rel_paths)}): {sdk_root}")
+        else:
+            print(f"Removing sdk root for a clean reinstall: {sdk_root}")
         self.m_progress_bar.set_step("removing old install")
-        self._rmtree_force(sdk_root, progress_label="Removing old install")
+        self._rmtree_sdk_root_excluding(sdk_root, preserve_rel_paths, "Removing old install")
 
-    def _remove_failed_sdk_root(self, sdk_root, config_display_name):
-        """Remove the sdk root after a failed install so no broken state remains."""
+    def _rmtree_sdk_root_excluding(self, sdk_root, preserve_rel_paths, progress_label):
+        """Remove an sdk root except the subpaths listed in the config's
+        preserve_on_reinstall (paths relative to the sdk root or
+        ${workspace}-style absolute, kept in place during the wipe)."""
+        if not preserve_rel_paths:
+            self._rmtree_force(sdk_root, progress_label=progress_label)
+            return
+
+        sdk_abs = os.path.abspath(sdk_root)
+        keep = set()
+        for rel in preserve_rel_paths:
+            kept = os.path.abspath(os.path.join(sdk_abs, rel))
+            if os.path.commonpath([kept, sdk_abs]) != sdk_abs or kept == sdk_abs:
+                raise RuntimeError(
+                    f"preserve_on_reinstall path '{rel}' escapes sdk root '{sdk_root}'")
+            keep.add(os.path.normcase(kept))
+
+        def _delete_selective(path):
+            path_abs = os.path.abspath(path)
+            path_nc = os.path.normcase(path_abs)
+            if path_nc in keep:
+                return
+            # a kept path nested under this entry: keep the entry, prune inside
+            if any(os.path.commonpath([k, path_nc]) == path_nc for k in keep):
+                for name in os.listdir(path_abs):
+                    _delete_selective(os.path.join(path_abs, name))
+                return
+            if os.path.isdir(path_abs) and not os.path.islink(path_abs):
+                self._rmtree_force(path_abs, progress_label=progress_label)
+            else:
+                os.remove(path_abs)
+
+        _delete_selective(sdk_abs)
+
+    def _remove_failed_sdk_root(self, sdk_root, config_display_name, preserve_rel_paths=None):
+        """Remove the sdk root after a failed install so no broken state remains.
+        Subpaths listed in the config's preserve_on_reinstall are kept."""
         if not sdk_root or not os.path.exists(sdk_root):
             return
 
         print(f"\nInstall failed for '{config_display_name}'; removing sdk root: {sdk_root}")
         self.m_progress_bar.set_step("removing failed install")
         try:
-            self._rmtree_force(sdk_root, progress_label="Removing failed install")
+            self._rmtree_sdk_root_excluding(
+                sdk_root, preserve_rel_paths, "Removing failed install")
         except Exception as e:
             print(f"Warning: could not remove sdk root '{sdk_root}': {e}")
 
@@ -1720,6 +1762,8 @@ class WorkspaceInstaller:
             return "SUCCESS-INSTALLED"
         if status == "SKIPPED":
             return "UP-TO-DATE"
+        if status == "no sdk_root":
+            return "SKIP"
         return status.upper().replace(" ", "-").replace("_", "-")
 
     def _colorize(self, text, status, light=False):
@@ -1944,6 +1988,13 @@ class WorkspaceInstaller:
                 config_data = self._load_config_data(config_path)
                 dependencies = self._extract_dependencies(config_path, config_data)
                 sdk_root_raw = self._extract_sdk_root(config_path, config_data)
+                preserve_paths = config_data.get('preserve_on_reinstall') or []
+                if not isinstance(preserve_paths, list) or not all(
+                        isinstance(p, str) for p in preserve_paths):
+                    raise RuntimeError(
+                        "preserve_on_reinstall must be a list of paths "
+                        "(relative to the sdk root or ${workspace}-style)")
+                preserve_paths = [self._formalize_path(p) for p in preserve_paths]
                 variables = self._extract_variables(config_path, config_data)
                 set_variables_decls = self._extract_set_variables_nodes(config_data.get('install'))
                 batch_environments = (config_data.get('generator_active_batch') or {}).get('environments') or {}
@@ -1957,6 +2008,7 @@ class WorkspaceInstaller:
                 'base': base_name,
                 'deps': dependencies,
                 'sdk_root': sdk_root_raw,
+                'preserve_on_reinstall': preserve_paths,
                 'variables': variables,
                 'set_variables_decls': set_variables_decls,
                 'batch_environments': batch_environments,
@@ -2168,7 +2220,8 @@ class WorkspaceInstaller:
                     # check below reports "missing", so everything that must
                     # install falls through to install_from_config.
                     self._validate_installed_config_state(
-                        config_path, sdk_root, records[rel].get('reinstall_reason'))
+                        config_path, sdk_root, records[rel].get('reinstall_reason'),
+                        preserve_rel_paths=records[rel].get('preserve_on_reinstall') or [])
                     if self._get_install_status(config_path, sdk_root) == "up to date":
                         print(self._colorize("Already installed and up to date, skipping install.", "up to date"))
                         self._record_config_summary(display_name, "SKIPPED", "already installed (config unchanged)", records[rel]['variables'])
@@ -2176,7 +2229,9 @@ class WorkspaceInstaller:
                         continue
                 self.install_from_config(config_path, records[rel]['effective_variables'])
             except Exception as e:
-                self._remove_failed_sdk_root(sdk_root, display_name)
+                self._remove_failed_sdk_root(
+                    sdk_root, display_name,
+                    preserve_rel_paths=records[rel].get('preserve_on_reinstall') or [])
                 self._record_config_summary(display_name, "FAILED", str(e), records[rel]['variables'])
                 self._record_unprocessed_configs(ordered, records)
                 raise

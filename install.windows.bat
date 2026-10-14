@@ -2,4 +2,8 @@
 set DEV_ENV_ROOT_PATH=%~dp0
 
 call %DEV_ENV_ROOT_PATH%/bootstrap.windows.bat
-python %DEV_ENV_ROOT_PATH%/configs/install.py
+if %errorlevel% neq 0 (
+    echo Bootstrap failed, aborting install.
+    exit /b %errorlevel%
+)
+%DEV_ENV_ROOT_PATH%workspace/bootstrap/python/python.exe %DEV_ENV_ROOT_PATH%/configs/install.py

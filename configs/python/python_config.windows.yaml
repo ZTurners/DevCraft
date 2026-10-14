@@ -1,22 +1,61 @@
-# No sdk_root on purpose: the install only pip-installs into the bootstrap
-# python under ${workspace}/python, which is the interpreter install.py itself
-# runs on. A sdk_root here would make a config change wipe the running
-# interpreter (WinError 5 on the loaded exe/.pyd files).
+# Bootstrap stands up a private interpreter under ${workspace}/bootstrap/python
+# that install.py itself runs on; this config owns the user-facing
+# ${workspace}/python tree and installs every python in it independently from
+# upstream archives — nothing is copied from bootstrap, so versions here are
+# free to diverge from configs/boostrap_python_version.txt. install.py never
+# runs from this tree, so the sdk_root below can be wiped and reinstalled
+# freely.
+sdk_root: ${workspace}/python
+
 variables:
-  python_version: "3.13.5"
+  python_313_version: "3.13.5"
+  python_310_version: "3.10.10"
 
 install:
+  # main user python. The embeddable archive ships without pip and pins
+  # sys.path via a ._pth file: unzip, patch ._pth, then install pip.
+  - download:
+      src:
+        url: https://www.python.org/ftp/python/$var{python_313_version}/python-$var{python_313_version}-embed-amd64.zip
+      dest: ${download}/python-$var{python_313_version}-embed-amd64.zip
+  - unzip:
+      src: ${download}/python-$var{python_313_version}-embed-amd64.zip
+      dest: ${workspace}/python/versions/$var{python_313_version}
+  # the fresh interpreter patches its own ._pth (it runs fine on the pinned
+  # path; site-packages only needs to work afterwards)
+  - execute:
+      command:
+        - ${workspace}/python/versions/$var{python_313_version}/python.exe -c "import sys, os, glob; d = os.path.dirname(sys.executable); p = glob.glob(os.path.join(d, 'python*._pth'))[0]; z = open(p).read().splitlines()[0]; open(p, 'w').write(z + chr(10) + '.' + chr(10) + 'Lib/site-packages' + chr(10) + 'import site' + chr(10))"
+  - download:
+      src:
+        url: https://bootstrap.pypa.io/get-pip.py
+      dest: ${download}/get-pip.py
+  - execute:
+      command:
+        - ${workspace}/python/versions/$var{python_313_version}/python.exe ${download}/get-pip.py --no-warn-script-location --trusted-host pypi.org --trusted-host files.pythonhosted.org
+
   # install lib clang for python
   - execute:
       command:
-        - ${workspace}/python/versions/$var{python_version}/python.exe -m pip install clang
+        - ${workspace}/python/versions/$var{python_313_version}/python.exe -m pip install clang
+
+  # embedded python consumed by llvm's windows toolchain (llvm copies it into
+  # its own bin); installed here so the whole versions/ tree stays under this
+  # config's sdk_root. No pip: llvm only consumes the binaries.
+  - download:
+      src:
+        url: https://www.python.org/ftp/python/$var{python_310_version}/python-$var{python_310_version}-embed-amd64.zip
+      dest: ${download}/python-$var{python_310_version}-embed-amd64.zip
+  - unzip:
+      src: ${download}/python-$var{python_310_version}-embed-amd64.zip
+      dest: ${workspace}/python/versions/$var{python_310_version}
 
 generator_active_batch:
   file_path: ${workspace}/python/active.bat
   environments:
     set:
-      PYTHON_HOME: ${workspace}/python/versions/$var{python_version}
+      PYTHON_HOME: ${workspace}/python/versions/$var{python_313_version}
     prepend:
-      - PATH: ${workspace}/python/versions/$var{python_version}
-      - PATH: ${workspace}/python/versions/$var{python_version}/bin
-      - PATH: ${workspace}/python/versions/$var{python_version}/scripts
+      - PATH: ${workspace}/python/versions/$var{python_313_version}
+      - PATH: ${workspace}/python/versions/$var{python_313_version}/bin
+      - PATH: ${workspace}/python/versions/$var{python_313_version}/scripts

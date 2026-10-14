@@ -20,7 +20,10 @@ echo "Setting PYTHON_VERSION=$PYTHON_VERSION"
 # PYTHON_VERSION=3.13.5
 PYTHON_URL="https://www.python.org/ftp/python/$PYTHON_VERSION/python-$PYTHON_VERSION-macos11.pkg"
 PYTHON_DOWNLOAD_DIR="$DEV_ENV_ROOT_PATH/.downloads"
-PYENV_ROOT_DIR="$DEV_ENV_WORKSPACE_PATH/python"
+# Bootstrap interpreter lives apart from the user-facing ${workspace}/python
+# tree (duplicated by the python config) so an sdk_root wipe there can never
+# touch the interpreter install.py itself runs on
+PYENV_ROOT_DIR="$DEV_ENV_WORKSPACE_PATH/bootstrap/python"
 ADD_TO_SYSTEM_PATH=0
 PYTHON_BIN="$PYENV_ROOT_DIR/versions/$PYTHON_VERSION/bin/python"
 
@@ -109,16 +112,6 @@ python -m pip --version || {
     echo "Pip verification failed"
     exit 1
 }
-
-# Verify build backend is available
-echo "Verifying build backend..."
-echo "Installing complete setuptools package..."
-
-python -m pip install setuptools    
-if [ $? -ne 0 ]; then
-    echo "setuptools install failed"
-    exit 1
-fi
 
 # Install PyYAML (YAML configs) + pypdl (multi-threaded downloads in configs/download.py);
 # pip show is a local check, so an already-provisioned machine skips the pypi round-trip

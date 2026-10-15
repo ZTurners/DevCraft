@@ -10,6 +10,14 @@ install:
         url: https://sdk.lunarg.com/sdk/download/$var{vulkan_version}/mac/vulkansdk-macos-$var{vulkan_version}.zip
         SHA-256: 571db867d8736e402f6f674f26f17b339495d016f3b2afdbac23a3650475023f
       dest: ${download}/vulkansdk-macos-$var{vulkan_version}.zip
+  # force-clean the scratch dir first: the Qt-installer-framework binary
+  # refuses a target directory that already contains an installation, so
+  # leftovers in .tmp from an interrupted run would fail the reinstall
+  - execute:
+      command:
+        - rm
+        - -rf
+        - ${workspace}/.tmp/vulkan
   - unzip:
       src: ${download}/vulkansdk-macos-$var{vulkan_version}.zip
       dest: ${workspace}/.tmp/vulkan

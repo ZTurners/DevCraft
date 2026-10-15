@@ -33,7 +33,7 @@ install:
       prepend: []
   - execute:
       command:
-        - ${workspace}/conan/conan-$var{conan_version}/conan profile detect --force
+        - ${workspace}/conan/conan-$var{conan_version}/bin/conan profile detect --force
   # install conanfile:
   # - execute:
   #     command:
@@ -58,4 +58,4 @@ generator_active_batch:
       CONAN_HOME: ${workspace}/conan/.conan
       CONAN_USE_ALWAYS_SHORT_PATHS: '1'
     prepend:
-      - PATH: ${workspace}/conan/conan-$var{conan_version}
+      - PATH: ${workspace}/conan/conan-$var{conan_version}/bin

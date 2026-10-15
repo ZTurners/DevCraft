@@ -5,31 +5,34 @@ variables:
   llvm_major: "23"
 
 install:
-  - execute:
-      terminal: true
-      command:
-        - if brew list --versions llvm >/dev/null 2>&1; then brew upgrade llvm; else brew install llvm; fi &&
-        - mkdir -p ${workspace}/llvm/llvm-$var{llvm_major} &&
-        - ln -sf $(brew --prefix llvm) ${workspace}/llvm/llvm-$var{llvm_major}/arm64-apple-darwin
+  # brew-based llvm (version drifts with brew; superseded by the pinned
+  # official archive below)
+  # - execute:
+  #     terminal: true
+  #     command:
+  #       - if brew list --versions llvm >/dev/null 2>&1; then brew upgrade llvm; else brew install llvm; fi &&
+  #       - mkdir -p ${workspace}/llvm/llvm-$var{llvm_major} &&
+  #       - ln -sf $(brew --prefix llvm) ${workspace}/llvm/llvm-$var{llvm_major}/arm64-apple-darwin
   # Keep LLD on the current stable release because newer Apple SDK TAPI
-  # targets (for example arm64e.x1-macos) are not supported by ld64.lld 21.
-  - execute:
-      terminal: true
-      command:
-        - if brew list --versions lld >/dev/null 2>&1; then brew upgrade lld; else brew install lld; fi &&
-        - mkdir -p ${workspace}/llvm/lld-$var{llvm_major} &&
-        - ln -sf $(brew --prefix lld) ${workspace}/llvm/lld-$var{llvm_major}/arm64-apple-darwin
+  # targets (for example arm64e.x1-macos) are not supported by ld64.lld 21;
+  # the pinned archive above ships its own (newer) ld64.lld in the same bin
+  # - execute:
+  #     terminal: true
+  #     command:
+  #       - if brew list --versions lld >/dev/null 2>&1; then brew upgrade lld; else brew install lld; fi &&
+  #       - mkdir -p ${workspace}/llvm/lld-$var{llvm_major} &&
+  #       - ln -sf $(brew --prefix lld) ${workspace}/llvm/lld-$var{llvm_major}/arm64-apple-darwin
 
   # llvm for macos arm64
-  # - download:
-  #     src:
-  #       url: https://github.com/llvm/llvm-project/releases/download/llvmorg-23.1.1/LLVM-23.1.1-macOS-ARM64.tar.xz
-  #       SHA-256: 64220f1c99132ef7e580447781b84f96fbba6862a43a8f6522b423052cd67502
-  #     dest: ${download}/LLVM-23.1.1-macOS-ARM64.tar.xz
-  # - unzip:
-  #     src: ${download}/LLVM-23.1.1-macOS-ARM64.tar.xz
-  #     src_sub_folder: LLVM-23.1.1-macOS-ARM64
-  #     dest: ${workspace}/llvm/llvm-23/arm64-apple-darwin
+  - download:
+      src:
+        url: https://github.com/llvm/llvm-project/releases/download/llvmorg-$var{llvm_version}/LLVM-$var{llvm_version}-macOS-ARM64.tar.xz
+        SHA-256: 64220f1c99132ef7e580447781b84f96fbba6862a43a8f6522b423052cd67502
+      dest: ${download}/LLVM-$var{llvm_version}-macOS-ARM64.tar.xz
+  - unzip:
+      src: ${download}/LLVM-$var{llvm_version}-macOS-ARM64.tar.xz
+      src_sub_folder: LLVM-$var{llvm_version}-macOS-ARM64
+      dest: ${workspace}/llvm/llvm-$var{llvm_major}/arm64-apple-darwin
 
   # llvm for linux arm64
   - download:
@@ -59,4 +62,5 @@ generator_active_batch:
     #   HOST_LLVM_BIN: ${workspace}/llvm/llvm-23/arm64-apple-darwin/bin
     prepend:
       - PATH: ${workspace}/llvm/llvm-$var{llvm_major}/arm64-apple-darwin/bin
-      - PATH: ${workspace}/llvm/lld-$var{llvm_major}/arm64-apple-darwin/bin
+      # lld now comes from the pinned llvm archive's own bin above
+      # - PATH: ${workspace}/llvm/lld-$var{llvm_major}/arm64-apple-darwin/bin

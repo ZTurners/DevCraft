@@ -2,9 +2,14 @@
 # that install.py itself runs on; this config owns the user-facing
 # ${workspace}/python tree and installs every python in it independently from
 # upstream archives — nothing is copied from bootstrap, so versions here are
-# free to diverge from configs/boostrap_python_version.txt. install.py never
+# free to diverge from the bootstrap script's pin. install.py never
 # runs from this tree, so the sdk_root below can be wiped and reinstalled
 # freely.
+#
+# The python-build-standalone archives used on macOS exist for Windows too,
+# but weigh ~41MB against the ~11MB embeddable zip (and the 3.10 embed below
+# must keep the embeddable layout llvm expects), so Windows stays on
+# python.org embeddable archives.
 sdk_root: ${workspace}/python
 
 variables:

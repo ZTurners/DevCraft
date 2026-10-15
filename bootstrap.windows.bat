@@ -36,32 +36,12 @@ echo [OK] Long path support enabled: total path length up to 32767 chars
     
     :: Python Installer Batch Script
     :: Usage: Just double-click this .bat file to run it (Admin rights required)
-    :: Check if jq is available (optional, for more complex JSON parsing)
-    set "PYTHON_SETTING_FILE=%DEV_ENV_ROOT_PATH%/configs/boostrap_python_version.txt"
-    
-    :: Read the file into a variable (strip whitespace)
-    for /f "delims=" %%i in (%PYTHON_SETTING_FILE%) do (
-        set PYTHON_VERSION=%%i
-    )
-    :: Remove any remaining whitespace
-    set PYTHON_VERSION=%PYTHON_VERSION: =%
-    :: Remove quotes
-    set PYTHON_VERSION=%PYTHON_VERSION:"=%
-    :: Set it in the environment (for current session)
-    set PYTHON_VERSION=%PYTHON_VERSION%
+    :: The bootstrap interpreter version is pinned here; the user-facing
+    :: ${workspace}/python tree is versioned separately by configs/python
+    set "BOOTSTRAP_PYTHON_VERSION=3.13.5"
 
-    :: Check the Python version
-    if not defined PYTHON_VERSION (
-        echo Cannot fetch python version
-        exit /b
-    )
-
-    :: Set the environment variable
-    echo Setting PYTHON_VERSION=%PYTHON_VERSION%
-
-    :: Configuration - Change these values if needed
-    :: PYTHON_VERSION=3.13.5
-    set PYTHON_URL=https://www.python.org/ftp/python/%PYTHON_VERSION%/python-%PYTHON_VERSION%-embed-amd64.zip
+    echo Setting BOOTSTRAP_PYTHON_VERSION=%BOOTSTRAP_PYTHON_VERSION%
+    set PYTHON_URL=https://www.python.org/ftp/python/%BOOTSTRAP_PYTHON_VERSION%/python-%BOOTSTRAP_PYTHON_VERSION%-embed-amd64.zip
     set PYTHON_DOWNLOAD_DIR=%DEV_ENV_DOWNLOAD_PATH%
     :: Bootstrap interpreter lives apart from the user-facing ${workspace}/python
     :: tree (duplicated by the python config) so an sdk_root wipe there can
@@ -70,7 +50,7 @@ echo [OK] Long path support enabled: total path length up to 32767 chars
     set PYTHON_SCRIPTS_DIR=%PYTHON_INSTALL_DIR%/Scripts
     set ADD_TO_SYSTEM_PATH=0
 
-    set ZIP_FILE=%PYTHON_DOWNLOAD_DIR%\python-%PYTHON_VERSION%-embed-amd64.zip
+    set ZIP_FILE=%PYTHON_DOWNLOAD_DIR%\python-%BOOTSTRAP_PYTHON_VERSION%-embed-amd64.zip
 
     :: Create directories if they don't exist
     echo Creating directories if needed ...
@@ -85,7 +65,7 @@ echo [OK] Long path support enabled: total path length up to 32767 chars
         mkdir "%PYTHON_INSTALL_DIR%"
 
         :: Download Python ZIP
-        echo Downloading Python %PYTHON_VERSION% ...
+        echo Downloading Python %BOOTSTRAP_PYTHON_VERSION% ...
         if not exist "%ZIP_FILE%" (
             echo Downloading from %PYTHON_URL% ...
             where curl.exe >nul 2>&1
@@ -151,7 +131,7 @@ echo [OK] Long path support enabled: total path length up to 32767 chars
         echo Python installation verification failed.
         exit /b
     ) else (
-        echo Python %PYTHON_VERSION% successfully installed at %PYTHON_INSTALL_DIR%
+        echo Python %BOOTSTRAP_PYTHON_VERSION% successfully installed at %PYTHON_INSTALL_DIR%
     )
 
     :: Add to Environment to PATH

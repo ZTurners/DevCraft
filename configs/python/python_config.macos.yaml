@@ -1,28 +1,33 @@
-# Bootstrap stands up a private pyenv-built interpreter under
+# Bootstrap stands up a private prebuilt interpreter under
 # ${workspace}/bootstrap/python that install.py itself runs on; this config
-# owns the user-facing ${workspace}/python tree and builds its python
-# independently with pyenv straight into this sdk_root (pyenv, brew and xz are
-# guaranteed by the bootstrap script). Versions here are free to diverge from
-# configs/boostrap_python_version.txt. install.py never runs from this tree,
-# so the sdk_root below can be wiped and reinstalled freely.
+# owns the user-facing ${workspace}/python tree and installs its python
+# independently from upstream archives — nothing is copied from bootstrap, so
+# versions here are free to diverge from the bootstrap script's pin.
+# install.py never runs from this tree, so the sdk_root below can be wiped
+# and reinstalled freely.
 sdk_root: ${workspace}/python
 
 variables:
   python_313_version: "3.13.5"
+  pbs_tag: "20250702"
 
 install:
-  # build the user python directly into this sdk_root; the xz dev flags
-  # mirror the bootstrap build so the interpreter keeps lzma support
-  - execute:
-      terminal: true
-      command:
-        - if ! brew list --versions xz >/dev/null 2>&1; then brew install xz; fi &&
-        - XZ_PREFIX=$(brew --prefix xz) &&
-        - PYENV_ROOT=${workspace}/python CPPFLAGS="-I$XZ_PREFIX/include" LDFLAGS="-L$XZ_PREFIX/lib" PKG_CONFIG_PATH="$XZ_PREFIX/lib/pkgconfig" pyenv install --force $var{python_313_version}
-  # pyenv builds may ship without pip: ensure it, then the toolchain package
-  - execute:
-      command:
-        - ${workspace}/python/versions/$var{python_313_version}/bin/python -m ensurepip --upgrade
+  # main user python: a python-build-standalone "install_only" archive — a
+  # prebuilt, relocatable CPython (lzma/ssl/pip included), so no pyenv/brew
+  # compile step. Apple Silicon only; pbs_tag must be a release tag whose
+  # assets still carry python_313_version. The archive holds a single
+  # 'python/' prefix, stripped here via src_sub_folder; pip ships inside the
+  # archive, so only the clang package needs a pip round-trip.
+  - download:
+      src:
+        url: https://github.com/astral-sh/python-build-standalone/releases/download/$var{pbs_tag}/cpython-$var{python_313_version}+$var{pbs_tag}-aarch64-apple-darwin-install_only.tar.gz
+        SHA-256: 66577414e9f4b0caa116a8e15fa50306db91bce13d49278079bb22adaeefb1fa
+      dest: ${download}/cpython-$var{python_313_version}+$var{pbs_tag}-aarch64-apple-darwin-install_only.tar.gz
+  - unzip:
+      src: ${download}/cpython-$var{python_313_version}+$var{pbs_tag}-aarch64-apple-darwin-install_only.tar.gz
+      src_sub_folder: python
+      dest: ${workspace}/python/versions/$var{python_313_version}
+  # install lib clang for python
   - execute:
       command:
         - ${workspace}/python/versions/$var{python_313_version}/bin/python -m pip install clang

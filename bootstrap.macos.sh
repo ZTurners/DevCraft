@@ -3,29 +3,30 @@
 DEV_ENV_ROOT_PATH=$(dirname "$(realpath "$0")")
 DEV_ENV_WORKSPACE_PATH="$DEV_ENV_ROOT_PATH/workspace"
 
-PYTHON_SETTING_FILE="$DEV_ENV_ROOT_PATH/configs/boostrap_python_version.txt"
-# Read the file, trim whitespace, and remove quotes
-PYTHON_VERSION=$(cat "$PYTHON_SETTING_FILE" | xargs | tr -d '"')
-# Check if version was obtained
-if [ -z "$PYTHON_VERSION" ]; then
-    echo "Cannot fetch python version"
-    exit 1
-fi
-# Set the environment variable (for current session and export to child processes)
-export PYTHON_VERSION="$PYTHON_VERSION"
-# Verify
-echo "Setting PYTHON_VERSION=$PYTHON_VERSION"
+# Bootstrap interpreter version, pinned here (the user-facing ${workspace}/python
+# tree is versioned separately by configs/python). Distributed as a
+# python-build-standalone "install_only" archive: a prebuilt, relocatable
+# CPython with lzma/ssl/pip included, so no pyenv/brew/compile is involved.
+# PBS_TAG must be a release tag whose assets still carry BOOTSTRAP_PYTHON_VERSION.
+BOOTSTRAP_PYTHON_VERSION=3.13.5
+PBS_TAG=20250702
 
 # Configuration
-# PYTHON_VERSION=3.13.5
-PYTHON_URL="https://www.python.org/ftp/python/$PYTHON_VERSION/python-$PYTHON_VERSION-macos11.pkg"
 PYTHON_DOWNLOAD_DIR="$DEV_ENV_ROOT_PATH/.downloads"
 # Bootstrap interpreter lives apart from the user-facing ${workspace}/python
 # tree (duplicated by the python config) so an sdk_root wipe there can never
 # touch the interpreter install.py itself runs on
-PYENV_ROOT_DIR="$DEV_ENV_WORKSPACE_PATH/bootstrap/python"
+PYTHON_ROOT_DIR="$DEV_ENV_WORKSPACE_PATH/bootstrap/python"
 ADD_TO_SYSTEM_PATH=0
-PYTHON_BIN="$PYENV_ROOT_DIR/versions/$PYTHON_VERSION/bin/python"
+PYTHON_BIN="$PYTHON_ROOT_DIR/versions/$BOOTSTRAP_PYTHON_VERSION/bin/python"
+
+# Apple Silicon only; the tarball triple is pinned below
+PBS_ARCH=aarch64
+
+PYTHON_TARBALL="$PYTHON_DOWNLOAD_DIR/cpython-$BOOTSTRAP_PYTHON_VERSION+$PBS_TAG-$PBS_ARCH-apple-darwin-install_only.tar.gz"
+PYTHON_URL="https://github.com/astral-sh/python-build-standalone/releases/download/$PBS_TAG/cpython-$BOOTSTRAP_PYTHON_VERSION+$PBS_TAG-$PBS_ARCH-apple-darwin-install_only.tar.gz"
+# Pinned SHA-256 of the tarball above
+PYTHON_SHA256=66577414e9f4b0caa116a8e15fa50306db91bce13d49278079bb22adaeefb1fa
 
 # Check whether Python exists and includes the optional modules required by
 # the installer. In particular, tar.xz extraction requires the _lzma module.
@@ -34,56 +35,43 @@ PYTHON_NEEDS_INSTALL=0
 if ! "$PYTHON_BIN" --version; then
     PYTHON_NEEDS_INSTALL=1
 elif ! "$PYTHON_BIN" -c "import lzma" >/dev/null 2>&1; then
-    echo "Python $PYTHON_VERSION is missing lzma support and will be rebuilt."
+    echo "Python $BOOTSTRAP_PYTHON_VERSION is missing lzma support and will be reinstalled."
     PYTHON_NEEDS_INSTALL=1
 fi
 
 if [ "$PYTHON_NEEDS_INSTALL" -eq 1 ]; then
-    if ! command -v pyenv &> /dev/null; then
-        echo "Error: pyenv is not installed. Please install pyenv first."
-        echo "You can install it using: brew install pyenv"
-        exit 1
-    fi
-
-    if ! command -v brew &> /dev/null; then
-        echo "Error: Homebrew is required to provide xz when building Python."
-        exit 1
-    fi
-
-    if ! brew list --versions xz >/dev/null 2>&1; then
-        echo "Installing xz for Python lzma support..."
-        brew install xz || {
-            echo "Error: Failed to install xz"
-            exit 1
-        }
-    fi
-
     # Create directories
     echo "Creating directories..."
     mkdir -p "$PYTHON_DOWNLOAD_DIR"
-    mkdir -p "$PYENV_ROOT_DIR"
+    mkdir -p "$PYTHON_ROOT_DIR/versions/$BOOTSTRAP_PYTHON_VERSION"
 
-    # Install the specified Python version using pyenv
-    echo "Installing Python $PYTHON_VERSION using pyenv..."
-
-    # Set PYENV_ROOT to python install dir
-    export PYENV_ROOT="$PYENV_ROOT_DIR"
-    XZ_PREFIX=$(brew --prefix xz)
-    export CPPFLAGS="-I$XZ_PREFIX/include${CPPFLAGS:+ $CPPFLAGS}"
-    export LDFLAGS="-L$XZ_PREFIX/lib${LDFLAGS:+ $LDFLAGS}"
-    export PKG_CONFIG_PATH="$XZ_PREFIX/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
-    pyenv install --force "$PYTHON_VERSION"
-
-    # Check if installation was successful
-    if [ $? -ne 0 ]; then
-        echo "Error: Failed to install Python $PYTHON_VERSION"
-        exit 1
+    # Download the prebuilt archive unless it is already staged
+    if [ -f "$PYTHON_TARBALL" ]; then
+        echo "Tarball already exists at $PYTHON_TARBALL"
+    else
+        echo "Downloading Python $BOOTSTRAP_PYTHON_VERSION ($PBS_ARCH)..."
+        curl -fL --progress-bar -o "$PYTHON_TARBALL.tmp" "$PYTHON_URL" || {
+            echo "Error: Failed to download $PYTHON_URL"
+            rm -f "$PYTHON_TARBALL.tmp"
+            exit 1
+        }
+        mv "$PYTHON_TARBALL.tmp" "$PYTHON_TARBALL"
     fi
 
-    # Get the path to the installed Python version
-    PYENV_PYTHON_PATH=$(pyenv prefix "$PYTHON_VERSION")
+    # Verify checksum before extracting
+    echo "$PYTHON_SHA256  $PYTHON_TARBALL" | shasum -a 256 -c - || {
+        echo "Error: SHA-256 mismatch for $PYTHON_TARBALL"
+        exit 1
+    }
 
-    echo "Done! Python $PYTHON_VERSION binaries have been copied to $PYENV_ROOT_DIR"
+    # The archive has a single 'python/' prefix; strip it into the version dir
+    echo "Extracting Python $BOOTSTRAP_PYTHON_VERSION ..."
+    tar -xzf "$PYTHON_TARBALL" -C "$PYTHON_ROOT_DIR/versions/$BOOTSTRAP_PYTHON_VERSION" --strip-components=1 || {
+        echo "Error: Failed to extract $PYTHON_TARBALL"
+        exit 1
+    }
+
+    echo "Done! Python $BOOTSTRAP_PYTHON_VERSION installed to $PYTHON_ROOT_DIR/versions/$BOOTSTRAP_PYTHON_VERSION"
 fi
 
 # Verify installation
@@ -98,9 +86,9 @@ echo "Verifying Python installation..."
 }
 
 # Temporarily add to PATH for the rest of the script
-export PATH="$PYENV_ROOT_DIR/versions/$PYTHON_VERSION/bin:$PATH"
+export PATH="$PYTHON_ROOT_DIR/versions/$BOOTSTRAP_PYTHON_VERSION/bin:$PATH"
 
-# Install pip if not present (should already be included in macOS package)
+# pip ships inside the standalone archive; make sure it is importable
 echo "Verifying pip..."
 python -m ensurepip --upgrade || {
     echo "Failed to ensure pip is available"

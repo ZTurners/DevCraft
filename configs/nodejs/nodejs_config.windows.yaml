@@ -23,4 +23,4 @@ generator_active_batch:
       NPM_CONFIG_PREFIX: ${workspace}/nodejs/global
     prepend:
       - PATH: ${workspace}/nodejs/node-v$var{node_version}
-      - PATH: ${workspace}/nodejs/global/bin
+      - PATH: ${workspace}/nodejs/global

@@ -40,7 +40,7 @@ install:
   - download:
       src:
         url: https://sdk.lunarg.com/sdk/download/$var{vulkan_version}/linux/vulkansdk-linux-x86_64-$var{vulkan_version}.tar.xz
-      dest: ${download}/vulkansdk-linux-x86_64_$var{vulkan_version}.tar.xz
+      dest: ${download}/vulkansdk-linux-x86_64-$var{vulkan_version}.tar.xz
   - unzip:
       src: ${download}/vulkansdk-linux-x86_64-$var{vulkan_version}.tar.xz
       src_sub_folder: $var{vulkan_version}/x86_64

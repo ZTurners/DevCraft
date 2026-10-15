@@ -23,18 +23,18 @@ install:
       skip_if_exists: ${workspace}/tracy/tracy-client-$var{tracy_version}/bin/tracy-profiler
       terminal: true
       command:
-        - ${workspace}/cmake/cmake-$var{cmake_version}-macos-universal/CMake.app/Contents/bin/cmake
+        - '"${CMAKE_HOME}/bin/cmake"'
         - -S ${workspace}/tracy/tracy-$var{tracy_version}-source/profiler
         - -B ${workspace}/tracy/tracy-$var{tracy_version}-source/profiler/build
         - -DCMAKE_BUILD_TYPE=Release
         - -DCMAKE_INSTALL_PREFIX=${workspace}/tracy/tracy-client-$var{tracy_version}
         - '&&'
-        - ${workspace}/cmake/cmake-$var{cmake_version}-macos-universal/CMake.app/Contents/bin/cmake
+        - '"${CMAKE_HOME}/bin/cmake"'
         - --build ${workspace}/tracy/tracy-$var{tracy_version}-source/profiler/build
         - --config Release
         - --parallel
         - '&&'
-        - ${workspace}/cmake/cmake-$var{cmake_version}-macos-universal/CMake.app/Contents/bin/cmake
+        - '"${CMAKE_HOME}/bin/cmake"'
         - --install ${workspace}/tracy/tracy-$var{tracy_version}-source/profiler/build
         - --config Release
 

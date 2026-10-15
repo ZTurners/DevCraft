@@ -21,6 +21,7 @@ install:
 generator_active_batch:
   file_path: ${workspace}/cmake/active.sh
   environments:
-    set: {}
+    set:
+      CMAKE_HOME: ${workspace}/cmake/cmake-$var{cmake_version}-macos-universal/CMake.app/Contents
     prepend:
       - PATH: ${workspace}/cmake/cmake-$var{cmake_version}-macos-universal/CMake.app/Contents/bin

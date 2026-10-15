@@ -7,7 +7,7 @@ install:
   - execute:
       # skip_if_exists: ${workspace}/pnpm/pnpm.cmd
       command:
-        - ${workspace}/nodejs/node-v$var{node_version}/npm.cmd
+        - '"%NODE_HOME%/npm.cmd"'
         - install
         - --global
         - --prefix

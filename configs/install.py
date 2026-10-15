@@ -380,14 +380,16 @@ class WorkspaceInstaller:
         mode |= (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
         os.chmod(path, mode)
 
-    def _formalize_path(self, path):
-        """Formalize a path by replacing workspace/configs/download variables."""
+    def _formalize_path(self, path, expand_environment=True):
+        """Resolve config paths and dependency environment variables for installation."""
         if not isinstance(path, str) or path == "":
             return path
         path = path.replace("${workspace}", self.m_workspace_root_path)
         path = path.replace("${configs}", self.m_configs_root_path)
         path = path.replace("${settings}", self.m_configs_root_path)
         path = path.replace("${download}", self.m_download_root_path)
+        if expand_environment:
+            path = os.path.expandvars(path)
         path = os.path.normpath(path)
 
         return path
@@ -402,7 +404,7 @@ class WorkspaceInstaller:
         if "${workspace}" in path:
             var = "%DEVCRAFT_WORKSPACE%" if self.m_system_name == "Windows" else "${DEVCRAFT_WORKSPACE}"
             return path.replace("${workspace}", var)
-        return self._formalize_path(path)
+        return self._formalize_path(path, expand_environment=False)
 
     def _process_download(self, download_config, context):
         """Handle download node."""
@@ -1915,15 +1917,15 @@ class WorkspaceInstaller:
                 
                 # Append commands
                 for var_name, value in prepend_env_list:
-                    value = self._formalize_path(value)
+                    value = self._formalize_path(value, expand_environment=False)
                     f.write(f'set {var_name}={value};%{var_name}%\n')
 
                 for command in commands:
-                    f.write(f'\n{self._formalize_path(command)}\n')
+                    f.write(f'\n{self._formalize_path(command, expand_environment=False)}\n')
 
                 # Set commands (overwrite existing values) after setup commands
                 for var_name, value in set_env_list:
-                    value = self._formalize_path(value)
+                    value = self._formalize_path(value, expand_environment=False)
                     f.write(f'set {var_name}={value}\n')
                 
                 f.write('\necho Environment variables set successfully\n')
@@ -1935,15 +1937,15 @@ class WorkspaceInstaller:
                 
                 # Write append commands
                 for var_name, value in prepend_env_list:
-                    value = self._formalize_path(value)
+                    value = self._formalize_path(value, expand_environment=False)
                     f.write(f'export {var_name}="{value}:${var_name}"\n')
 
                 for command in commands:
-                    f.write(f'\n{self._formalize_path(command)}\n')
+                    f.write(f'\n{self._formalize_path(command, expand_environment=False)}\n')
 
                 # Write set commands (overwrite existing values) after setup commands
                 for var_name, value in set_env_list:
-                    value = self._formalize_path(value)
+                    value = self._formalize_path(value, expand_environment=False)
                     f.write(f'export {var_name}="{value}"\n')
                 
                 f.write('\necho "Environment variables set successfully"\n')

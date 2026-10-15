@@ -7,7 +7,7 @@ dependencies:
 install:
   - execute:
       command:
-        - ${workspace}/nodejs/node-v$var{node_version}/npm.cmd
+        - '"%NODE_HOME%/npm.cmd"'
         - install
         - -g
         - hbs-cli
@@ -15,6 +15,4 @@ install:
 
 generator_active_batch:
   file_path: ${workspace}/hbs_cli/active.bat
-  environments:
-    prepend:
-      - PATH: ${workspace}/nodejs/node-v$var{node_version};${workspace}/mustache/mustache_$var{mustache_version}_windows_amd64
+  environments: {}

@@ -11,7 +11,7 @@ install:
   - execute:
       skip_if_exists: ${workspace}/typescript/tsc.cmd
       command:
-        - ${workspace}/nodejs/node-v$var{node_version}/npm.cmd
+        - '"%NODE_HOME%/npm.cmd"'
         - install
         - --global
         - --prefix
@@ -22,5 +22,4 @@ generator_active_batch:
   file_path: ${workspace}/typescript/active.bat
   environments:
     prepend:
-      - PATH: ${workspace}/nodejs/node-v$var{node_version}
       - PATH: ${workspace}/typescript

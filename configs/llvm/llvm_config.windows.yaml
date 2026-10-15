@@ -19,10 +19,9 @@ install:
       src_sub_folder: clang+llvm-$var{llvm_version}-x86_64-pc-windows-msvc
       dest: ${workspace}/llvm/llvm-$var{llvm_major}/x86_64-windows-msvc
 
-  # stage the llvm embed python (installed by the python config; version var
-  # inherited from it) into llvm's bin
+  # Stage the embed Python exported by the python config into llvm's bin.
   - copy:
-      src: ${workspace}/python/versions/$var{python_310_version}
+      src: "%PYTHON_310_HOME%"
       dest: ${workspace}/llvm/llvm-$var{llvm_major}/x86_64-windows-msvc/bin
       force_update: true
 

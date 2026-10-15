@@ -53,8 +53,8 @@ install:
   - execute:
       skip_if_exists: ${workspace}/emscripten/emsdk-$var{emscripten_version}/upstream/emscripten/node_modules/typescript/package.json
       command:
-        - ${workspace}/nodejs/node-v$var{node_version}/bin/node
-        - ${workspace}/nodejs/node-v$var{node_version}/lib/node_modules/npm/bin/npm-cli.js
+        - '"${NODE_HOME}/bin/node"'
+        - '"${NODE_HOME}/lib/node_modules/npm/bin/npm-cli.js"'
         - install
         - --no-save
         - --prefix

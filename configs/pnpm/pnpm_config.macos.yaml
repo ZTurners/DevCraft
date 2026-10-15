@@ -7,8 +7,8 @@ install:
   - execute:
       # skip_if_exists: ${workspace}/pnpm/bin/pnpm
       command:
-        - ${workspace}/nodejs/node-v$var{node_version}/bin/node
-        - ${workspace}/nodejs/node-v$var{node_version}/lib/node_modules/npm/bin/npm-cli.js
+        - '"${NODE_HOME}/bin/node"'
+        - '"${NODE_HOME}/lib/node_modules/npm/bin/npm-cli.js"'
         - install
         - --global
         - --prefix

@@ -6,8 +6,8 @@ dependencies:
 install:
   - execute:
       command:
-        - ${workspace}/nodejs/node-v$var{node_version}/bin/node
-        - ${workspace}/nodejs/node-v$var{node_version}/lib/node_modules/npm/bin/npm-cli.js
+        - '"${NODE_HOME}/bin/node"'
+        - '"${NODE_HOME}/lib/node_modules/npm/bin/npm-cli.js"'
         - install
         - -g
         - hbs-cli
@@ -15,6 +15,4 @@ install:
 
 generator_active_batch:
   file_path: ${workspace}/hbs_cli/active.sh
-  environments:
-    prepend:
-      - PATH: ${workspace}/nodejs/node-v$var{node_version}/bin
+  environments: {}

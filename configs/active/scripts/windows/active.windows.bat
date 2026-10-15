@@ -5,8 +5,10 @@ rem   active.windows.bat            -> runs each found active.bat
 rem   active.windows.bat /list      -> lists all active.bat that would be run (safe preview)
 
 set DEVCRAFT_HOST_TRIPLE=x86_64-windows-msvc
+rem Keep the workspace root without a trailing separator; callers add their own.
 set DEVCRAFT_WORKSPACE=%~dp0
 set DEVCRAFT_WORKSPACE=%DEVCRAFT_WORKSPACE:\=/%
+set DEVCRAFT_WORKSPACE=%DEVCRAFT_WORKSPACE:~0,-1%
 
 
 

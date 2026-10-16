@@ -3,7 +3,10 @@
 export DEVCRAFT_HOST_TRIPLE=arm64-apple-darwin
 
 # Determine the directory where this script resides and use it as the base
-export DEVCRAFT_WORKSPACE=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
+export # BASH_SOURCE is bash-only; zsh sets $0 to the sourced file instead
+DEV_ACTIVE_SCRIPT="${BASH_SOURCE[0]}"
+[ -n "${DEV_ACTIVE_SCRIPT}" ] || DEV_ACTIVE_SCRIPT="$0"
+DEVCRAFT_WORKSPACE=$(cd "$(dirname "${DEV_ACTIVE_SCRIPT}")" &>/dev/null && pwd -P)
 
 # Iterate immediate subdirectories and source any active.sh found
 for sub in "${DEVCRAFT_WORKSPACE}"/*/; do

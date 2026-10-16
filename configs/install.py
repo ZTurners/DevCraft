@@ -16,6 +16,7 @@ import datetime
 import zipfile
 import tarfile
 import copy
+import fnmatch
 import heapq
 import re
 import threading
@@ -296,6 +297,7 @@ class WorkspaceInstaller:
         success_items = [item for item in self.m_summary_data if item.get("status") == "SUCCESS"]
         failed_items = [item for item in self.m_summary_data if item.get("status") == "FAILED"]
         skipped_items = [item for item in self.m_summary_data if item.get("status") == "SKIPPED"]
+        removed_items = [item for item in self.m_summary_data if item.get("status") == "REMOVED"]
         nosdkroot_items = [item for item in self.m_summary_data if item.get("status") == "no sdk_root"]
         notstarted_items = [item for item in self.m_summary_data if item.get("status") == "NOT STARTED"]
 
@@ -314,6 +316,8 @@ class WorkspaceInstaller:
         else:
             lines.append(f"Failed SDK installs: {len(failed_items)}")
         lines.append(self._colorize(f"Up-to-date SDK installs (config unchanged): {len(skipped_items)}", "SKIPPED", light=True))
+        if removed_items:
+            lines.append(self._colorize(f"Removed workspace dirs (config deleted): {len(removed_items)}", "REMOVED", light=True))
         if nosdkroot_items:
             lines.append(self._colorize(f"No sdk_root configs (install steps run every time): {len(nosdkroot_items)}", "no sdk_root", light=True))
         if notstarted_items:
@@ -339,7 +343,7 @@ class WorkspaceInstaller:
             if duration is not None:
                 duration_text = f" | elapsed time: {self._format_duration(duration)}"
             lines.append(f"  {index:>2}. {config_name}  {tag}{tag_pad}{duration_text}".rstrip())
-            if status in ("FAILED", "NOT STARTED"):
+            if status in ("FAILED", "NOT STARTED", "REMOVED"):
                 message = item.get("message") or "Unknown error"
                 lines.append(self._colorize(f"        - {message}", status))
             for name, value in item["variables"].items():
@@ -1535,6 +1539,43 @@ class WorkspaceInstaller:
             )
         return sdk_root
 
+    # Stored config-copy markers inside a workspace directory identify it as
+    # an sdk root installed by some config; used to detect directories whose
+    # config has been deleted (or repointed elsewhere).
+    _ORPHAN_MARKER_GLOBS = ("*_config.*.yaml", "*_config.*.yml", "*_config.*.json")
+
+    def _detect_orphaned_workspace_dirs(self, owned_sdk_roots):
+        """Find workspace directories that carry a stored config marker while
+        no current config declares them as sdk_root — the residue of deleted
+        configs. Returns a list of (dir_path, marker_file_names) tuples."""
+        orphans = []
+        if not os.path.isdir(self.m_workspace_root_path):
+            return orphans
+        for name in sorted(os.listdir(self.m_workspace_root_path)):
+            dir_path = os.path.join(self.m_workspace_root_path, name)
+            if not os.path.isdir(dir_path):
+                continue
+            dir_key = os.path.normcase(os.path.abspath(dir_path))
+            if dir_key in owned_sdk_roots:
+                continue
+            # Never remove a directory that still contains the sdk root of a
+            # current config, even though the directory itself is unowned.
+            if any(key.startswith(dir_key + os.sep) for key in owned_sdk_roots):
+                print(f"Warning: workspace/{name} has no owning config but contains an sdk root of a current config; keeping it.")
+                continue
+            try:
+                entries = os.listdir(dir_path)
+            except OSError:
+                continue
+            markers = sorted({
+                entry
+                for pattern in self._ORPHAN_MARKER_GLOBS
+                for entry in fnmatch.filter(entries, pattern)
+            })
+            if markers:
+                orphans.append((dir_path, markers))
+        return orphans
+
     def _installed_config_marker_path(self, sdk_root, config_file_path):
         """Path of the config copy stored inside an installed sdk root."""
         return os.path.join(sdk_root, os.path.basename(config_file_path))
@@ -1798,6 +1839,7 @@ class WorkspaceInstaller:
             "SUCCESS": "\033[38;5;75m",      # blue (sub-line tier)
             "FAILED": "\033[31m",            # red
             "SKIPPED": "\033[32m",           # green (sub-line tier)
+            "REMOVED": "\033[38;5;214m",     # orange (workspace cleanup)
             "NOT STARTED": "\033[31m",       # red: planned this run, never started
         }
         light_palette = {
@@ -1808,6 +1850,7 @@ class WorkspaceInstaller:
             "SUCCESS": "\033[38;5;117m",    # blue (entry tier)
             "FAILED": "\033[91m",            # bright red
             "SKIPPED": "\033[92m",          # green (entry tier)
+            "REMOVED": "\033[38;5;214m",     # orange (workspace cleanup)
             "NOT STARTED": "\033[91m",       # bright red
         }
         ansi = (light_palette if light else palette).get(status)
@@ -2084,6 +2127,11 @@ class WorkspaceInstaller:
                 )
             sdk_root_owners[sdk_root_key] = rel
 
+        # Workspace directories whose installing config is gone (deleted, or
+        # repointed to another sdk_root): schedule them for removal so stale
+        # sdk roots stop lingering in the workspace.
+        orphan_removals = self._detect_orphaned_workspace_dirs(set(sdk_root_owners.keys()))
+
         # Topological sort with deterministic ordering.
         heap = []
         for rel, deg in indegree.items():
@@ -2151,9 +2199,20 @@ class WorkspaceInstaller:
         _summary_line("reinstall-needed", "sdk root will be removed and reinstalled (own config or a dependency changed)")
         _summary_line("no sdk_root", "no marker mechanism; install steps run every time")
 
-        # Nothing missing and nothing to reinstall: skip the confirmation
-        # prompt, the install pass and the run summary entirely.
-        if status_counts.get("missing", 0) + status_counts.get("reinstall-needed", 0) == 0:
+        if orphan_removals:
+            print("\nWorkspace cleanup (installed by configs that no longer exist):")
+            for dir_path, markers in orphan_removals:
+                rel = os.path.relpath(dir_path, self.m_workspace_root_path)
+                tag = f"[{self._status_tag('REMOVED')}]".ljust(len("[REINSTALL-NEEDED]"))
+                print(f"  {self._colorize(tag, 'REMOVED', light=True)}  "
+                      f"{self._colorize(f'workspace/{rel}', 'REMOVED', light=True)}  "
+                      f"(installed by {', '.join(markers)})")
+
+        # Nothing missing, nothing to reinstall and nothing to clean up: skip
+        # the confirmation prompt, the install pass and the run summary.
+        nothing_to_install = (
+            status_counts.get("missing", 0) + status_counts.get("reinstall-needed", 0) == 0)
+        if nothing_to_install and not orphan_removals:
             print("\nNothing to install — all configs are already up to date. Exiting.")
             self.m_nothing_to_do = True
             return
@@ -2183,9 +2242,45 @@ class WorkspaceInstaller:
             print(f"\nApplying environments from installed config: {records[rel]['base']}")
             self._apply_config_environments(records[rel])
 
+        removal_count = len(orphan_removals)
         self.m_progress_bar.start(
-            len(ordered),
-            status_counts.get("missing", 0) + status_counts.get("reinstall-needed", 0))
+            len(ordered) + removal_count,
+            status_counts.get("missing", 0) + status_counts.get("reinstall-needed", 0) + removal_count)
+
+        # Clean up workspace directories orphaned by deleted configs before
+        # installing anything, so stale state never survives into new installs.
+        for orphan_index, (dir_path, markers) in enumerate(orphan_removals):
+            rel_name = os.path.relpath(dir_path, self.m_workspace_root_path)
+            display_name = f"workspace/{rel_name}"
+            self.m_current_config = display_name
+            self.m_current_node = "cleanup"
+            self.m_current_install_step = "removing orphaned install"
+            print(f"\n{'='*70}")
+            print(f"Removing orphaned workspace directory: {display_name}")
+            print(f"  (installed by {', '.join(markers)}; no current config declares it)")
+            print(f"{'='*70}")
+            self.m_progress_bar.begin_config(display_name)
+            orphan_started = time.monotonic()
+            try:
+                self.m_progress_bar.set_step("removing orphaned install")
+                if os.path.islink(dir_path):
+                    os.unlink(dir_path)
+                else:
+                    self._rmtree_force(dir_path, progress_label="Removing orphaned install")
+                self._record_config_summary(
+                    display_name, "REMOVED",
+                    f"installed by {', '.join(markers)}; no current config declares it",
+                    duration_seconds=time.monotonic() - orphan_started)
+                self.m_progress_bar.finish_config(work=True)
+            except Exception as e:
+                self._record_config_summary(display_name, "FAILED", str(e))
+                for remaining_path, _remaining_markers in orphan_removals[orphan_index + 1:]:
+                    remaining_name = f"workspace/{os.path.relpath(remaining_path, self.m_workspace_root_path)}"
+                    self._record_config_summary(
+                        remaining_name, "NOT STARTED",
+                        "planned for removal this run but not started (run aborted)")
+                self._record_unprocessed_configs(ordered, records)
+                raise
 
         # Process each config file in dependency order.
         for rel in ordered:

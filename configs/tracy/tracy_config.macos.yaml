@@ -1,46 +1,29 @@
 sdk_root: ${workspace}/tracy
 
-dependencies:
-  - cmake
-  - xcode
-
 variables:
-  tracy_version: "0.13.1"
+  tracy_version: "0.14.1"
 
 install:
-  # Tracy does not publish a prebuilt macOS client for v0.13.1, so build the
-  # profiler client from the official tagged source archive.
+  # Since v0.14.0 Tracy publishes prebuilt macOS binaries (arm64), so the
+  # profiler is consumed as a plain download: no source build, and neither
+  # cmake nor an Apple toolchain dependency is needed anymore. The zip
+  # carries the tracy-profiler.app bundle plus the command line utilities.
   - download:
       src:
-        url: https://github.com/wolfpld/tracy/archive/refs/tags/v$var{tracy_version}.tar.gz
-        SHA-256: d4efc50ebcb0bfcfdbba148995aeb75044c0d80f5d91223aebfaa8fa9e563d2b
-      dest: ${download}/tracy-$var{tracy_version}-source.tar.gz
+        url: https://github.com/wolfpld/tracy/releases/download/v$var{tracy_version}/macos-$var{tracy_version}.zip
+        SHA-256: 971e2d8a742a57dc081cb2e36cc6200d565be7555c39a2f6439f9d65e2b416cb
+      dest: ${download}/tracy-$var{tracy_version}-macos.zip
   - unzip:
-      src: ${download}/tracy-$var{tracy_version}-source.tar.gz
-      src_sub_folder: tracy-$var{tracy_version}
-      dest: ${workspace}/tracy/tracy-$var{tracy_version}-source
-  - execute:
-      skip_if_exists: ${workspace}/tracy/tracy-client-$var{tracy_version}/bin/tracy-profiler
-      terminal: true
-      command:
-        - '"${CMAKE_HOME}/bin/cmake"'
-        - -S ${workspace}/tracy/tracy-$var{tracy_version}-source/profiler
-        - -B ${workspace}/tracy/tracy-$var{tracy_version}-source/profiler/build
-        - -DCMAKE_BUILD_TYPE=Release
-        - -DCMAKE_INSTALL_PREFIX=${workspace}/tracy/tracy-client-$var{tracy_version}
-        - '&&'
-        - '"${CMAKE_HOME}/bin/cmake"'
-        - --build ${workspace}/tracy/tracy-$var{tracy_version}-source/profiler/build
-        - --config Release
-        - --parallel
-        - '&&'
-        - '"${CMAKE_HOME}/bin/cmake"'
-        - --install ${workspace}/tracy/tracy-$var{tracy_version}-source/profiler/build
-        - --config Release
-
+      src: ${download}/tracy-$var{tracy_version}-macos.zip
+      dest: ${workspace}/tracy/tracy-client-$var{tracy_version}
+  # Python's zipfile extraction does not restore the executable bits stored
+  # in the archive, so set them explicitly.
+  - make_execute_permission:
+      files:
+        - ${workspace}/tracy/tracy-client-$var{tracy_version}
 generator_active_batch:
   file_path: ${workspace}/tracy/active.sh
   environments:
     set: {}
     prepend:
-      - PATH: ${workspace}/tracy/tracy-client-$var{tracy_version}/bin
+      - PATH: ${workspace}/tracy/tracy-client-$var{tracy_version}

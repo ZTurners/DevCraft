@@ -4,7 +4,7 @@ dependencies:
   - python
 
 variables:
-  llvm_version: "23.1.1"
+  llvm_version: "23.1.3"
   llvm_major: "23"
 
 install:
@@ -12,7 +12,7 @@ install:
   - download:
       src:
         url: https://github.com/llvm/llvm-project/releases/download/llvmorg-$var{llvm_version}/clang+llvm-$var{llvm_version}-x86_64-pc-windows-msvc.tar.xz
-        SHA-256: c54ac8146b420fe72e11e6fdd56498d6818011ad23267196b6ab37b5ac9264c3
+        SHA-256: 9ee6a2192fbb30c776415af529927f76ca6b5d1d55699bb1315f9878e610b5b8
       dest: ${download}/clang+llvm-$var{llvm_version}-x86_64-pc-windows-msvc.tar.xz
   - unzip:
       src: ${download}/clang+llvm-$var{llvm_version}-x86_64-pc-windows-msvc.tar.xz
@@ -29,7 +29,7 @@ install:
   - download:
       src:
         url: https://github.com/llvm/llvm-project/releases/download/llvmorg-$var{llvm_version}/LLVM-$var{llvm_version}-Linux-ARM64.tar.xz
-        SHA-256: 3fbaaa6a1f147557a4095b9911f8dc2d4c745a11863982f76ee20e248c190a80
+        SHA-256: 56d005e339c979a696ed6c244e6472e16f3b1371e48987a07e6145bda7ee0d03
       dest: ${download}/LLVM-$var{llvm_version}-Linux-ARM64.tar.xz
   - unzip:
       src: ${download}/LLVM-$var{llvm_version}-Linux-ARM64.tar.xz
@@ -44,7 +44,7 @@ install:
   - download:
       src:
         url: https://github.com/llvm/llvm-project/releases/download/llvmorg-$var{llvm_version}/LLVM-$var{llvm_version}-Linux-X64.tar.xz
-        SHA-256: 832aeb58d105de1cabc7b982dd2c65de0610f7377df48ae8fc2dd8e97420a15c
+        SHA-256: ca9fe385a5d9e2d88132dc0e23a00e9f87f38fa75f67207b5e457d208e71d013
       dest: ${download}/LLVM-$var{llvm_version}-Linux-X64.tar.xz
   - unzip:
       src: ${download}/LLVM-$var{llvm_version}-Linux-X64.tar.xz

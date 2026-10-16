@@ -1,22 +1,38 @@
 sdk_root: ${workspace}/xcode
 
+variables:
+  # sucatalog product 082-83364 (PostDate 2026-09-09) = Command Line Tools
+  # for Xcode 27.0. NMOS is the macOS 27 SDK generation, which Command Line
+  # Tools 27 makes the default MacOSX.sdk. Bump both variables (and the URL +
+  # checksum) together when moving to a newer Command Line Tools release.
+  command_line_tools_build: "082-83364"
+  command_line_tools_sdk_version: "27.0"
+
 install:
-  # command_line_tools:
+  # Only the Command Line Tools SDK is installed for now: the macOS SDK
+  # with the libc++ headers the ArieoEngine Conan host profile consumes.
+  # The compiler, linker and binutils all come from DevCraft LLVM, so the
+  # CLTools_Executables pkg is deliberately not downloaded. Nothing is
+  # installed system-wide and no sudo is involved.
+  - download:
+      src:
+        url: https://swcdn.apple.com/content/downloads/58/48/082-83364-A_KCEBOO2NJS/0d2rj4y5ucjlkgcvqt6f6a4pergug5tu2b/CLTools_macOSNMOS_SDK.pkg
+        SHA-256: d55351824fd17742fd6e1e7a252fa1028698f32147ee48be9a6b75442bf30575
+      dest: ${download}/command_line_tools-$var{command_line_tools_build}/CLTools_macOSNMOS_SDK.pkg
   - execute:
       command:
-        - clt_package=com.apple.pkg.CLTools_Executables;
-        - 'if ! pkgutil --pkg-info "$clt_package" >/dev/null 2>&1; then'
-        - ' xcode-select --install;'
-        - ' echo "Complete the Command Line Tools installation, then run install macos again.";'
-        - ' exit 1;'
-        - fi;
-        - clt_path=$(pkgutil --only-files --files "$clt_package" | sed -n
-          's#^\(.*CommandLineTools\)/.*#/\1#p' | head -n 1);
-        - 'test -n "$clt_path" && test -d "$clt_path";'
-        - 'mkdir -p ${workspace}/xcode;'
-        - 'ln -sfn "$clt_path" ${workspace}/xcode/CommandLineTools'
+        - python3 ${configs}/xcode/scripts/unpack_command_line_tools_pkg.py
+        - ${download}/command_line_tools-$var{command_line_tools_build}/CLTools_macOSNMOS_SDK.pkg
+        - ${workspace}/xcode
+        - Library/Developer/CommandLineTools
+  # The SDK payload ships the versioned dir (MacOSX27.0.sdk) plus Apple's
+  # own MacOSX27 shortcut; everything points at the versioned dir directly,
+  # no extra aliases are created.
+  - execute:
+      command:
+        - test -d ${workspace}/xcode/SDKs/MacOSX$var{command_line_tools_sdk_version}.sdk
 generator_active_batch:
   file_path: ${workspace}/xcode/active.sh
   environments:
     set:
-      DEVELOPER_DIR: ${workspace}/xcode/CommandLineTools
+      SDKROOT: ${workspace}/xcode/SDKs/MacOSX$var{command_line_tools_sdk_version}.sdk

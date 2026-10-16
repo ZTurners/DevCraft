@@ -1,7 +1,7 @@
 sdk_root: ${workspace}/llvm
 
 variables:
-  llvm_version: "23.1.1"
+  llvm_version: "23.1.3"
   llvm_major: "23"
 
 install:
@@ -13,9 +13,10 @@ install:
   #       - if brew list --versions llvm >/dev/null 2>&1; then brew upgrade llvm; else brew install llvm; fi &&
   #       - mkdir -p ${workspace}/llvm/llvm-$var{llvm_major} &&
   #       - ln -sf $(brew --prefix llvm) ${workspace}/llvm/llvm-$var{llvm_major}/arm64-apple-darwin
-  # Keep LLD on the current stable release because newer Apple SDK TAPI
-  # targets (for example arm64e.x1-macos) are not supported by ld64.lld 21;
-  # the pinned archive above ships its own (newer) ld64.lld in the same bin
+  # 23.1.3 is the minimum that parses the arm64e.x1 TAPI targets used by the
+  # MacOSX27 SDK tbd stubs; ld64.lld from 23.1.1 rejects them as malformed.
+  # LLVM and LLD ship together in the pinned archive's bin, so no separate
+  # lld install is needed anymore.
   # - execute:
   #     terminal: true
   #     command:
@@ -27,7 +28,7 @@ install:
   - download:
       src:
         url: https://github.com/llvm/llvm-project/releases/download/llvmorg-$var{llvm_version}/LLVM-$var{llvm_version}-macOS-ARM64.tar.xz
-        SHA-256: 64220f1c99132ef7e580447781b84f96fbba6862a43a8f6522b423052cd67502
+        SHA-256: 3dcfd88aec10be204a24037bcb0dc0ad777882e9dbe8ac60e2639060d8a794b1
       dest: ${download}/LLVM-$var{llvm_version}-macOS-ARM64.tar.xz
   - unzip:
       src: ${download}/LLVM-$var{llvm_version}-macOS-ARM64.tar.xz
@@ -38,7 +39,7 @@ install:
   - download:
       src:
         url: https://github.com/llvm/llvm-project/releases/download/llvmorg-$var{llvm_version}/LLVM-$var{llvm_version}-Linux-ARM64.tar.xz
-        SHA-256: 3fbaaa6a1f147557a4095b9911f8dc2d4c745a11863982f76ee20e248c190a80
+        SHA-256: 56d005e339c979a696ed6c244e6472e16f3b1371e48987a07e6145bda7ee0d03
       dest: ${download}/LLVM-$var{llvm_version}-Linux-ARM64.tar.xz
   - unzip:
       src: ${download}/LLVM-$var{llvm_version}-Linux-ARM64.tar.xz
@@ -49,7 +50,7 @@ install:
   - download:
       src:
         url: https://github.com/llvm/llvm-project/releases/download/llvmorg-$var{llvm_version}/LLVM-$var{llvm_version}-Linux-X64.tar.xz
-        SHA-256: 832aeb58d105de1cabc7b982dd2c65de0610f7377df48ae8fc2dd8e97420a15c
+        SHA-256: ca9fe385a5d9e2d88132dc0e23a00e9f87f38fa75f67207b5e457d208e71d013
       dest: ${download}/LLVM-$var{llvm_version}-Linux-X64.tar.xz
   - unzip:
       src: ${download}/LLVM-$var{llvm_version}-Linux-X64.tar.xz

@@ -14,10 +14,12 @@ DevCraft is a cross-platform developer environment bootstrap repository. It down
 - `workspace/active_with_codex_cli.windows.bat`
 - `workspace/active_with_vscode.windows.bat`
 - `workspace/active_with_zcode.windows.bat`
+- `workspace/active_with_dsh.windows.bat`
 
 ### macOS
 - `bootstrap.macos.sh`
 - `install.macos.sh`
+- `workspace/active_with_dsh.macos.sh`
 
 ## Quick Start
 
@@ -58,12 +60,30 @@ Or launch ZCode with the local environment:
 workspace\active_with_zcode.windows.bat
 ```
 
+Or launch the installed DeepSeek Harness desktop app with the local environment:
+
+```bat
+workspace\active_with_dsh.windows.bat
+```
+
+The launcher locates the desktop executable through its registered `dsh://` handler.
+
 ### macOS
 Run:
 
 ```sh
 ./install.macos.sh
 ```
+
+Launch the installed DeepSeek Harness desktop app with the local environment:
+
+```sh
+./workspace/active_with_dsh.macos.sh
+```
+
+The macOS launcher checks `/Applications` and `~/Applications` for `DeepSeek Harness.app`.
+Both launchers forward command-line arguments. Fully quit an already-running app
+before launching it to ensure it inherits the activated environment.
 
 ## Documentation
 Detailed documentation is maintained in the Obsidian Git repository.

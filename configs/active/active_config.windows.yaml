@@ -4,6 +4,10 @@ install:
       src: ${configs}/active/scripts/windows
       dest: ${workspace}
       force_update: true
+  - copy:
+      src: ${configs}/active/icons/windows
+      dest: ${workspace}/.icons
+      force_update: true
   - make_execute_permission:
       files:
         - ${workspace}/active_with_bash.windows.sh

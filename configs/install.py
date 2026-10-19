@@ -2208,16 +2208,16 @@ class WorkspaceInstaller:
                       f"{self._colorize(f'workspace/{rel}', 'REMOVED', light=True)}  "
                       f"(installed by {', '.join(markers)})")
 
-        # Nothing missing, nothing to reinstall and nothing to clean up: skip
-        # the confirmation prompt, the install pass and the run summary.
+        # Configs without sdk_root (for example active scripts) still have
+        # work to do on every run, even when every SDK is up to date.
         nothing_to_install = (
             status_counts.get("missing", 0) + status_counts.get("reinstall-needed", 0) == 0)
-        if nothing_to_install and not orphan_removals:
+        if nothing_to_install and not orphan_removals and not status_counts.get("no sdk_root", 0):
             print("\nNothing to install — all configs are already up to date. Exiting.")
             self.m_nothing_to_do = True
             return
 
-        if not self._confirm_proceed():
+        if (not nothing_to_install or orphan_removals) and not self._confirm_proceed():
             self.m_user_aborted = True
             print("Aborted by user. No changes were made.")
             return

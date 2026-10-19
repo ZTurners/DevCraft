@@ -93,7 +93,7 @@ echo [OK] Long path support enabled: total path length up to 32767 chars
         ) else (
             echo Error: ZIP file not found!
             pause
-            exit /b
+            exit /b 1
         )
     )
 
@@ -101,35 +101,43 @@ echo [OK] Long path support enabled: total path length up to 32767 chars
     echo Configuring Python ...
     :: Dynamically find the ._pth file
     
-    for %%f in ("%PYTHON_INSTALL_DIR%\python*._pth") do set PTH_FILE=%%f
-    for %%f in ("%PYTHON_INSTALL_DIR%\python*.zip") do set PYTHON_ZIP_FILE=%%f
-    
+    set "PTH_FILE="
+    set "PYTHON_ZIP_FILE="
+    for %%f in ("%PYTHON_INSTALL_DIR%\python*._pth") do if exist "%%~ff" set "PTH_FILE=%%~ff"
+    for %%f in ("%PYTHON_INSTALL_DIR%\python*.zip") do if exist "%%~ff" set "PYTHON_ZIP_FILE=%%~nxf"
+
     if not defined PTH_FILE (
         echo ERROR: Could not find python*._pth file in %PYTHON_INSTALL_DIR%
         pause
-        exit /b
+        exit /b 1
+    )
+    if not defined PYTHON_ZIP_FILE (
+        echo ERROR: Could not find python*.zip standard library in %PYTHON_INSTALL_DIR%
+        pause
+        exit /b 1
     )
     echo Found ._pth file: %PTH_FILE%
-    
-    if not exist "%PTH_FILE%.bak" (
-        :: Backup original ._pth file
-        copy "%PTH_FILE%" "%PTH_FILE%.bak" >nul
 
-        :: Modify ._pth file to enable site-packages
-        (
-            echo %PYTHON_ZIP_FILE%
-            echo .
-            echo Lib\site-packages
-            echo import site
-        ) > "%PTH_FILE%"
+    :: Keep the original backup, but refresh configuration on every run.
+    :: Relative paths are resolved beside ._pth and survive moving the project.
+    if not exist "%PTH_FILE%.bak" copy "%PTH_FILE%" "%PTH_FILE%.bak" >nul
+    (
+        echo %PYTHON_ZIP_FILE%
+        echo .
+        echo Lib\site-packages
+        echo import site
+    ) > "%PTH_FILE%"
+    if errorlevel 1 (
+        echo ERROR: Failed to configure Python module paths.
+        exit /b 1
     )
 
-    :: Verify Python installation
+    :: --version skips runtime initialization; verify standard-library imports too.
     echo Verifying Python installation...
-    "%PYTHON_INSTALL_DIR%\python.exe" --version
+    "%PYTHON_INSTALL_DIR%\python.exe" -c "import encodings, site, sys; print(sys.version)"
     if %ERRORLEVEL% neq 0 (
         echo Python installation verification failed.
-        exit /b
+        exit /b 1
     ) else (
         echo Python %BOOTSTRAP_PYTHON_VERSION% successfully installed at %PYTHON_INSTALL_DIR%
     )
@@ -149,7 +157,7 @@ echo [OK] Long path support enabled: total path length up to 32767 chars
         if not exist "%PYTHON_DOWNLOAD_DIR%\get-pip.py" (
             echo Failed to download pip installer
             pause
-            exit /b
+            exit /b 1
         )
 
         :: Install pip properly for embedded Python
@@ -163,7 +171,7 @@ echo [OK] Long path support enabled: total path length up to 32767 chars
     if %ERRORLEVEL% neq 0 (
         echo Pip verification failed
         pause
-        exit /b
+        exit /b 1
     )
     
     :: Get installation details

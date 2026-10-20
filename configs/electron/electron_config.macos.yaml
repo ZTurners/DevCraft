@@ -1,0 +1,29 @@
+sdk_root: ${workspace}/electron
+
+variables:
+  electron_version: "44.9.1"
+
+install:
+  - download:
+      src:
+        url: https://github.com/electron/electron/releases/download/v$var{electron_version}/electron-v$var{electron_version}-darwin-arm64.zip
+        SHA-256: ff597552c9c7b0b16c39a7fb93a346ee7148afbd372ebcf0c18415482c49fbea
+      dest: ${download}/electron-v$var{electron_version}-darwin-arm64.zip
+  # Preserve framework symlinks and executable modes in the signed app bundle.
+  # The generic Python ZIP extractor does not preserve these attributes.
+  - execute:
+      command:
+        - /usr/bin/ditto
+        - -x
+        - -k
+        - '"${download}/electron-v$var{electron_version}-darwin-arm64.zip"'
+        - '"${workspace}/electron/electron-v$var{electron_version}"'
+
+generator_active_batch:
+  file_path: ${workspace}/electron/active.sh
+  environments:
+    set:
+      ELECTRON_HOME: ${workspace}/electron/electron-v$var{electron_version}
+      ELECTRON_EXECUTABLE: ${workspace}/electron/electron-v$var{electron_version}/Electron.app/Contents/MacOS/Electron
+    prepend:
+      - PATH: ${workspace}/electron/electron-v$var{electron_version}/Electron.app/Contents/MacOS
